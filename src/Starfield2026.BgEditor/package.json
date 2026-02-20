@@ -1,0 +1,11 @@
+{
+  "name": "bgeditor",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "concurrently -n fe,be,el -c cyan,green,magenta \"cd frontend && npm run dev\" \"cd backend && npm run dev\" \"cd electron && npm run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

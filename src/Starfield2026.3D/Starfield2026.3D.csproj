@@ -29,4 +29,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Starfield2026.Core\Starfield2026.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\Starfield2026.Assets\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

@@ -59,12 +59,9 @@ public class HUDRenderer
         
         if (activeScreenType == "overworld")
         {
-            if (overworldBoosts > 0)
-            {
-                string boostText = $"Boosts: {overworldBoosts}";
-                _font.Draw(boostText, margin, leftY, Color.DodgerBlue);
-                leftY += _font.CharHeight + 4;
-            }
+            string boostText = $"Boosts: {overworldBoosts}";
+            _font.Draw(boostText, margin, leftY, Color.DodgerBlue);
+            leftY += _font.CharHeight + 4;
         }
         else if (ammo != null)
         {

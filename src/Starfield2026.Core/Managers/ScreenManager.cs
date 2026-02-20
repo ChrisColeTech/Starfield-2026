@@ -15,6 +15,7 @@ public class ScreenManager
     private bool _transitionFadingOut;
     private IGameScreen? _nextScreen;
     private readonly Action<string> _onScreenChanged;
+    private Action? _midFadeAction;
     
     public ScreenManager(Action<string> onScreenChanged)
     {
@@ -27,14 +28,15 @@ public class ScreenManager
         ActiveScreen.OnEnter();
     }
     
-    public void TransitionTo(IGameScreen screen, string screenName)
+    public void TransitionTo(IGameScreen screen, string screenName, Action? midFadeAction = null)
     {
-        if (_isTransitioning || screen == ActiveScreen) return;
+        if (_isTransitioning) return;
         
         _isTransitioning = true;
         _transitionFadingOut = true;
         _transitionAlpha = 0f;
         _nextScreen = screen;
+        _midFadeAction = midFadeAction;
         
         _onScreenChanged?.Invoke(screenName);
     }
@@ -49,9 +51,19 @@ public class ScreenManager
                 if (_transitionAlpha >= 1f)
                 {
                     _transitionAlpha = 1f;
-                    ActiveScreen.OnExit();
-                    ActiveScreen = _nextScreen!;
-                    ActiveScreen.OnEnter();
+                    if (ActiveScreen != _nextScreen)
+                    {
+                        ActiveScreen.OnExit();
+                        ActiveScreen = _nextScreen!;
+                        ActiveScreen.OnEnter();
+                    }
+                    else
+                    {
+                        // Even if not swapping screens, we might be using it to mask a mode swap
+                        ActiveScreen = _nextScreen!; 
+                    }
+                    _midFadeAction?.Invoke();
+                    _midFadeAction = null;
                     _transitionFadingOut = false;
                 }
             }

@@ -1,7 +1,7 @@
 # 07 — Lessons Learned & Handoff: World Registry, Map System & Tile Architecture
 
 **Date:** 2026-02-20  
-**Session Focus:** Porting the world/map/tile/encounter registry from PokemonGreen, 3D map renderer, warp transitions, auto-save on location change  
+**Session Focus:** Porting the world/map/tile/encounter registry from Starfield, 3D map renderer, warp transitions, auto-save on location change  
 **Status:** Core map system complete. Build clean (0 warnings, 0 errors). Game loads 16×16 tile-based maps with warp transitions between locations, auto-saves current map to DB.
 
 ---
@@ -14,7 +14,7 @@
 |--------|------|---------|
 | `TileCategory` | `Core/Maps/TileCategory.cs` | 10-category enum: Terrain, Decoration, Interactive, Entity, Trainer, Encounter, Structure, Item, Transition, Spawn |
 | `TileDefinition` | `Core/Maps/TileDefinition.cs` | Record with Id, Name, Walkable, Color, Height (3D extrusion), OverlayBehavior, EntityId, SpriteName |
-| `TileRegistry` | `Core/Maps/TileRegistry.cs` | 120 Starfield-themed tiles in ID ranges 0–119 matching PokemonGreen conventions |
+| `TileRegistry` | `Core/Maps/TileRegistry.cs` | 120 Starfield-themed tiles in ID ranges 0–119 matching Starfield conventions |
 | `WarpConnection` | `Core/Maps/WarpConnection.cs` | `WarpTrigger` enum (Step/Interact), `WarpConnection`, `MapEdge`, `MapConnection` records |
 | `WorldDefinition` | `Core/Maps/WorldDefinition.cs` | World metadata record (Id, Name, SpawnMapId, SpawnX, SpawnY) |
 | `MapDefinition` | `Core/Maps/MapDefinition.cs` | Abstract base class — auto-registers in `MapCatalog`, stores tile arrays, warps, encounters |
@@ -219,7 +219,7 @@ sqlite3 "D:\Projects\Starfield-2026\src\Starfield2026.3D\bin\Debug\net9.0\starfi
 
 **Strategies:**
 1. **Pre-movement check** — Before applying velocity, calculate target tile. If not walkable, zero out that velocity component. Allows sliding along walls.
-2. **Grid-based movement** — Lock player to tile grid (like PokemonGreen). Move one tile at a time with animation. Simplest collision model.
+2. **Grid-based movement** — Lock player to tile grid (like Starfield). Move one tile at a time with animation. Simplest collision model.
 3. **Collision rectangle** — Treat player as a 1×1 bounding box, check all 4 corners against walkability. Allows smooth movement with proper blocking.
 4. **Physics layer** — Build a walkability bitmask at map load. Each bit = 1 tile. Fast O(1) checks via bit operations.
 
@@ -333,7 +333,7 @@ Starfield2026.Core (Library)
 
 ### How the Map Editor Works
 
-The PokemonGreen Map Editor (Electron app) directly parses `TileRegistry.cs` to build the tile palette. Key compatibility requirements:
+The Starfield Map Editor (Electron app) directly parses `TileRegistry.cs` to build the tile palette. Key compatibility requirements:
 
 1. **File must be named `TileRegistry.cs`** — editor scans for this filename
 2. **`TileDefinition` constructors must follow the record pattern** — editor parses the constructor arguments
@@ -383,7 +383,7 @@ The editor exports map data as `.g.cs` generated classes that extend `MapDefinit
 ```
 feat(world): Add world registry, tile maps, warp transitions, auto-save
 
-- Port world/map/tile/encounter architecture from PokemonGreen (14 new files)
+- Port world/map/tile/encounter architecture from Starfield (14 new files)
 - Create TileRegistry with 120 Starfield-themed tiles (ID 0-119)
 - Create MapDefinition base class with auto-registration in MapCatalog
 - Create MapRenderer3D: flat quads for walkable tiles, extruded cubes for walls

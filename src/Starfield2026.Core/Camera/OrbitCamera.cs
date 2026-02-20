@@ -56,7 +56,8 @@ public class OrbitCamera
             _initialized = true;
         }
         
-        _target = Vector3.Lerp(_target, targetPosition, FollowSpeed * dt);
+        float blend = 1f - (float)Math.Exp(-FollowSpeed * dt);
+        _target = Vector3.Lerp(_target, targetPosition, blend);
         
         float targetYaw = playerYaw + MathHelper.Pi + _yawOffset;
         float yawDiff = targetYaw - _currentYaw;

@@ -28,6 +28,21 @@ public class InputSnapshot
     public MouseState Mouse { get; init; }
     public MouseState PreviousMouse { get; init; }
     
+    
     public bool IsKeyJustPressed(Keys key) => Keyboard.IsKeyDown(key) && PreviousKeyboard.IsKeyUp(key);
     public bool IsKeyHeld(Keys key) => Keyboard.IsKeyDown(key);
+
+    public bool Confirm => ConfirmPressed;
+    public bool Cancel => CancelPressed;
+    public bool AnyKey => Keyboard.GetPressedKeyCount() > 0 && PreviousKeyboard.GetPressedKeyCount() == 0;
+    public bool Up => IsKeyJustPressed(Keys.Up) || IsKeyJustPressed(Keys.W);
+    public bool Down => IsKeyJustPressed(Keys.Down) || IsKeyJustPressed(Keys.S);
+    public bool Left => IsKeyJustPressed(Keys.Left) || IsKeyJustPressed(Keys.A);
+    public bool Right => IsKeyJustPressed(Keys.Right) || IsKeyJustPressed(Keys.D);
+
+    public bool PageLeft => IsKeyJustPressed(Keys.Q) || IsKeyJustPressed(Keys.PageUp);
+    public bool PageRight => IsKeyJustPressed(Keys.E) || IsKeyJustPressed(Keys.PageDown);
+
+    public Point MousePosition => Mouse.Position;
+    public bool MouseClicked => Mouse.LeftButton == ButtonState.Pressed && PreviousMouse.LeftButton == ButtonState.Released;
 }

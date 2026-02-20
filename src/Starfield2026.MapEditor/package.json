@@ -1,0 +1,11 @@
+{
+  "name": "mapeditor",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "concurrently -n fe,el -c cyan,magenta \"cd frontend && npm run dev\" \"cd electron && npm run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

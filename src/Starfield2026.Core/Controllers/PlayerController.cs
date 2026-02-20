@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Starfield2026.Core.Input;
+using Starfield2026.Core.Systems;
 
 namespace Starfield2026.Core.Controllers;
 
@@ -13,7 +14,7 @@ public class PlayerController
     public bool IsRunning { get; private set; }
     public bool IsGrounded { get; private set; } = true;
     public bool IsHovering { get; private set; }
-    public int BoostCount { get; private set; }
+    public BoostSystem? Boosts { get; set; }
     public float HoverBobOffset { get; private set; }
     
     private float _walkSpeed = 12f;
@@ -46,7 +47,6 @@ public class PlayerController
         IsRunning = false;
         _runningToggled = false;
         IsHovering = false;
-        BoostCount = 0;
     }
     
     public void SetPosition(Vector3 position, float yaw)
@@ -60,15 +60,6 @@ public class PlayerController
         _hoverTime = 0f;
     }
     
-    public void SetBoostCount(int count)
-    {
-        BoostCount = count;
-    }
-    
-    public int GetAndResetBoostsUsed()
-    {
-        return 0;
-    }
     
     public void Update(float dt, InputSnapshot input)
     {
@@ -76,10 +67,8 @@ public class PlayerController
             _runningToggled = !_runningToggled;
         IsRunning = _runningToggled;
         
-        var kb = Keyboard.GetState();
-        bool jumpHeld = kb.IsKeyDown(Keys.Space) || kb.IsKeyDown(Keys.LeftAlt) || kb.IsKeyDown(Keys.RightAlt);
-        bool jumpTriggered = jumpHeld && !_wasJumpHeld;
-        _wasJumpHeld = jumpHeld;
+        bool jumpHeld = input.JumpHeld;
+        bool jumpTriggered = input.JumpPressed;
         
         if (IsGrounded)
         {
@@ -95,18 +84,18 @@ public class PlayerController
         {
             if (jumpTriggered)
             {
-                if (!IsHovering && BoostCount > 0)
+                if (!IsHovering && Boosts != null && Boosts.BoostCount > 0)
                 {
                     IsHovering = true;
-                    BoostCount--;
+                    Boosts.UseBoost(1);
                     _hoverTime = _hoverDuration;
                     _verticalVelocity = 0f;
                 }
                 else if (IsHovering)
                 {
-                    if (BoostCount > 0)
+                    if (Boosts != null && Boosts.BoostCount > 0)
                     {
-                        BoostCount--;
+                        Boosts.UseBoost(1);
                         _hoverTime += _hoverDuration;
                         _verticalVelocity = _hoverRiseSpeed;
                     }

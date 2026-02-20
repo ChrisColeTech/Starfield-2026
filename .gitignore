@@ -1,4 +1,21 @@
-.venv/
-*.db
+# .NET Core
 bin/
 obj/
+
+# Node
+node_modules/
+dist/
+dist-electron/
+.npm/
+
+# Visual Studio
+.vs/
+*.user
+
+# Build outputs
+build/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db

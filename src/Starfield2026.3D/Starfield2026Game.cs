@@ -10,6 +10,7 @@ using Starfield2026.Core.Save;
 using Starfield2026.Core.Screens;
 using Starfield2026.Core.Systems;
 using Starfield2026.Core.UI;
+using Starfield2026.Core.UI.Fonts;
 
 namespace Starfield2026._3D;
 
@@ -30,6 +31,26 @@ public class Starfield2026Game : Game
     private OverworldScreen _overworld = null!;
     private DrivingScreen _driving = null!;
     private SpaceFlightScreen _spaceflight = null!;
+
+    private enum GameMode { Exploration, Battle }
+    private GameMode _mode = GameMode.Exploration;
+    private const bool DebugStartInBattle = true;
+    
+    private Starfield2026.Core.Battle.BattleScreen3D _battleScreen = new();
+    private KermFontRenderer _kermRenderer = null!;
+    private KermFont _kermFont = null!;
+
+    private string FindAssetsRoot()
+    {
+        string current = AppContext.BaseDirectory;
+        while (current != null)
+        {
+            string maybe = Path.Combine(current, "Starfield2026.Assets");
+            if (Directory.Exists(maybe)) return maybe;
+            current = Path.GetDirectoryName(current);
+        }
+        return Path.Combine(AppContext.BaseDirectory, "Assets");
+    }
 
     public Starfield2026Game()
     {
@@ -112,6 +133,34 @@ public class Starfield2026Game : Game
         
         _hud = new HUDRenderer();
         _hud.Initialize(_spriteBatch, pixel);
+
+        string assets = FindAssetsRoot();
+        string fontPath = Path.Combine(assets, "Fonts", "Battle.kermfont");
+        if (File.Exists(fontPath))
+        {
+            _kermFont = new KermFont(GraphicsDevice, fontPath);
+            _kermRenderer = new KermFontRenderer(_kermFont);
+        }
+        _battleScreen.Initialize(_spriteBatch, pixel, _kermRenderer, _kermFont, null);
+        _battleScreen.LoadBattleModels(GraphicsDevice, Path.Combine(assets, "BattleBG"));
+        _battleScreen.SetPartyAndInventory(new Starfield2026.Core.Pokemon.Party(), new Starfield2026.Core.Items.PlayerInventory());
+        
+        _battleScreen.OnBattleExit = () =>
+        {
+            // Trigger a proper smooth fadeout back to the Overworld
+            // Pass a mid-fade action to swap the GameMode right when the screen is completely black
+            _screens.TransitionTo(_overworld, "overworld", () => 
+            {
+                _mode = GameMode.Exploration;
+                _battleScreen.CleanupBattle();
+            });
+        };
+
+        if (DebugStartInBattle)
+        {
+            _mode = GameMode.Battle;
+            _battleScreen.EnterBattle();
+        }
     }
 
     protected override void Update(GameTime gameTime)
@@ -119,27 +168,38 @@ public class Starfield2026Game : Game
         _input.Update();
         var input = _input.Current;
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        
-        if (input.IsKeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Z))
-            _ammo.ToggleProjectileType();
-        
-        if (input.CancelPressed && !_screens.IsTransitioning)
+
+        if (_mode == GameMode.Battle)
         {
-            var next = _screens.ActiveScreen switch
+            _battleScreen.Update(dt, input, gameTime.TotalGameTime.TotalSeconds);
+        }
+        
+        if (_mode != GameMode.Battle)
+        {
+            if (input.IsKeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Z))
+                _ammo.ToggleProjectileType();
+            
+            if (input.CancelPressed && !_screens.IsTransitioning)
             {
-                OverworldScreen => (IGameScreen)_driving,
-                DrivingScreen => _spaceflight,
-                SpaceFlightScreen => _overworld,
-                _ => _overworld
-            };
-            var name = next == _overworld ? "overworld" : next == _driving ? "driving" : "space";
-            _screens.TransitionTo(next, name);
+                var next = _screens.ActiveScreen switch
+                {
+                    OverworldScreen => (IGameScreen)_driving,
+                    DrivingScreen => _spaceflight,
+                    SpaceFlightScreen => _overworld,
+                    _ => _overworld
+                };
+                var name = next == _overworld ? "overworld" : next == _driving ? "driving" : "space";
+                _screens.TransitionTo(next, name);
+            }
         }
         
         _screens.Update(dt, screen =>
         {
-            screen.Update(gameTime, input);
-            _coinCollector.CollectFromScreen(screen);
+            if (_mode != GameMode.Battle)
+            {
+                screen.Update(gameTime, input);
+                _coinCollector.CollectFromScreen(screen);
+            }
         });
         
         base.Update(gameTime);
@@ -147,7 +207,17 @@ public class Starfield2026Game : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        _screens.ActiveScreen.Draw(GraphicsDevice);
+        if (_mode == GameMode.Battle)
+        {
+            _battleScreen.Draw3DScene(GraphicsDevice);
+            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
+            _battleScreen.DrawUI(2, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+            _spriteBatch.End();
+        }
+        else
+        {
+            _screens.ActiveScreen.Draw(GraphicsDevice);
+        }
         
         _spriteBatch.Begin();
         
@@ -164,7 +234,10 @@ public class Starfield2026Game : Game
             _ => null
         };
         int overworldBoosts = _screens.ActiveScreen == _overworld ? (_overworld.Boosts?.BoostCount ?? 0) : 0;
-        _hud.Draw(GraphicsDevice, _state, _ammo, _boosts, screenType, speed, overworldBoosts);
+        if (_mode != GameMode.Battle)
+        {
+            _hud.Draw(GraphicsDevice, _state, _ammo, _boosts, screenType, speed, overworldBoosts);
+        }
         _hud.DrawTransition(GraphicsDevice, _screens.GetTransitionAlpha());
         
         _spriteBatch.End();

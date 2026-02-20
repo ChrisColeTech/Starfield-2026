@@ -112,22 +112,14 @@ public class OverworldScreen : IGameScreen
         if (input.CameraZoom != 0)
             _camera.Zoom(input.CameraZoom * _camera.ZoomSpeed * dt);
         
-        if (Boosts != null)
-            _player.SetBoostCount(Boosts.BoostCount);
+        _player.Boosts = Boosts;
         
         _player.Update(dt, input);
-        
-        if (Boosts != null)
-        {
-            int used = Boosts.BoostCount - _player.BoostCount;
-            if (used > 0)
-                Boosts.UseBoost(used);
-        }
         
         _world.Update(dt, _player.Position);
         _encounters.Update(dt, _player.IsMoving, _world.CurrentMap, _player.Position);
         
-        float targetDist = _player.IsRunning && _player.IsMoving ? 22f : 18f;
+        float targetDist = _player.IsRunning ? 22f : 18f;
         _camera.Distance = MathHelper.Lerp(_camera.Distance, targetDist, 10f * dt);
         
         float aspect = _device.Viewport.Width / (float)_device.Viewport.Height;

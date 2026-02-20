@@ -62,7 +62,7 @@ public class InputManager
             CameraZoom = cameraZoom,
             RunHeld = _keyboard.IsKeyDown(Keys.LeftShift) || _keyboard.IsKeyDown(Keys.RightShift),
             RunPressed = IsJustPressed(Keys.LeftShift) || IsJustPressed(Keys.RightShift),
-            JumpHeld = _keyboard.IsKeyDown(Keys.Space) || _keyboard.IsKeyDown(Keys.LeftAlt) || _keyboard.IsKeyDown(Keys.RightAlt),
+            JumpHeld = _keyboard.IsKeyDown(Keys.Space) || _keyboard.IsKeyDown(Keys.C) || _keyboard.IsKeyDown(Keys.LeftAlt) || _keyboard.IsKeyDown(Keys.RightAlt),
             JumpPressed = IsJustPressed(Keys.Space) || IsJustPressed(Keys.C) || IsJustPressed(Keys.LeftAlt) || IsJustPressed(Keys.RightAlt),
             FireHeld = _keyboard.IsKeyDown(Keys.Space),
             ConfirmPressed = IsJustPressed(Keys.Enter),
