@@ -24,27 +24,25 @@ public class OverworldScreen : IGameScreen
     private MapRenderer3D _mapRenderer = null!;
     private CoinCollectibleSystem _coinSystem = null!;
     
-    private float _baseDistance = 20f;
-    private float _runDistance = 25f;
-    private float _distanceVelocity;
-    
     public AmmoSystem? Ammo { get; set; }
+    public BoostSystem? Boosts { get; set; }
     public CoinCollectibleSystem CoinSystem => _coinSystem;
     public string? CurrentMapId => _world.CurrentMapId;
-    
+
     public event Action? OnLaunchRequested;
     public event Action? OnRandomEncounter;
     public event Action<WarpConnection>? OnMapTransition;
-    
+
     public void Initialize(GraphicsDevice device)
     {
         _device = device;
-        _camera.Distance = 20f;
-        _camera.Pitch = -0.25f;
+        
+        _camera.Distance = 18f;
+        _camera.Pitch = -0.3f;
         _camera.Yaw = MathHelper.Pi;
-        _camera.MinDistance = 10f;
-        _camera.MaxDistance = 40f;
-        _camera.FollowSpeed = 1.5f;
+        _camera.MinDistance = 8f;
+        _camera.MaxDistance = 35f;
+        _camera.FollowSpeed = 5f;
         
         _player.Initialize(new Vector3(0, 1.5f, 0));
         _camera.SnapToTarget(_player.Position);
@@ -114,15 +112,23 @@ public class OverworldScreen : IGameScreen
         if (input.CameraZoom != 0)
             _camera.Zoom(input.CameraZoom * _camera.ZoomSpeed * dt);
         
+        if (Boosts != null)
+            _player.SetBoostCount(Boosts.BoostCount);
+        
         _player.Update(dt, input);
+        
+        if (Boosts != null)
+        {
+            int used = Boosts.BoostCount - _player.BoostCount;
+            if (used > 0)
+                Boosts.UseBoost(used);
+        }
+        
         _world.Update(dt, _player.Position);
         _encounters.Update(dt, _player.IsMoving, _world.CurrentMap, _player.Position);
         
-        float targetDist = _player.IsRunning && _player.IsMoving ? _runDistance : _baseDistance;
-        float distDiff = targetDist - _camera.Distance;
-        _distanceVelocity += distDiff * 3.5f * dt;
-        _distanceVelocity *= 0.85f;
-        _camera.Distance += _distanceVelocity * dt;
+        float targetDist = _player.IsRunning && _player.IsMoving ? 22f : 18f;
+        _camera.Distance = MathHelper.Lerp(_camera.Distance, targetDist, 10f * dt);
         
         float aspect = _device.Viewport.Width / (float)_device.Viewport.Height;
         _camera.Update(_player.Position, aspect, dt, _player.Yaw);
@@ -130,6 +136,10 @@ public class OverworldScreen : IGameScreen
         _background.Update(dt, _player.Speed, _player.Position);
         
         _coinSystem.Update(dt, _player.Position, 3f, _player.Speed, 30f, 25f, 4f, 60f, _world.CurrentMap);
+        
+        var collected = _coinSystem.GetAndResetNewlyCollected();
+        if (collected.Blue > 0 && Boosts != null)
+            Boosts.AddBoost(collected.Blue);
         
         float snap = _groundGrid.Spacing;
         float sx = (float)Math.Floor(_player.Position.X / snap) * snap;
@@ -161,8 +171,9 @@ public class OverworldScreen : IGameScreen
         _coinSystem.Draw(device, view, proj);
         
         float bob = _player.IsMoving ? (float)Math.Sin(Environment.TickCount64 / 150.0) * 0.08f : 0f;
+        float hoverBob = _player.IsHovering ? _player.HoverBobOffset : 0f;
         _cubeRenderer.Draw(device, view, proj,
-            _player.Position + new Vector3(0, bob, 0),
+            _player.Position + new Vector3(0, bob + hoverBob, 0),
             _player.Yaw, 1.5f, new Color(0, 220, 255));
     }
     

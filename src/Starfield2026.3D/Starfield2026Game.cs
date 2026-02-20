@@ -77,7 +77,7 @@ public class Starfield2026Game : Game
     
     private void InitializeScreens()
     {
-        _overworld = new OverworldScreen { Ammo = _ammo };
+        _overworld = new OverworldScreen { Ammo = _ammo, Boosts = _boosts };
         _driving = new DrivingScreen { Ammo = _ammo, Boosts = _boosts };
         _spaceflight = new SpaceFlightScreen { Ammo = _ammo, Boosts = _boosts };
         
@@ -163,7 +163,8 @@ public class Starfield2026Game : Game
             SpaceFlightScreen => _spaceflight.CurrentSpeed,
             _ => null
         };
-        _hud.Draw(GraphicsDevice, _state, _ammo, _boosts, screenType, speed);
+        int overworldBoosts = _screens.ActiveScreen == _overworld ? (_overworld.Boosts?.BoostCount ?? 0) : 0;
+        _hud.Draw(GraphicsDevice, _state, _ammo, _boosts, screenType, speed, overworldBoosts);
         _hud.DrawTransition(GraphicsDevice, _screens.GetTransitionAlpha());
         
         _spriteBatch.End();

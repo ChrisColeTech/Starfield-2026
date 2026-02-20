@@ -16,6 +16,8 @@ public class InputSnapshot
     public bool RunHeld { get; init; }
     public bool JumpPressed { get; init; }
     public bool FireHeld { get; init; }
+    public bool RunPressed { get; init; }
+    public bool JumpHeld { get; init; }
     public bool ConfirmPressed { get; init; }
     public bool CancelPressed { get; init; }
     public bool PausePressed { get; init; }

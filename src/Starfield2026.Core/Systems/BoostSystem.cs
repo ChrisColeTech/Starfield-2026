@@ -20,6 +20,18 @@ public class BoostSystem
         }
     }
     
+    public void AddBoost(int count)
+    {
+        BoostCount = Math.Clamp(BoostCount + count, 0, MaxBoosts);
+        Changed?.Invoke(this);
+    }
+    
+    public void UseBoost(int count = 1)
+    {
+        BoostCount = Math.Max(0, BoostCount - count);
+        Changed?.Invoke(this);
+    }
+    
     public bool TryActivate()
     {
         if (BoostCount <= 0) return false;

@@ -19,7 +19,7 @@ public class HUDRenderer
         _font = new PixelFont(spriteBatch, pixel);
     }
     
-    public void Draw(GraphicsDevice device, GameState state, AmmoSystem? ammo, BoostSystem? boosts, string? activeScreenType, float? speed = null)
+    public void Draw(GraphicsDevice device, GameState state, AmmoSystem? ammo, BoostSystem? boosts, string? activeScreenType, float? speed = null, int overworldBoosts = 0)
     {
         int screenW = device.Viewport.Width;
         int screenH = device.Viewport.Height;
@@ -55,6 +55,16 @@ public class HUDRenderer
             string coinText = $"Coins: {state.TotalCoins}";
             int textW = _font.MeasureWidth(coinText);
             _font.Draw(coinText, screenW - textW - margin, barY + barH + 4 + _font.CharHeight + 4, Color.Gold);
+        }
+        
+        if (activeScreenType == "overworld")
+        {
+            if (overworldBoosts > 0)
+            {
+                string boostText = $"Boosts: {overworldBoosts}";
+                _font.Draw(boostText, margin, leftY, Color.DodgerBlue);
+                leftY += _font.CharHeight + 4;
+            }
         }
         else if (ammo != null)
         {
