@@ -68,6 +68,7 @@ public class Starfield2026Game : Game
         
         _ammo = new AmmoSystem();
         _ammo.Initialize(_state.GoldAmmo, _state.RedAmmo);
+        _ammo.Changed += a => { _state.SetAmmo(a.GoldAmmo, a.RedAmmo); };
         
         _boosts = new BoostSystem();
         _boosts.SetBoosts(_state.BoostCount);

@@ -179,7 +179,7 @@ public class SpaceFlightScreen : IGameScreen
         float fov = MathHelper.PiOver4 + speedFactor * 0.35f;
         var proj = Matrix.CreatePerspectiveFieldOfView(fov, aspect, 0.5f, 1500f);
         
-        _background.Draw(device, view, proj, _ship.Position);
+        _background.Draw(device, view, proj, _ship.Position, _ship.CurrentSpeed);
         _gridFloor.Draw(device, view, proj);
         _gridCeiling.Draw(device, view, proj);
         _coinSystem.Draw(device, view, proj);

@@ -40,13 +40,13 @@ public class OverworldScreen : IGameScreen
     {
         _device = device;
         _camera.Distance = 20f;
-        _camera.Pitch = -0.35f;
+        _camera.Pitch = -0.25f;
         _camera.Yaw = MathHelper.Pi;
         _camera.MinDistance = 10f;
         _camera.MaxDistance = 40f;
         _camera.FollowSpeed = 1.5f;
         
-        _player.Initialize(new Vector3(0, 0.75f, 0));
+        _player.Initialize(new Vector3(0, 1.5f, 0));
         _camera.SnapToTarget(_player.Position);
         
         _world.OnMapTransition += warp => OnMapTransition?.Invoke(warp);
@@ -92,14 +92,14 @@ public class OverworldScreen : IGameScreen
             float scale = 2f;
             float worldX = (spawnX - _world.CurrentMap.Width / 2f) * scale;
             float worldZ = (spawnY - _world.CurrentMap.Height / 2f) * scale;
-            _player.SetPosition(new Vector3(worldX, 0.75f, worldZ), _player.Yaw);
+            _player.SetPosition(new Vector3(worldX, 1.5f, worldZ), _player.Yaw);
             _camera.SnapToTarget(_player.Position);
         }
     }
     
     public void SetPlayerPosition(float worldX, float worldZ)
     {
-        _player.SetPosition(new Vector3(worldX, 0.75f, worldZ), _player.Yaw);
+        _player.SetPosition(new Vector3(worldX, 1.5f, worldZ), _player.Yaw);
         _camera.SnapToTarget(_player.Position);
     }
     
@@ -129,7 +129,7 @@ public class OverworldScreen : IGameScreen
         
         _background.Update(dt, _player.Speed, _player.Position);
         
-        _coinSystem.Update(dt, _player.Position, 3f, _player.Speed, 15f, 55f, 0f, 55f);
+        _coinSystem.Update(dt, _player.Position, 3f, _player.Speed, 30f, 25f, 4f, 60f, _world.CurrentMap);
         
         float snap = _groundGrid.Spacing;
         float sx = (float)Math.Floor(_player.Position.X / snap) * snap;
@@ -150,7 +150,8 @@ public class OverworldScreen : IGameScreen
         var view = _camera.View;
         var proj = _camera.Projection;
         
-        _background.Draw(device, view, proj, _player.Position);
+        var bgCenter = new Vector3(_player.Position.X, 0f, _player.Position.Z);
+        _background.Draw(device, view, proj, bgCenter, _player.IsRunning ? 8f : (_player.Speed > 0.1f ? 4f : 0f));
         
         if (_world.CurrentMap != null)
             _mapRenderer.Draw(device, view, proj, _world.CurrentMap, _player.Position);

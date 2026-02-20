@@ -43,6 +43,13 @@ public class GameState
         _database.SaveAmmo(GoldAmmo, RedAmmo);
     }
     
+    public void SetAmmo(int gold, int red)
+    {
+        GoldAmmo = gold;
+        RedAmmo = red;
+        _database.SaveAmmo(GoldAmmo, RedAmmo);
+    }
+    
     public void TakeDamage(int amount)
     {
         CurrentHealth = Math.Max(0, CurrentHealth - amount);

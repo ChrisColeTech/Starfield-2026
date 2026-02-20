@@ -139,7 +139,7 @@ public class DrivingScreen : IGameScreen
         var view = _camera.View;
         var proj = _camera.Projection;
         
-        _background.Draw(device, view, proj, _vehicle.Position);
+        _background.Draw(device, view, proj, _vehicle.Position, _vehicle.Speed);
         _groundGrid.Draw(device, view, proj);
         _coinSystem.Draw(device, view, proj);
         _projectiles.Draw(device, view, proj);

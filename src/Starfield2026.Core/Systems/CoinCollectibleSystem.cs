@@ -69,11 +69,18 @@ public class CoinCollectibleSystem
         });
     }
 
-    public void SpawnRandomAhead(Vector3 playerPos, float aheadDistance, float corridorWidth, float corridorHeight, float maxBound = float.MaxValue, float redChance = 0.1f, float blueChance = 0.08f, float greenChance = 0.08f)
+    public void SpawnRandomAhead(Vector3 playerPos, float aheadDistance, float corridorWidth, float corridorHeight, float maxBound = float.MaxValue, Starfield2026.Core.Maps.MapDefinition? map = null, float redChance = 0.1f, float blueChance = 0.08f, float greenChance = 0.08f)
     {
         float x = playerPos.X + ((float)_random.NextDouble() * 2f - 1f) * corridorWidth;
-        float y = playerPos.Y + ((float)_random.NextDouble() * 2f - 1f) * corridorHeight;
+        float y = Math.Max(1.5f, playerPos.Y + ((float)_random.NextDouble() * 2f - 1f) * corridorHeight);
         float z = playerPos.Z - aheadDistance;
+
+        if (map != null)
+        {
+            x = MathHelper.Clamp(x, -map.Width, map.Width);
+            z = MathHelper.Clamp(z, -map.Height, map.Height);
+            y = MathHelper.Clamp(y, 1f, 25f);
+        }
 
         x = MathHelper.Clamp(x, -maxBound, maxBound);
         z = MathHelper.Clamp(z, -maxBound, maxBound);
@@ -102,10 +109,10 @@ public class CoinCollectibleSystem
         return CoinType.Gold;
     }
 
-    public void Update(float dt, Vector3 playerPos, float collectRadius, float speed = 0f,
-        float aheadDistance = 60f, float corridorWidth = 20f, float corridorHeight = 5f, float maxBound = float.MaxValue)
+public void Update(float dt, Vector3 playerPos, float collectRadius, float speed = 0f,
+float aheadDistance = 60f, float corridorWidth = 20f, float corridorHeight = 5f, float maxBound = float.MaxValue, Starfield2026.Core.Maps.MapDefinition? map = null)
     {
-        if (speed > 0)
+        if (speed > 2f)
         {
             _spawnTimer += dt;
             if (_spawnTimer >= _spawnInterval)
