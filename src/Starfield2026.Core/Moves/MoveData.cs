@@ -1,4 +1,4 @@
-namespace Starfield2026.Core.Battle;
+namespace Starfield2026.Core.Moves;
 
 /// <summary>
 /// Static definition of a move (from the move database).

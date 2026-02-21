@@ -1,9 +1,10 @@
+using Starfield2026.Core.Moves;
 using System;
 using System.Collections.Generic;
 using Starfield2026.Core.Data;
 using Starfield2026.Core.Pokemon;
 
-namespace Starfield2026.Core.Battle;
+namespace Starfield2026.Core.Managers;
 
 /// <summary>
 /// Simple state machine managing battle turns.

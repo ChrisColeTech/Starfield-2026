@@ -1,6 +1,6 @@
 using Starfield2026.Core.Data;
 
-namespace Starfield2026.Core.Battle;
+namespace Starfield2026.Core.Moves;
 
 /// <summary>
 /// Move database backed by SQLite (gamedata.db).

@@ -1,4 +1,4 @@
-namespace Starfield2026.Core.Battle;
+namespace Starfield2026.Core.Moves;
 
 public enum MoveType
 {

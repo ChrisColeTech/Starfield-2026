@@ -1,6 +1,7 @@
+using Starfield2026.Core.Moves;
 using Starfield2026.Core.Pokemon;
 
-namespace Starfield2026.Core.Battle;
+namespace Starfield2026.Core.Pokemon;
 
 /// <summary>
 /// A Pokemon participating in battle. Wraps stats, moves, and display HP for animation.

@@ -1,4 +1,4 @@
-namespace Starfield2026.Core.Battle;
+namespace Starfield2026.Core.Moves;
 
 /// <summary>
 /// A move slot on a Pokemon in battle. Tracks current PP.

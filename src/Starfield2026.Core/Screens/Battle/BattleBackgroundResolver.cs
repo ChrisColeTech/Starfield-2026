@@ -1,4 +1,5 @@
-namespace Starfield2026.Core.Battle;
+using Starfield2026.Core.Rendering;
+namespace Starfield2026.Core.Screens.Battle;
 
 public static class BattleBackgroundResolver
 {

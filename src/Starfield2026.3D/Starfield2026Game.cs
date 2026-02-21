@@ -9,6 +9,7 @@ using Starfield2026.Core.Maps;
 using Starfield2026.Core.Rendering;
 using Starfield2026.Core.Save;
 using Starfield2026.Core.Screens;
+using Starfield2026.Core.Screens.Battle;
 using Starfield2026.Core.Systems;
 using Starfield2026.Core.UI;
 
@@ -36,7 +37,10 @@ public class Starfield2026Game : Game
     private GameMode _mode = GameMode.Exploration;
     private const bool DebugStartInBattle = true;
     
-    private Starfield2026.Core.Battle.BattleScreen3D _battleScreen = new();
+    private BattleScreen3D _battleScreen = new();
+    private IScreenOverlay? _pauseOverlay;
+    private Texture2D _pixel = null!;
+    private PixelFont _uiFont = null!;
 
     private string FindAssetsRoot()
     {
@@ -135,15 +139,15 @@ public class Starfield2026Game : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         
-        var pixel = new Texture2D(GraphicsDevice, 1, 1);
-        pixel.SetData(new[] { Color.White });
+        _pixel = new Texture2D(GraphicsDevice, 1, 1);
+        _pixel.SetData(new[] { Color.White });
         
         _hud = new HUDRenderer();
-        _hud.Initialize(_spriteBatch, pixel);
+        _hud.Initialize(_spriteBatch, _pixel);
 
-        PixelFont uiFont = new PixelFont(_spriteBatch, pixel);
+        _uiFont = new PixelFont(_spriteBatch, _pixel);
 
-        _battleScreen.Initialize(_spriteBatch, pixel, null, null, uiFont);
+        _battleScreen.Initialize(_spriteBatch, _pixel, null, null, _uiFont);
         string assets = FindAssetsRoot();
         _battleScreen.LoadBattleModels(GraphicsDevice, Path.Combine(assets, "BattleBG"));
         _battleScreen.SetPartyAndInventory(
@@ -181,6 +185,22 @@ public class Starfield2026Game : Game
         var input = _input.Current;
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
+        // ── Pause overlay ──
+        if (_pauseOverlay != null)
+        {
+            _pauseOverlay.Update(dt, input);
+            if (_pauseOverlay.IsFinished)
+            {
+                if (_pauseOverlay is PauseScreen ps && ps.RequestCharacterSelect)
+                {
+                    // TODO: open character select screen
+                }
+                _pauseOverlay = null;
+            }
+            base.Update(gameTime);
+            return;
+        }
+
         if (_mode == GameMode.Battle)
         {
             _battleScreen.Update(dt, input, gameTime.TotalGameTime.TotalSeconds);
@@ -188,6 +208,14 @@ public class Starfield2026Game : Game
         
         if (_mode != GameMode.Battle)
         {
+            // Tab opens pause menu
+            if (input.PausePressed)
+            {
+                _pauseOverlay = new PauseScreen();
+                base.Update(gameTime);
+                return;
+            }
+
             if (input.IsKeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Z))
                 _ammo.ToggleProjectileType();
             
@@ -256,6 +284,15 @@ public class Starfield2026Game : Game
             _hud.Draw(GraphicsDevice, _state, _ammo, _boosts, screenType, speed, overworldBoosts);
         }
         _hud.DrawTransition(GraphicsDevice, _screens.GetTransitionAlpha());
+
+        // Pause overlay on top
+        if (_pauseOverlay != null)
+        {
+            int sw = GraphicsDevice.Viewport.Width;
+            int sh = GraphicsDevice.Viewport.Height;
+            int fs = UITheme.GetFontScale(sw);
+            _pauseOverlay.Draw(_spriteBatch, _pixel, _uiFont, sw, sh, fs);
+        }
         
         _spriteBatch.End();
         base.Draw(gameTime);

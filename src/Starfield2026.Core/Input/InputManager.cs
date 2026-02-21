@@ -67,7 +67,7 @@ public class InputManager
             FireHeld = _keyboard.IsKeyDown(Keys.Space),
             ConfirmPressed = IsJustPressed(Keys.Enter),
             CancelPressed = IsJustPressed(Keys.Escape) || IsJustPressed(Keys.Back),
-            PausePressed = IsJustPressed(Keys.P),
+            PausePressed = IsJustPressed(Keys.Tab),
             Keyboard = _keyboard,
             PreviousKeyboard = _previousKeyboard,
             Mouse = _mouse,

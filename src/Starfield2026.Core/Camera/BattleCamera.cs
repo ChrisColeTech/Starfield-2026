@@ -2,7 +2,7 @@
 using System;
 using Microsoft.Xna.Framework;
 
-namespace Starfield2026.Core.Battle;
+namespace Starfield2026.Core.Camera;
 
 // ── Camera Settings ──
 // LookAt:        where the camera points at

@@ -10,6 +10,7 @@ public class MenuItem
     public string Label { get; set; } = "";
     public bool Enabled { get; set; } = true;
     public Action? OnConfirm { get; set; }
+    public bool IsSeparator { get; set; }
 
     public MenuItem() { }
 
@@ -19,4 +20,6 @@ public class MenuItem
         OnConfirm = onConfirm;
         Enabled = enabled;
     }
+
+    public static MenuItem Separator() => new() { IsSeparator = true, Enabled = false };
 }

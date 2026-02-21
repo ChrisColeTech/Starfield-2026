@@ -25,17 +25,6 @@ public class CharacterSelectScreen : IScreenOverlay
     private const int BottomHeight = 50;
     private const int Padding = 20;
 
-    private static readonly Color CardFill = new(48, 48, 58, 200);
-    private static readonly Color CardFillSelected = new(60, 80, 120, 220);
-    private static readonly Color CardBorder = new(100, 200, 255, 220);
-    private static readonly Color BtnNormal = new(60, 60, 70, 200);
-    private static readonly Color BtnSelected = new(80, 100, 140, 220);
-    private static readonly Color BtnBack = new(48, 48, 48);
-    private static readonly Color BtnBackSel = new(96, 48, 48);
-    private static readonly Color GradTop = new(30, 60, 100);
-    private static readonly Color GradMid = new(20, 40, 80);
-    private static readonly Color GradBot = new(60, 120, 180);
-
     private readonly Category[] _categories;
     private Level _level = Level.Category;
     private int _catIndex;
@@ -44,20 +33,18 @@ public class CharacterSelectScreen : IScreenOverlay
     private Phase _phase = Phase.FadeIn;
     private float _fadeTimer;
 
-    // Bottom row focus
     private enum BottomFocus { None, Prev, Next, Back }
     private BottomFocus _bottomFocus = BottomFocus.None;
 
-    // Layout rects (computed each Draw)
     private Rectangle[] _cardRects = Array.Empty<Rectangle>();
     private Rectangle _prevRect, _nextRect, _backRect;
+    private readonly PopupModal _popup = new();
 
     public string? SelectedFolder { get; private set; }
     public bool IsFinished { get; private set; }
 
     public CharacterSelectScreen(string[] folders, string[] displayNames)
     {
-        // Group folders by prefix
         var groups = new Dictionary<string, List<(string folder, string name)>>(StringComparer.OrdinalIgnoreCase);
         for (int i = 0; i < folders.Length; i++)
         {
@@ -72,7 +59,6 @@ public class CharacterSelectScreen : IScreenOverlay
             list.Add((f, n));
         }
 
-        // Build categories sorted: Trainers first, Pokemon second, then alphabetical
         var cats = new List<Category>();
         foreach (var kvp in groups.OrderBy(g => CategorySortKey(g.Key)))
         {
@@ -89,10 +75,8 @@ public class CharacterSelectScreen : IScreenOverlay
 
     private static string GetPrefix(string folder)
     {
-        // Extract prefix like "tr", "pm", "ob", "group"
         int i = 0;
         while (i < folder.Length && char.IsLetter(folder[i])) i++;
-        // For "group_0001" → "group", for "tr0001_00" → "tr", for "pm0025_00" → "pm"
         string prefix = i > 0 ? folder[..i] : "other";
         return prefix.ToLowerInvariant();
     }
@@ -115,13 +99,11 @@ public class CharacterSelectScreen : IScreenOverlay
         _ => 4,
     };
 
-    // Pagination helpers for item level
     private Category CurrentCat => _categories[_catIndex];
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(CurrentCat.Folders.Length / (double)ItemsPerPage));
     private int PageStart => _page * ItemsPerPage;
     private int PageCount => Math.Min(ItemsPerPage, CurrentCat.Folders.Length - PageStart);
 
-    // For category level
     private int CatPages => Math.Max(1, (int)Math.Ceiling(_categories.Length / (double)ItemsPerPage));
     private int CatPageStart => _page * ItemsPerPage;
     private int CatPageCount => Math.Min(ItemsPerPage, _categories.Length - CatPageStart);
@@ -149,6 +131,12 @@ public class CharacterSelectScreen : IScreenOverlay
 
     private void UpdateNavigation(InputSnapshot input)
     {
+        if (_popup.IsOpen)
+        {
+            _popup.Update(input);
+            return;
+        }
+
         if (input.Cancel)
         {
             if (_level == Level.Items) { _level = Level.Category; _page = 0; _itemIndex = 0; _bottomFocus = BottomFocus.None; }
@@ -171,7 +159,7 @@ public class CharacterSelectScreen : IScreenOverlay
                 {
                     _bottomFocus = BottomFocus.None;
                     if (_level == Level.Category) { _catIndex = CatPageStart + i; EnterItems(); }
-                    else { SelectedFolder = CurrentCat.Folders[PageStart + i]; BeginExit(); }
+                    else { ShowSelectPopup(PageStart + i); }
                     return;
                 }
             }
@@ -254,8 +242,19 @@ public class CharacterSelectScreen : IScreenOverlay
         if (input.Confirm && localIdx < count)
         {
             if (_level == Level.Category) { _catIndex = CatPageStart + localIdx; EnterItems(); }
-            else { SelectedFolder = CurrentCat.Folders[PageStart + localIdx]; BeginExit(); }
+            else { ShowSelectPopup(PageStart + localIdx); }
         }
+    }
+
+    private void ShowSelectPopup(int folderIndex)
+    {
+        var anchor = _cardRects[_level == Level.Category ? _catIndex - CatPageStart : _itemIndex];
+        string name = folderIndex < CurrentCat.Names.Length ? CurrentCat.Names[folderIndex] : CurrentCat.Folders[folderIndex];
+        string[] options = { "Select", "Cancel" };
+        _popup.ShowMenu(name, options, anchor, idx =>
+        {
+            if (idx == 0) { SelectedFolder = CurrentCat.Folders[folderIndex]; BeginExit(); }
+        }, () => { /* cancel closes */ });
     }
 
     private void EnterItems()
@@ -286,12 +285,13 @@ public class CharacterSelectScreen : IScreenOverlay
                      PixelFont uiFont, int screenWidth, int screenHeight, int fontScale = 3)
     {
         uiFont.Scale = fontScale;
-        // Derived sizes from font scale
         int lineH = uiFont.CharHeight;
         int smallScale = Math.Max(1, fontScale * 2 / 3);
+        int radius = Math.Max(2, fontScale * 2);
+        int shadowOff = Math.Max(1, fontScale);
 
         var fullRect = new Rectangle(0, 0, screenWidth, screenHeight);
-        UIStyle.DrawTripleGradient(sb, pixel, fullRect, GradTop, GradMid, GradBot);
+        UIDraw.VerticalGradient(sb, pixel, fullRect, UITheme.GradTop, UITheme.GradBot);
 
         // Title
         string title;
@@ -299,13 +299,13 @@ public class CharacterSelectScreen : IScreenOverlay
             title = "SELECT CATEGORY";
         else
             title = $"{CurrentCat.Label.ToUpperInvariant()}  ({_page + 1}/{TotalPages})  [{CurrentCat.Folders.Length}]";
-        DrawText(sb, uiFont, title, new Vector2(Padding, Padding - 4 * fontScale), Color.White, fontScale);
+        DrawText(sb, uiFont, title, new Vector2(Padding, Padding - 4 * fontScale), UITheme.TextPrimary, fontScale);
 
         // Breadcrumb for item level
         if (_level == Level.Items)
         {
             DrawText(sb, uiFont, "< Esc to go back",
-                new Vector2(Padding, Padding + lineH + 2 * fontScale), new Color(140, 160, 200), smallScale);
+                new Vector2(Padding, Padding + lineH + 2 * fontScale), UITheme.TextSecondary, smallScale);
         }
 
         // Grid
@@ -330,8 +330,11 @@ public class CharacterSelectScreen : IScreenOverlay
 
             int localSel = _level == Level.Category ? _catIndex - CatPageStart : _itemIndex;
             bool selected = _bottomFocus == BottomFocus.None && i == localSel;
-            sb.Draw(pixel, _cardRects[i], selected ? CardFillSelected : CardFill);
-            if (selected) DrawBorder(sb, pixel, _cardRects[i], 2, CardBorder);
+
+            UIDraw.ShadowedPanel(sb, pixel, _cardRects[i], radius,
+                selected ? UITheme.PurpleSelected : UITheme.SlateCard, shadowOff, Color.Black * 0.3f);
+            if (selected)
+                UIDraw.GlowBorder(sb, pixel, _cardRects[i], radius, UITheme.PurpleGlow);
 
             if (_level == Level.Category)
             {
@@ -343,9 +346,9 @@ public class CharacterSelectScreen : IScreenOverlay
                 string countStr = $"{cat.Folders.Length} models";
                 uiFont.Scale = smallScale;
                 DrawText(sb, uiFont, countStr,
-                    new Vector2(cx + cardW / 2 - uiFont.MeasureWidth(countStr) / 2, cy + cardH / 2 + 4 * fontScale), new Color(160, 180, 220), smallScale);
+                    new Vector2(cx + cardW / 2 - uiFont.MeasureWidth(countStr) / 2, cy + cardH / 2 + 4 * fontScale), UITheme.TextSecondary, smallScale);
                 DrawText(sb, uiFont, cat.Prefix,
-                    new Vector2(cx + 8 * fontScale, cy + cardH - lineH - 4 * fontScale), new Color(120, 120, 140), smallScale);
+                    new Vector2(cx + 8 * fontScale, cy + cardH - lineH - 4 * fontScale), UITheme.TextDisabled, smallScale);
                 uiFont.Scale = fontScale;
             }
             else
@@ -357,7 +360,7 @@ public class CharacterSelectScreen : IScreenOverlay
                     new Vector2(cx + cardW / 2 - uiFont.MeasureWidth(name) / 2, cy + cardH / 2 - lineH / 2), Color.White, fontScale);
                 uiFont.Scale = smallScale;
                 DrawText(sb, uiFont, CurrentCat.Folders[gi],
-                    new Vector2(cx + 8 * fontScale, cy + cardH - lineH - 4 * fontScale), new Color(160, 160, 180), smallScale);
+                    new Vector2(cx + 8 * fontScale, cy + cardH - lineH - 4 * fontScale), UITheme.TextDisabled, smallScale);
                 uiFont.Scale = fontScale;
             }
         }
@@ -379,8 +382,11 @@ public class CharacterSelectScreen : IScreenOverlay
             _bottomFocus == BottomFocus.Next, hasNext, fontScale);
 
         _backRect = new Rectangle(screenWidth - btnW - Padding, bottomY, btnW, btnH);
-        sb.Draw(pixel, _backRect, _bottomFocus == BottomFocus.Back ? BtnBackSel : BtnBack);
-        if (_bottomFocus == BottomFocus.Back) DrawBorder(sb, pixel, _backRect, 2, CardBorder);
+        UIDraw.ShadowedPanel(sb, pixel, _backRect, radius,
+            _bottomFocus == BottomFocus.Back ? new Color(120, 50, 50) : UITheme.SlateCard,
+            shadowOff, Color.Black * 0.3f);
+        if (_bottomFocus == BottomFocus.Back)
+            UIDraw.GlowBorder(sb, pixel, _backRect, radius, UITheme.PurpleGlow);
         string backLabel = _level == Level.Items ? "Back" : "Close";
         uiFont.Scale = fontScale;
         DrawText(sb, uiFont, backLabel,
@@ -396,7 +402,7 @@ public class CharacterSelectScreen : IScreenOverlay
             for (int p = 0; p < totalPages; p++)
             {
                 var dotR = new Rectangle(dotsX + p * dotSpacing, bottomY + btnH / 2 - dotSize / 2, dotSize, dotSize);
-                sb.Draw(pixel, dotR, p == _page ? CardBorder : new Color(80, 80, 100, 150));
+                sb.Draw(pixel, dotR, p == _page ? UITheme.PurpleAccent : UITheme.PurpleMuted);
             }
         }
         else if (totalPages > 30)
@@ -404,9 +410,12 @@ public class CharacterSelectScreen : IScreenOverlay
             string pageStr = $"Page {_page + 1}/{totalPages}";
             uiFont.Scale = smallScale;
             DrawText(sb, uiFont, pageStr,
-                new Vector2(screenWidth / 2 - uiFont.MeasureWidth(pageStr) / 2, bottomY + (btnH - lineH) / 2), new Color(180, 180, 200), smallScale);
+                new Vector2(screenWidth / 2 - uiFont.MeasureWidth(pageStr) / 2, bottomY + (btnH - lineH) / 2), UITheme.TextSecondary, smallScale);
             uiFont.Scale = fontScale;
         }
+
+        // ── Popup (via PopupModal) ──
+        _popup.Draw(sb, pixel, uiFont, fontScale, screenWidth, screenHeight);
 
         // Fade
         float fadeAlpha = _phase switch
@@ -424,26 +433,21 @@ public class CharacterSelectScreen : IScreenOverlay
     {
         uiFont.Scale = fontScale;
         int lineH = uiFont.CharHeight;
-        Color bg = selected ? BtnSelected : (enabled ? BtnNormal : new Color(30, 30, 30, 100));
-        sb.Draw(pixel, rect, bg);
-        if (selected) DrawBorder(sb, pixel, rect, 2, CardBorder);
+        int radius = Math.Max(2, fontScale * 2);
+        int shadowOff = Math.Max(1, fontScale);
+
+        Color bg = selected ? UITheme.PurpleAccent : (enabled ? UITheme.SlateCard : new Color(20, 22, 32, 100));
+        UIDraw.ShadowedPanel(sb, pixel, rect, radius, bg, shadowOff, Color.Black * 0.3f);
+        if (selected) UIDraw.GlowBorder(sb, pixel, rect, radius, UITheme.PurpleGlow);
         DrawText(sb, uiFont, label,
             new Vector2(rect.X + rect.Width / 2 - uiFont.MeasureWidth(label) / 2, rect.Y + (rect.Height - lineH) / 2),
-            enabled ? Color.White : new Color(80, 80, 80), fontScale);
+            enabled ? Color.White : UITheme.TextDisabled, fontScale);
     }
 
     private static void DrawText(SpriteBatch sb, PixelFont uiFont, string text, Vector2 pos, Color color, float scale)
     {
         uiFont.Scale = (int)Math.Max(1, scale);
-        UIStyle.DrawShadowedText(sb, uiFont, text, pos, color, Color.Black * 0.5f);
-    }
-
-    private static void DrawBorder(SpriteBatch sb, Texture2D pixel, Rectangle r, int t, Color color)
-    {
-        sb.Draw(pixel, new Rectangle(r.X, r.Y, r.Width, t), color);
-        sb.Draw(pixel, new Rectangle(r.X, r.Bottom - t, r.Width, t), color);
-        sb.Draw(pixel, new Rectangle(r.X, r.Y, t, r.Height), color);
-        sb.Draw(pixel, new Rectangle(r.Right - t, r.Y, t, r.Height), color);
+        UIDraw.ShadowedText(sb, uiFont, text, pos, color, UITheme.TextShadow);
     }
 
     private sealed class Category

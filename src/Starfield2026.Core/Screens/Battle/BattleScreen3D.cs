@@ -1,3 +1,6 @@
+using Starfield2026.Core.Managers;
+using Starfield2026.Core.Rendering.Battle;
+using Starfield2026.Core.Camera;
 #nullable enable
 using System;
 using Microsoft.Xna.Framework;
@@ -9,7 +12,7 @@ using Starfield2026.Core.Pokemon;
 using Starfield2026.Core.UI;
 using Starfield2026.Core.Rendering;
 
-namespace Starfield2026.Core.Battle;
+namespace Starfield2026.Core.Screens.Battle;
 
 /// <summary>
 /// Thin orchestrator for the 3D battle screen.
@@ -224,8 +227,7 @@ public class BattleScreen3D
             _ui.ShowMessage($"Go! {_allyPokemon?.Nickname.ToUpper()}!", () =>
             {
                 _allySentOut = true;
-                _ui.ActivateMenu();
-                _ui.ShowMessage("What will you do?");
+                SetupMenuCallbacks();
             });
         }
 

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Starfield2026.Core.Rendering;
@@ -7,146 +6,106 @@ using Starfield2026.Core.Rendering;
 namespace Starfield2026.Core.UI;
 
 /// <summary>
-/// Text display with typewriter effect and message queue.
-/// Shows one message at a time with character-by-character reveal.
-/// Press confirm to skip typing or advance to the next message.
+/// Typewriter-style text display with callback on completion.
+/// Shows text character by character, advances on key press.
 /// </summary>
 public class MessageBox
 {
-    private readonly Queue<string> _messageQueue = new();
-    private string _currentMessage = "";
-    private int _revealedChars;
+    private string _fullText = "";
+    private int _charIndex;
     private float _charTimer;
+    private bool _finished;
 
-    /// <summary>Characters per second for typewriter effect.</summary>
-    public float TypeSpeed { get; set; } = 40f;
+    private const float CharsPerSecond = 60f;
 
-    /// <summary>True while a message is being displayed.</summary>
-    public bool IsActive => _currentMessage.Length > 0 || _messageQueue.Count > 0;
-
-    /// <summary>True when all characters of the current message are visible.</summary>
-    public bool IsTextFullyRevealed => _revealedChars >= _currentMessage.Length;
-
-    /// <summary>True when the last message has been dismissed.</summary>
-    public bool IsFinished { get; private set; }
-
-    /// <summary>Callback fired when the last message is dismissed.</summary>
+    public bool IsActive { get; private set; }
     public Action? OnFinished { get; set; }
 
-    /// <summary>Queue a single message for display.</summary>
-    public void Show(string message)
+    /// <summary>Show a message with typewriter effect.</summary>
+    public void Show(string text)
     {
-        IsFinished = false;
-        _messageQueue.Enqueue(message);
-        if (_currentMessage.Length == 0)
-            AdvanceToNext();
+        _fullText = text ?? "";
+        _charIndex = 0;
+        _charTimer = 0f;
+        _finished = false;
+        IsActive = true;
     }
 
-    /// <summary>Queue multiple messages.</summary>
-    public void ShowMultiple(params string[] messages)
-    {
-        IsFinished = false;
-        foreach (var msg in messages)
-            _messageQueue.Enqueue(msg);
-        if (_currentMessage.Length == 0)
-            AdvanceToNext();
-    }
-
-    /// <summary>Clear all state.</summary>
+    /// <summary>Clear the message box.</summary>
     public void Clear()
     {
-        _messageQueue.Clear();
-        _currentMessage = "";
-        _revealedChars = 0;
-        _charTimer = 0;
-        IsFinished = true;
+        _fullText = "";
+        _charIndex = 0;
+        _finished = false;
+        IsActive = false;
+        OnFinished = null;
     }
 
-    /// <summary>
-    /// Advance the typewriter. If confirmPressed: skip to full reveal or advance to next message.
-    /// </summary>
-    public void Update(float deltaTime, bool confirmPressed)
+    /// <summary>Advance typewriter and handle input.</summary>
+    public void Update(float deltaTime, bool anyKeyPressed)
     {
-        if (_currentMessage.Length == 0) return;
+        if (!IsActive) return;
 
-        if (confirmPressed)
-        {
-            if (!IsTextFullyRevealed)
-            {
-                _revealedChars = _currentMessage.Length;
-            }
-            else
-            {
-                AdvanceToNext();
-            }
-            return;
-        }
-
-        // Typewriter tick
-        if (!IsTextFullyRevealed)
+        if (!_finished)
         {
             _charTimer += deltaTime;
-            float interval = 1f / TypeSpeed;
-            while (_charTimer >= interval && _revealedChars < _currentMessage.Length)
+            int charsToShow = (int)(CharsPerSecond * _charTimer);
+            if (charsToShow > 0)
             {
-                _revealedChars++;
-                _charTimer -= interval;
+                _charIndex = Math.Min(_charIndex + charsToShow, _fullText.Length);
+                _charTimer = 0f;
             }
+
+            if (anyKeyPressed && _charIndex < _fullText.Length)
+            {
+                _charIndex = _fullText.Length;
+                return;
+            }
+
+            if (_charIndex >= _fullText.Length)
+                _finished = true;
+        }
+        else if (anyKeyPressed)
+        {
+            var cb = OnFinished;
+            OnFinished = null;
+            IsActive = cb != null;
+            cb?.Invoke();
         }
     }
 
-    /// <summary>
-    /// Draw the message box. All layout proportional to bounds.
-    /// </summary>
-    public void Draw(SpriteBatch spriteBatch, PixelFont uiFont, Texture2D pixel, Rectangle bounds, int fontScale = 1)
+    /// <summary>Draw the message box panel with current text.</summary>
+    public void Draw(SpriteBatch sb, PixelFont font, Texture2D pixel,
+        Rectangle bounds, int fontScale)
     {
-        if (_currentMessage.Length == 0) return;
+        if (!IsActive) return;
 
-        uiFont.Scale = fontScale;
+        int radius = Math.Max(2, fontScale * 2);
+        int shadowOff = Math.Max(1, fontScale);
 
-        // Background
-        spriteBatch.Draw(pixel, bounds, UITheme.MenuBackground);
+        // Panel with drop shadow
+        UIDraw.ShadowedPanel(sb, pixel, bounds, radius,
+            UITheme.SlatePanelBg, shadowOff, Color.Black * 0.3f);
 
-        // Border
-        int b = Math.Max(1, fontScale / 2);
-        spriteBatch.Draw(pixel, new Rectangle(bounds.X, bounds.Y, bounds.Width, b), Color.White * 0.6f);
-        spriteBatch.Draw(pixel, new Rectangle(bounds.X, bounds.Bottom - b, bounds.Width, b), Color.White * 0.6f);
-        spriteBatch.Draw(pixel, new Rectangle(bounds.X, bounds.Y, b, bounds.Height), Color.White * 0.6f);
-        spriteBatch.Draw(pixel, new Rectangle(bounds.Right - b, bounds.Y, b, bounds.Height), Color.White * 0.6f);
+        // Text
+        int pad = 8 * fontScale;
+        font.Scale = fontScale;
 
-        // Text — inset proportionally from bounds
-        int padX = bounds.Width / 20;
-        int padY = bounds.Height / 6;
-        string visibleText = _currentMessage[.._revealedChars];
-        UIStyle.DrawShadowedText(spriteBatch, uiFont, visibleText,
-            new Vector2(bounds.X + padX, bounds.Y + padY),
-            Color.White, Color.Black * 0.5f);
+        string visible = _fullText[.._charIndex];
+        UIDraw.ShadowedText(sb, font, visible,
+            new Vector2(bounds.X + pad, bounds.Y + pad),
+            UITheme.TextPrimary, UITheme.TextShadow);
 
-        // Blinking advance arrow when fully revealed
-        if (IsTextFullyRevealed)
+        // Blinking advance indicator
+        if (_finished && OnFinished != null)
         {
-            int arrowSize = uiFont.CharHeight / 2;
-            int arrowX = bounds.Right - padX;
-            int arrowY = bounds.Bottom - padY;
-            if ((int)(DateTime.Now.TimeOfDay.TotalSeconds * 3) % 2 == 0)
-                UIStyle.DrawDownArrow(spriteBatch, pixel, new Vector2(arrowX, arrowY), arrowSize, Color.White);
-        }
-    }
-
-    private void AdvanceToNext()
-    {
-        if (_messageQueue.Count > 0)
-        {
-            _currentMessage = _messageQueue.Dequeue();
-            _revealedChars = 0;
-            _charTimer = 0;
-        }
-        else
-        {
-            _currentMessage = "";
-            _revealedChars = 0;
-            IsFinished = true;
-            OnFinished?.Invoke();
+            float blink = (float)(DateTime.Now.Millisecond % 600) / 600f;
+            if (blink < 0.5f)
+            {
+                int arrowX = bounds.Right - pad - font.CharWidth;
+                int arrowY = bounds.Bottom - pad - font.CharHeight;
+                font.Draw(">", arrowX, arrowY, UITheme.PurpleAccent);
+            }
         }
     }
 }

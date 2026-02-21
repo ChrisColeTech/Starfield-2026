@@ -20,3 +20,4 @@ build/
 .DS_Store
 Thumbs.db
 /.venv
+/src/Starfield2026.Assets/Models

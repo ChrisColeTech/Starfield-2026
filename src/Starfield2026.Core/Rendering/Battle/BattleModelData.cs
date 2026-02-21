@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Starfield2026.Core.Battle;
+namespace Starfield2026.Core.Rendering.Battle;
 
 public class BattleModelData : IDisposable
 {

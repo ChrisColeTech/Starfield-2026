@@ -1,7 +1,7 @@
+using Starfield2026.Core.Moves;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Starfield2026.Core.Battle;
 using Starfield2026.Core.Data;
 
 namespace Starfield2026.Core.Pokemon;

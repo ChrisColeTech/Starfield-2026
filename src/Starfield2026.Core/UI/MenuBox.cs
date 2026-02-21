@@ -8,133 +8,113 @@ using Starfield2026.Core.Rendering;
 namespace Starfield2026.Core.UI;
 
 /// <summary>
-/// Navigable menu with grid layout and keyboard/mouse input.
-/// Supports multi-column layout, disabled items, and confirm/cancel callbacks.
+/// Selectable menu with grid navigation.
+/// Handles D-pad input, selection highlight, confirm/cancel.
+/// Used for non-battle menus (pause menu, etc.).
 /// </summary>
 public class MenuBox
 {
     private readonly List<MenuItem> _items = new();
 
-    /// <summary>Number of columns in the grid layout.</summary>
-    public int Columns { get; set; } = 2;
-
-    /// <summary>Currently selected item index.</summary>
+    public int Columns { get; set; } = 1;
     public int SelectedIndex { get; set; }
-
-    /// <summary>True when the menu is accepting input.</summary>
     public bool IsActive { get; set; }
-
-    /// <summary>Callback when the user presses cancel.</summary>
     public Action? OnCancel { get; set; }
-
-    /// <summary>Read-only access to menu items.</summary>
     public IReadOnlyList<MenuItem> Items => _items;
 
-    /// <summary>Set the menu options.</summary>
+    /// <summary>Set the menu items (params overload).</summary>
     public void SetItems(params MenuItem[] items)
     {
         _items.Clear();
         _items.AddRange(items);
-        SelectedIndex = 0;
-
-        // Snap to first enabled item
-        for (int i = 0; i < _items.Count; i++)
-        {
-            if (_items[i].Enabled) { SelectedIndex = i; break; }
-        }
+        SelectedIndex = Math.Clamp(SelectedIndex, 0, Math.Max(0, _items.Count - 1));
     }
 
-    /// <summary>
-    /// Handle input navigation and selection.
-    /// </summary>
+    /// <summary>Process navigation and confirm/cancel input.</summary>
     public void Update(InputSnapshot input)
     {
         if (!IsActive || _items.Count == 0) return;
 
-        int rows = (_items.Count + Columns - 1) / Columns;
-        int col = SelectedIndex % Columns;
-        int row = SelectedIndex / Columns;
+        int cols = Math.Max(1, Columns);
+        int rows = (_items.Count + cols - 1) / cols;
+        int col = SelectedIndex % cols;
+        int row = SelectedIndex / cols;
 
-        // Navigation
-        if (input.IsKeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Left))
-            col = Math.Max(0, col - 1);
-        if (input.IsKeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Right))
-            col = Math.Min(Columns - 1, col + 1);
-        if (input.IsKeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Up))
-            row = Math.Max(0, row - 1);
-        if (input.IsKeyJustPressed(Microsoft.Xna.Framework.Input.Keys.Down))
-            row = Math.Min(rows - 1, row + 1);
+        if (input.Up) row--;
+        if (input.Down) row++;
+        if (input.Left) col--;
+        if (input.Right) col++;
 
-        int newIndex = row * Columns + col;
+        row = Math.Clamp(row, 0, rows - 1);
+        col = Math.Clamp(col, 0, cols - 1);
+
+        int newIndex = row * cols + col;
         if (newIndex >= 0 && newIndex < _items.Count)
             SelectedIndex = newIndex;
 
-        // Confirm
-        if (input.ConfirmPressed && _items[SelectedIndex].Enabled)
+        if (input.Confirm && SelectedIndex >= 0 && SelectedIndex < _items.Count)
         {
-            _items[SelectedIndex].OnConfirm?.Invoke();
+            var item = _items[SelectedIndex];
+            if (item.Enabled)
+                item.OnConfirm?.Invoke();
         }
 
-        // Cancel
-        if (input.CancelPressed)
-        {
+        if (input.Cancel)
             OnCancel?.Invoke();
-        }
     }
 
-    /// <summary>
-    /// Draw the menu box with selection highlight.
-    /// All layout is proportional to the bounds — no magic pixel numbers.
-    /// </summary>
-    public void Draw(SpriteBatch spriteBatch, PixelFont uiFont, Texture2D pixel, Rectangle bounds, int fontScale = 1)
+    /// <summary>Draw the menu panel with items and selection highlight.</summary>
+    public void Draw(SpriteBatch sb, PixelFont font, Texture2D pixel,
+        Rectangle bounds, int fontScale)
     {
         if (_items.Count == 0) return;
 
-        uiFont.Scale = fontScale;
+        int radius = Math.Max(2, fontScale * 2);
+        int shadowOff = Math.Max(1, fontScale);
+        font.Scale = fontScale;
 
-        // Background
-        spriteBatch.Draw(pixel, bounds, UITheme.MenuBackground);
+        // Panel with drop shadow
+        UIDraw.ShadowedPanel(sb, pixel, bounds, radius,
+            UITheme.SlatePanelBg, shadowOff, Color.Black * 0.3f);
 
-        // Border
-        int b = Math.Max(1, fontScale / 2);
-        spriteBatch.Draw(pixel, new Rectangle(bounds.X, bounds.Y, bounds.Width, b), Color.White * 0.6f);
-        spriteBatch.Draw(pixel, new Rectangle(bounds.X, bounds.Bottom - b, bounds.Width, b), Color.White * 0.6f);
-        spriteBatch.Draw(pixel, new Rectangle(bounds.X, bounds.Y, b, bounds.Height), Color.White * 0.6f);
-        spriteBatch.Draw(pixel, new Rectangle(bounds.Right - b, bounds.Y, b, bounds.Height), Color.White * 0.6f);
-
-        // Layout from bounds — proportional, never overflows
-        int pad = bounds.Height / 10;
-        int rows = (_items.Count + Columns - 1) / Columns;
-        int itemW = (bounds.Width - pad * 2) / Columns;
-        int itemH = (bounds.Height - pad * 2) / Math.Max(1, rows);
+        // Layout
+        int pad = 8 * fontScale;
+        int cols = Math.Max(1, Columns);
+        int rows = (_items.Count + cols - 1) / cols;
+        int colW = (bounds.Width - pad * 2) / cols;
+        int rowH = (bounds.Height - pad * 2) / Math.Max(1, rows);
 
         for (int i = 0; i < _items.Count; i++)
         {
-            int col = i % Columns;
-            int row = i / Columns;
-            int ix = bounds.X + pad + col * itemW;
-            int iy = bounds.Y + pad + row * itemH;
+            int c = i % cols;
+            int r = i / cols;
+            int x = bounds.X + pad + c * colW;
+            int y = bounds.Y + pad + r * rowH;
 
+            bool selected = (i == SelectedIndex && IsActive);
             var item = _items[i];
-            Color textColor = item.Enabled ? Color.White : Color.Gray * 0.5f;
 
-            // Selection highlight
-            if (i == SelectedIndex && IsActive)
+            // Selection highlight with glow
+            if (selected)
             {
-                spriteBatch.Draw(pixel, new Rectangle(ix, iy, itemW, itemH), Color.White * 0.15f);
-
-                // Selector arrow — left of item, vertically centered
-                int arrowSize = uiFont.CharHeight / 2;
-                UIStyle.DrawRightArrow(spriteBatch, pixel,
-                    new Vector2(ix - arrowSize - 2, iy + (itemH - arrowSize) / 2),
-                    arrowSize, Color.White);
+                var hlRect = new Rectangle(x - 2, y - 1, colW, rowH);
+                int hlRadius = Math.Max(1, fontScale);
+                UIDraw.RoundedRect(sb, pixel, hlRect, hlRadius, UITheme.PurpleSelected);
+                UIDraw.GlowBorder(sb, pixel, hlRect, hlRadius, UITheme.PurpleGlow);
             }
 
-            // Item label — vertically centered in row
-            int textX = ix + pad;
-            int textY = iy + (itemH - uiFont.CharHeight) / 2;
-            UIStyle.DrawShadowedText(spriteBatch, uiFont, item.Label,
-                new Vector2(textX, textY), textColor, Color.Black * 0.5f);
+            // Item text — centered
+            Color textColor = !item.Enabled ? UITheme.TextDisabled :
+                              selected ? Color.White : UITheme.TextPrimary;
+
+            string label = item.Label;
+            int textW = font.MeasureWidth(label);
+            int textX = x + (colW - textW) / 2;
+            int textY = y + (rowH - font.CharHeight) / 2;
+
+            UIDraw.ShadowedText(sb, font, label,
+                new Vector2(textX, textY),
+                textColor, UITheme.TextShadow);
         }
     }
 }

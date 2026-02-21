@@ -1,3 +1,4 @@
+using Starfield2026.Core.Moves;
 namespace Starfield2026.Core.Pokemon;
 
 public class SpeciesData
@@ -14,8 +15,8 @@ public class SpeciesData
     public int BaseSpeed { get; set; }
 
     // Typing
-    public Battle.MoveType Type1 { get; set; }
-    public Battle.MoveType Type2 { get; set; } = Battle.MoveType.Normal; // same as Type1 if mono-type
+    public MoveType Type1 { get; set; }
+    public MoveType Type2 { get; set; } = MoveType.Normal; // same as Type1 if mono-type
 
     // EXP system
     public int BaseEXPYield { get; set; }

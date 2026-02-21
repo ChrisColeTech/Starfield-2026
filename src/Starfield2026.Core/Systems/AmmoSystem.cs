@@ -25,7 +25,7 @@ public static class AmmoConfig
     
     public static readonly Color GoldColor = Color.Gold;
     public static readonly Color RedColor = Color.Red;
-    public static readonly Color BlueColor = Color.DodgerBlue;
+    public static readonly Color BlueColor = new(120, 60, 220);
     public static readonly Color GreenColor = Color.LimeGreen;
     
     public static Color GetProjectileColor(ProjectileType type) => type switch

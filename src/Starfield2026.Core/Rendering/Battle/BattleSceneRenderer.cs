@@ -1,3 +1,4 @@
+using Starfield2026.Core.Rendering;
 #nullable enable
 using System;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 // using PokemonGreen.Assets;
 
-namespace Starfield2026.Core.Battle;
+namespace Starfield2026.Core.Rendering.Battle;
 
 /// <summary>
 /// Handles 3D rendering: battle backgrounds, platforms, Pokemon models,

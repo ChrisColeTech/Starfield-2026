@@ -1,9 +1,9 @@
+using Starfield2026.Core.Moves;
 #nullable enable
 
 using System;
 using System.Collections.Generic;
 using Microsoft.Data.Sqlite;
-using Starfield2026.Core.Battle;
 using Starfield2026.Core.Pokemon;
 
 namespace Starfield2026.Core.Data;
