@@ -10,6 +10,7 @@ public class GameState
     public int BoostCount { get; private set; }
     public string CurrentScreen { get; private set; } = "space";
     public string? CurrentMapId { get; private set; }
+    public Microsoft.Xna.Framework.Vector3 PlayerPosition { get; set; } = new Microsoft.Xna.Framework.Vector3(80, 0.825f, 80);
     
     private GameDatabase _database = null!;
     
@@ -25,14 +26,15 @@ public class GameState
             BoostCount = profile.BoostCount;
             CurrentScreen = profile.CurrentScreen ?? "space";
             CurrentMapId = profile.CurrentMapId;
+            PlayerPosition = profile.Position;
         }
         
         CurrentHealth = MaxHealth;
     }
     
-    public void AddCoins(int gold, int red)
+    public void AddCoins(int gold, int red, int blue = 0, int green = 0)
     {
-        TotalCoins += gold + (red * 3);
+        TotalCoins += gold + (red * 3) + (blue * 5) + (green * 5);
         _database.SaveCoinCount(TotalCoins);
     }
     
@@ -90,6 +92,7 @@ public class GameState
             BoostCount = BoostCount,
             CurrentScreen = CurrentScreen,
             CurrentMapId = CurrentMapId ?? "overworld_grid",
+            Position = PlayerPosition,
         });
     }
 }

@@ -128,6 +128,12 @@ public class CubeRenderer
     public void Draw(GraphicsDevice device, Matrix view, Matrix projection,
         Vector3 position, float rotationY, float scale, Color color)
     {
+        Draw(device, view, projection, position, rotationY, new Vector3(scale), color);
+    }
+
+    public void Draw(GraphicsDevice device, Matrix view, Matrix projection,
+        Vector3 position, float rotationY, Vector3 scale, Color color)
+    {
         if (_solidEffect == null)
         {
             _solidEffect = new BasicEffect(device)

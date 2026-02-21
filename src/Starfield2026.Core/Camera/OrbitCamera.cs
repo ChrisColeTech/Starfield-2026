@@ -45,6 +45,7 @@ public class OrbitCamera
     public void SnapToTarget(Vector3 targetPosition)
     {
         _target = targetPosition;
+        _initialized = false; // Force complete instant-snap of Position and Yaw on next Update
     }
     
     public void Update(Vector3 targetPosition, float aspectRatio, float dt, float playerYaw = 0f)
@@ -63,7 +64,7 @@ public class OrbitCamera
         float yawDiff = targetYaw - _currentYaw;
         while (yawDiff > MathHelper.Pi) yawDiff -= MathHelper.TwoPi;
         while (yawDiff < -MathHelper.Pi) yawDiff += MathHelper.TwoPi;
-        _currentYaw += yawDiff * FollowSpeed * dt;
+        _currentYaw += yawDiff * blend;
         
         Yaw = _currentYaw;
         
@@ -78,6 +79,6 @@ public class OrbitCamera
             lookAt.Z + horizontalDist * (float)Math.Cos(_currentYaw));
         
         View = Matrix.CreateLookAt(Position, lookAt, Vector3.Up);
-        Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspectRatio, 0.1f, 500f);
+        Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspectRatio, 0.1f, 800f);
     }
 }

@@ -17,7 +17,7 @@ public sealed class OverworldGrid : MapDefinition
     // 116 = PlayerSpawn (walkable, spawn)
 
     /// <summary>Whether this map should use the wireframe GridRenderer instead of MapRenderer3D.</summary>
-    public bool UseWireframeGrid => true;
+    public override bool UseWireframeGrid => true;
 
     private static readonly int[] BaseTileData = BuildGrid();
 

@@ -57,6 +57,9 @@ public abstract class MapDefinition
     /// <summary>Progress-based level scaling multiplier for encounters on this map.</summary>
     public float ProgressMultiplier => _progressMultiplier;
 
+    /// <summary>Whether this map should use the wireframe GridRenderer instead of MapRenderer3D.</summary>
+    public virtual bool UseWireframeGrid => false;
+
     /// <summary>
     /// Creates a MapDefinition from flat row-major tile arrays.
     /// Automatically registers this map in MapCatalog.
@@ -110,9 +113,18 @@ public abstract class MapDefinition
     /// </summary>
     public float GetTileHeight(int x, int y)
     {
+        float height = 0f;
         int tileId = GetBaseTile(x, y);
         var tileDef = TileRegistry.GetTile(tileId);
-        return tileDef?.Height ?? 0f;
+        if (tileDef != null) height = Math.Max(height, tileDef.Height);
+        
+        int? overId = GetOverlayTile(x, y);
+        if (overId.HasValue)
+        {
+            var overDef = TileRegistry.GetTile(overId.Value);
+            if (overDef != null) height = Math.Max(height, overDef.Height);
+        }
+        return height;
     }
 
     /// <summary>

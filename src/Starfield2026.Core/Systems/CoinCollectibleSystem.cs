@@ -28,7 +28,7 @@ public class CoinCollectibleSystem
     }
 
     private float _spawnTimer;
-    private float _spawnInterval = 3f;
+    private float _spawnInterval = 1.5f;
 
     public float SpawnInterval
     {
@@ -69,7 +69,7 @@ public class CoinCollectibleSystem
         });
     }
 
-    public void SpawnRandomAhead(Vector3 playerPos, float aheadDistance, float corridorWidth, float corridorHeight, float maxBound = float.MaxValue, Starfield2026.Core.Maps.MapDefinition? map = null, float redChance = 0.1f, float blueChance = 0.08f, float greenChance = 0.08f)
+    public void SpawnRandomAhead(Vector3 playerPos, float aheadDistance, float corridorWidth, float corridorHeight, float maxBound = float.MaxValue, Starfield2026.Core.Maps.MapDefinition? map = null, float redChance = 0.1f, float blueChance = 0.2f, float greenChance = 0.2f)
     {
         float x = playerPos.X + ((float)_random.NextDouble() * 2f - 1f) * corridorWidth;
         float y = Math.Max(1.5f, playerPos.Y + ((float)_random.NextDouble() * 2f - 1f) * corridorHeight);
@@ -89,7 +89,7 @@ public class CoinCollectibleSystem
         SpawnCoin(new Vector3(x, y, z), type);
     }
 
-    public void SpawnRandomNearby(Vector3 playerPos, float radius, float groundY, float redChance = 0.1f, float blueChance = 0.08f, float greenChance = 0.08f)
+    public void SpawnRandomNearby(Vector3 playerPos, float radius, float groundY, float redChance = 0.1f, float blueChance = 0.2f, float greenChance = 0.2f)
     {
         float angle = (float)(_random.NextDouble() * MathHelper.TwoPi);
         float dist = (float)(_random.NextDouble() * radius);

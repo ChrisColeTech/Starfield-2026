@@ -78,6 +78,9 @@ public class Starfield2026Game : Game
     
     private void InitializeDatabase()
     {
+        // Force evaluation of map singletons so they register in MapCatalog
+        Starfield2026.Core.Maps.MapCatalog.LoadAllMaps();
+
         _database = new GameDatabase();
         string dbPath = Path.Combine(AppContext.BaseDirectory, "starfield2026.db");
         _database.Initialize(dbPath);
@@ -111,7 +114,11 @@ public class Starfield2026Game : Game
         _driving.OnExitDrivingRequested += () => _screens.TransitionTo(_spaceflight, "space");
         _spaceflight.OnLandRequested += () => _screens.TransitionTo(_overworld, "overworld");
         
-        _screens = new ScreenManager(screenName => _state.SetScreen(screenName));
+        _screens = new ScreenManager(screenName => 
+        {
+            _state.SetScreen(screenName);
+            _state.Save();
+        });
         
         var initial = _state.CurrentScreen switch
         {
@@ -122,6 +129,8 @@ public class Starfield2026Game : Game
         _screens.SetInitialScreen(initial);
         
         _coinCollector = new CoinCollector(_state, _ammo, _boosts);
+        
+        _overworld.LoadMap(_state.CurrentMapId ?? "overworld_grid", _state.PlayerPosition);
     }
 
     protected override void LoadContent()
@@ -147,9 +156,16 @@ public class Starfield2026Game : Game
         
         _battleScreen.OnBattleExit = () =>
         {
-            // Trigger a proper smooth fadeout back to the Overworld
-            // Pass a mid-fade action to swap the GameMode right when the screen is completely black
-            _screens.TransitionTo(_overworld, "overworld", () => 
+            // Restore previous screen from State
+            var nextScreen = _state.CurrentScreen switch
+            {
+                "driving" => (IGameScreen)_driving,
+                "space" => _spaceflight,
+                _ => _overworld
+            };
+            var nextName = _state.CurrentScreen ?? "overworld";
+
+            _screens.TransitionTo(nextScreen, nextName, () => 
             {
                 _mode = GameMode.Exploration;
                 _battleScreen.CleanupBattle();
@@ -199,6 +215,11 @@ public class Starfield2026Game : Game
             {
                 screen.Update(gameTime, input);
                 _coinCollector.CollectFromScreen(screen);
+                
+                if (screen is OverworldScreen overworld)
+                {
+                    _state.PlayerPosition = overworld.Position;
+                }
             }
         });
         
@@ -246,7 +267,25 @@ public class Starfield2026Game : Game
     
     private void HandleMapTransition(WarpConnection warp)
     {
-        _overworld.LoadMap(warp.TargetMapId, warp.TargetX, warp.TargetY);
+        float scale = 2f;
+        float worldX = 0f;
+        float worldZ = 0f;
+        
+        if (Starfield2026.Core.Maps.MapCatalog.TryGetMap(warp.TargetMapId, out var targetMap) && targetMap != null)
+        {
+            worldX = (warp.TargetX - targetMap.Width / 2f) * scale;
+            worldZ = (warp.TargetY - targetMap.Height / 2f) * scale;
+        }
+        else
+        {
+            // Fallback assumption just in case
+            worldX = (warp.TargetX - 40) * scale;
+            worldZ = (warp.TargetY - 40) * scale;
+        }
+        
+        var newPos = new Vector3(worldX, 0.825f, worldZ);
+        
+        _overworld.LoadMap(warp.TargetMapId, newPos);
         _state.SetMap(warp.TargetMapId);
     }
 

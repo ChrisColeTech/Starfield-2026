@@ -102,6 +102,26 @@ public static class MapCatalog
     }
 
     /// <summary>
+    /// Uses reflection to find all MapDefinition subclasses in the assembly and
+    /// triggers their static constructors to register them automatically.
+    /// </summary>
+    public static void LoadAllMaps()
+    {
+        var assembly = typeof(MapCatalog).Assembly;
+        foreach (var type in assembly.GetTypes())
+        {
+            if (type.IsSubclassOf(typeof(MapDefinition)) && !type.IsAbstract)
+            {
+                var prop = type.GetProperty("Instance", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                if (prop != null)
+                {
+                    prop.GetValue(null);
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Clears all registered maps from the catalog.
     /// </summary>
     public static void Clear()

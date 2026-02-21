@@ -61,7 +61,7 @@ public class PlayerController
     }
     
     
-    public void Update(float dt, InputSnapshot input)
+    public void Update(float dt, InputSnapshot input, Starfield2026.Core.Maps.MapDefinition? map = null)
     {
         if (input.RunPressed && IsGrounded)
             _runningToggled = !_runningToggled;
@@ -80,7 +80,8 @@ public class PlayerController
                 _hoverTime = 0f;
             }
         }
-        else
+        
+        if (!IsGrounded)
         {
             if (jumpTriggered)
             {
@@ -89,7 +90,7 @@ public class PlayerController
                     IsHovering = true;
                     Boosts.UseBoost(1);
                     _hoverTime = _hoverDuration;
-                    _verticalVelocity = 0f;
+                    _verticalVelocity = _hoverRiseSpeed;
                 }
                 else if (IsHovering)
                 {
@@ -97,24 +98,27 @@ public class PlayerController
                     {
                         Boosts.UseBoost(1);
                         _hoverTime += _hoverDuration;
-                        _verticalVelocity = _hoverRiseSpeed;
-                    }
-                    else
-                    {
-                        _verticalVelocity = -_hoverDescentSpeed;
+                        // Accumulate velocity rather than hard-setting, giving a satisfying "double jump" feel
+                        _verticalVelocity = Math.Max(_verticalVelocity, 0) + _hoverRiseSpeed;
                     }
                 }
             }
             
             if (IsHovering)
             {
-                if (jumpHeld)
+                // Only allow descent if we aren't currently shooting upwards from a fresh boost
+                if (jumpHeld && !jumpTriggered && _verticalVelocity <= 0)
                 {
                     _verticalVelocity = -_hoverDescentSpeed;
                 }
-                else if (_verticalVelocity < 0)
+                else if (_verticalVelocity < 0 && !jumpHeld)
                 {
                     _verticalVelocity = 0f;
+                }
+                else if (_verticalVelocity > 0)
+                {
+                    // Apply heavy gravity to the upward boost burst so it feels punchy and short
+                    _verticalVelocity -= _gravity * 1.5f * dt;
                 }
                 
                 _hoverTime -= dt;
@@ -134,16 +138,27 @@ public class PlayerController
             }
             
             Position = new Vector3(Position.X, Position.Y + _verticalVelocity * dt, Position.Z);
-            
-            if (Position.Y <= 1.5f)
+        }
+        
+        float groundHeight = 0.825f;
+        if (map != null)
+        {
+            int px = (int)Math.Floor(Position.X / 2f + map.Width / 2f);
+            int pz = (int)Math.Floor(Position.Z / 2f + map.Height / 2f);
+            if (px >= 0 && px < map.Width && pz >= 0 && pz < map.Height)
             {
-                Position = new Vector3(Position.X, 1.5f, Position.Z);
-                _verticalVelocity = 0f;
-                IsGrounded = true;
-                IsHovering = false;
-                _hoverTime = 0f;
-                HoverBobOffset = 0f;
+                groundHeight += map.GetTileHeight(px, pz);
             }
+        }
+
+        if (!IsGrounded && Position.Y <= groundHeight && _verticalVelocity <= 0)
+        {
+            Position = new Vector3(Position.X, groundHeight, Position.Z);
+            _verticalVelocity = 0f;
+            IsGrounded = true;
+            IsHovering = false;
+            _hoverTime = 0f;
+            HoverBobOffset = 0f;
         }
         
         float moveX = input.MoveX;
@@ -170,8 +185,39 @@ public class PlayerController
             newPos.X = MathHelper.Clamp(newPos.X, -_worldHalfSize, _worldHalfSize);
             newPos.Z = MathHelper.Clamp(newPos.Z, -_worldHalfSize, _worldHalfSize);
             
+            if (map != null)
+            {
+                int nx = (int)Math.Floor(newPos.X / 2f + map.Width / 2f);
+                int nz = (int)Math.Floor(newPos.Z / 2f + map.Height / 2f);
+                if (nx >= 0 && nx < map.Width && nz >= 0 && nz < map.Height)
+                {
+                    float targetGround = 0.825f + map.GetTileHeight(nx, nz);
+                    bool hasWarp = map.GetWarp(nx, nz, Starfield2026.Core.Maps.WarpTrigger.Step) != null || 
+                                   map.GetWarp(nx, nz, Starfield2026.Core.Maps.WarpTrigger.Interact) != null;
+                                   
+                    if (!hasWarp && targetGround > Position.Y + 0.5f)
+                    {
+                        // Wall collision: prevent XZ movement
+                        newPos.X = Position.X;
+                        newPos.Z = Position.Z;
+                    }
+                }
+            }
+            
             if (IsGrounded)
-                newPos.Y = 1.5f;
+            {
+                float finalGround = 0.825f;
+                if (map != null)
+                {
+                    int endX = (int)Math.Floor(newPos.X / 2f + map.Width / 2f);
+                    int endZ = (int)Math.Floor(newPos.Z / 2f + map.Height / 2f);
+                    if (endX >= 0 && endX < map.Width && endZ >= 0 && endZ < map.Height)
+                    {
+                        finalGround += map.GetTileHeight(endX, endZ);
+                    }
+                }
+                newPos.Y = finalGround;
+            }
             
             Position = newPos;
         }

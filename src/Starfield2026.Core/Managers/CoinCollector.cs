@@ -29,7 +29,7 @@ public class CoinCollector
         
         if (gold > 0 || red > 0 || blue > 0 || green > 0)
         {
-            _state.AddCoins(gold, red);
+            _state.AddCoins(gold, red, blue, green);
             
             for (int i = 0; i < gold; i++)
                 _ammo.AddAmmoFromCoin(CoinType.Gold);
