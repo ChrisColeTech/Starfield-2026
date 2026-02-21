@@ -7,7 +7,7 @@ using Starfield2026.Core.Input;
 using Starfield2026.Core.Items;
 using Starfield2026.Core.Pokemon;
 using Starfield2026.Core.UI;
-using Starfield2026.Core.UI.Fonts;
+using Starfield2026.Core.Rendering;
 
 namespace Starfield2026.Core.Battle;
 
@@ -46,10 +46,10 @@ public class BattleScreen3D
     // ── Initialization ──
 
     public void Initialize(SpriteBatch spriteBatch, Texture2D pixel,
-        KermFontRenderer? kermFontRenderer, KermFont? kermFont,
-        SpriteFont? fallbackFont = null)
+        object? oldA, object? oldB,
+        PixelFont? fallbackFont = null)
     {
-        _ui.Initialize(spriteBatch, pixel, kermFontRenderer, kermFont, fallbackFont);
+        _ui.Initialize(spriteBatch, pixel, oldA, oldB, fallbackFont);
     }
 
     public void SetPartyAndInventory(Party party, PlayerInventory inventory)

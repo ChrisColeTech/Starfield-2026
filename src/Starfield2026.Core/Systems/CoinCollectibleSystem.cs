@@ -4,11 +4,13 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Starfield2026.Core.Rendering;
 
+using Starfield2026.Core.Systems.Coins;
+
 namespace Starfield2026.Core.Systems;
 
 public class CoinCollectibleSystem
 {
-    private struct CoinInstance
+    public struct CoinInstance
     {
         public Vector3 Position;
         public float Rotation;
@@ -18,7 +20,10 @@ public class CoinCollectibleSystem
 
     private CoinRenderer _renderer = null!;
     private readonly List<CoinInstance> _coins = new();
+    public List<CoinInstance> Coins => _coins;
+    
     private readonly Random _random = new();
+    private ICoinSpawner _spawnerStrategy = null!;
 
     private float _driftSpeed;
     public float DriftSpeed
@@ -27,14 +32,7 @@ public class CoinCollectibleSystem
         set => _driftSpeed = value;
     }
 
-    private float _spawnTimer;
-    private float _spawnInterval = 1.5f;
-
-    public float SpawnInterval
-    {
-        get => _spawnInterval;
-        set => _spawnInterval = value;
-    }
+    // Timers moved to InfiniteRunnerCoinSpawner
 
     public int ActiveCount
     {
@@ -52,10 +50,12 @@ public class CoinCollectibleSystem
     private int _newlyBlueCollected;
     private int _newlyGreenCollected;
 
-    public void Initialize(GraphicsDevice device)
+    public void Initialize(GraphicsDevice device, ICoinSpawner spawnerStrategy)
     {
         _renderer = new CoinRenderer();
         _renderer.Initialize(device);
+        _spawnerStrategy = spawnerStrategy;
+        _spawnerStrategy.Initialize(this);
     }
 
     public void SpawnCoin(Vector3 position, CoinType type = CoinType.Gold)
@@ -67,26 +67,6 @@ public class CoinCollectibleSystem
             Collected = false,
             Type = type,
         });
-    }
-
-    public void SpawnRandomAhead(Vector3 playerPos, float aheadDistance, float corridorWidth, float corridorHeight, float maxBound = float.MaxValue, Starfield2026.Core.Maps.MapDefinition? map = null, float redChance = 0.1f, float blueChance = 0.2f, float greenChance = 0.2f)
-    {
-        float x = playerPos.X + ((float)_random.NextDouble() * 2f - 1f) * corridorWidth;
-        float y = Math.Max(1.5f, playerPos.Y + ((float)_random.NextDouble() * 2f - 1f) * corridorHeight);
-        float z = playerPos.Z - aheadDistance;
-
-        if (map != null)
-        {
-            x = MathHelper.Clamp(x, -map.Width, map.Width);
-            z = MathHelper.Clamp(z, -map.Height, map.Height);
-            y = MathHelper.Clamp(y, 1f, 25f);
-        }
-
-        x = MathHelper.Clamp(x, -maxBound, maxBound);
-        z = MathHelper.Clamp(z, -maxBound, maxBound);
-
-        var type = PickCoinType(redChance, blueChance, greenChance);
-        SpawnCoin(new Vector3(x, y, z), type);
     }
 
     public void SpawnRandomNearby(Vector3 playerPos, float radius, float groundY, float redChance = 0.1f, float blueChance = 0.2f, float greenChance = 0.2f)
@@ -108,20 +88,19 @@ public class CoinCollectibleSystem
         if (roll < greenChance + blueChance + redChance) return CoinType.Red;
         return CoinType.Gold;
     }
-
-public void Update(float dt, Vector3 playerPos, float collectRadius, float speed = 0f,
-float aheadDistance = 60f, float corridorWidth = 20f, float corridorHeight = 5f, float maxBound = float.MaxValue, Starfield2026.Core.Maps.MapDefinition? map = null)
+    public void Update(float dt, Vector3 playerPos, float collectRadius, float playerSpeed, Starfield2026.Core.Maps.MapDefinition? map = null)
     {
-        if (speed > 2f)
-        {
-            _spawnTimer += dt;
-            if (_spawnTimer >= _spawnInterval)
-            {
-                _spawnTimer = 0;
-                SpawnRandomAhead(playerPos, aheadDistance, corridorWidth, corridorHeight, maxBound);
-            }
-        }
+        UpdateCollectionLogic(dt, playerPos, collectRadius);
+        _spawnerStrategy.Update(dt, playerPos, playerSpeed, this, map);
+    }
+    
+    public void OnMapLoaded(Starfield2026.Core.Maps.MapDefinition map)
+    {
+        _spawnerStrategy.OnMapLoaded(map, this);
+    }
 
+    private void UpdateCollectionLogic(float dt, Vector3 playerPos, float collectRadius)
+    {
         float radiusSq = collectRadius * collectRadius;
 
         for (int i = 0; i < _coins.Count; i++)
@@ -152,16 +131,9 @@ float aheadDistance = 60f, float corridorWidth = 20f, float corridorHeight = 5f,
                     _newlyGreenCollected++;
             }
         }
-
-        _coins.RemoveAll(c =>
-            c.Collected ||
-            (_driftSpeed > 0 && c.Position.Z > playerPos.Z + 20f));
     }
 
-    public void ResetSpawnTimer()
-    {
-        _spawnTimer = 0;
-    }
+    // Removed ResetSpawnTimer
 
     public (int Gold, int Red, int Blue, int Green) GetAndResetNewlyCollected()
     {

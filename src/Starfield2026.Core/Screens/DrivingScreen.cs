@@ -6,6 +6,7 @@ using Starfield2026.Core.Controllers;
 using Starfield2026.Core.Input;
 using Starfield2026.Core.Rendering;
 using Starfield2026.Core.Systems;
+using Starfield2026.Core.Systems.Coins;
 
 namespace Starfield2026.Core.Screens;
 
@@ -71,9 +72,12 @@ public class DrivingScreen : IGameScreen
         _coinSystem = new CoinCollectibleSystem
         {
             DriftSpeed = 0f,
-            SpawnInterval = 2f,
         };
-        _coinSystem.Initialize(device);
+        _coinSystem.Initialize(device, new InfiniteRunnerCoinSpawner
+        {
+            SpawnInterval = 2f,
+            CorridorWidth = 15f
+        });
         
         _projectiles = new ProjectileSystem { FireRate = 0.15f };
         _projectiles.Initialize(device);
@@ -89,7 +93,7 @@ public class DrivingScreen : IGameScreen
         
         _background.Update(dt, _vehicle.Speed, _vehicle.Position);
         
-        _coinSystem.Update(dt, _vehicle.Position, 5f, _vehicle.Speed, 60f, 15f, 0f);
+        _coinSystem.Update(dt, _vehicle.Position, 5f, _vehicle.Speed);
         
         if (input.FireHeld && Ammo != null && Ammo.CanFire(Ammo.SelectedType))
         {
@@ -151,7 +155,6 @@ public class DrivingScreen : IGameScreen
     
     public void OnEnter()
     {
-        _coinSystem.ResetSpawnTimer();
         _projectiles.Clear();
     }
     

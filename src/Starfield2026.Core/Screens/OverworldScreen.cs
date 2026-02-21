@@ -7,6 +7,7 @@ using Starfield2026.Core.Input;
 using Starfield2026.Core.Maps;
 using Starfield2026.Core.Rendering;
 using Starfield2026.Core.Systems;
+using Starfield2026.Core.Systems.Coins;
 
 namespace Starfield2026.Core.Screens;
 
@@ -76,9 +77,8 @@ public class OverworldScreen : IGameScreen
         _coinSystem = new CoinCollectibleSystem
         {
             DriftSpeed = 0f,
-            SpawnInterval = 2.5f,
         };
-        _coinSystem.Initialize(device);
+        _coinSystem.Initialize(device, new GlobalMapCoinSpawner(75));
     }
     
     public void LoadMap(string mapId, Vector3? spawnPosition = null)
@@ -88,6 +88,8 @@ public class OverworldScreen : IGameScreen
         
         if (_world.CurrentMap != null)
         {
+            _coinSystem.OnMapLoaded(_world.CurrentMap);
+            
             if (spawnPosition.HasValue)
             {
                 _player.SetPosition(spawnPosition.Value, _player.Yaw);
@@ -136,9 +138,7 @@ public class OverworldScreen : IGameScreen
         _camera.Update(_player.Position, aspect, dt, _player.Yaw);
         
         _background.Update(dt, _player.Speed, _player.Position);
-        
-        _coinSystem.Update(dt, _player.Position, 3f, _player.Speed, 30f, 25f, 4f, 60f, _world.CurrentMap);
-        
+        _coinSystem.Update(dt, _player.Position, 3f, _player.Speed, _world.CurrentMap);
         // CoinCollector will handle GetAndResetNewlyCollected() globally in Starfield2026Game
         
         float snap = _groundGrid.Spacing;
@@ -195,10 +195,7 @@ public class OverworldScreen : IGameScreen
             _player.Yaw, 1.5f, new Color(0, 220, 255));
     }
     
-    public void OnEnter()
-    {
-        _coinSystem.ResetSpawnTimer();
-    }
+    public void OnEnter() { }
     
     public void OnExit() { }
 }

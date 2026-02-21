@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Starfield2026.Core.Input;
 using Starfield2026.Core.Items;
-using Starfield2026.Core.UI.Fonts;
+using Starfield2026.Core.Rendering;
 
 namespace Starfield2026.Core.UI.Screens;
 
@@ -20,10 +20,6 @@ public class BagScreen : IScreenOverlay
     private const int GridColumns = 4;
     private const int GridRows = 5;
     private const int ItemsPerPage = GridColumns * GridRows;
-    private const int Padding = 20;
-    private const int TabHeight = 40;
-    private const int BottomBarHeight = 44;
-    private const int CellSpacing = 4;
 
     // Colors
     private static readonly Color GradTop = new(215, 230, 230);
@@ -258,23 +254,28 @@ public class BagScreen : IScreenOverlay
     }
 
     public void Draw(SpriteBatch sb, Texture2D pixel,
-                     KermFontRenderer? fontRenderer, KermFont? font,
-                     SpriteFont fallbackFont, int screenWidth, int screenHeight, int fontScale = 3)
+                     PixelFont uiFont, int screenWidth, int screenHeight, int fontScale = 3)
     {
+        uiFont.Scale = fontScale;
         var fullRect = new Rectangle(0, 0, screenWidth, screenHeight);
+
+        int pad = 6 * fontScale;
+        int tabH = 20 * fontScale;
+        int botH = 22 * fontScale;
+        int cellSp = 2 * fontScale;
 
         // Gradient background
         UIStyle.DrawTripleGradient(sb, pixel, fullRect, GradTop, GradMid, GradBot);
 
         // Top bar — pouch tabs
-        DrawPouchTabs(sb, pixel, fontRenderer, fallbackFont, screenWidth);
+        DrawPouchTabs(sb, pixel, uiFont, screenWidth, pad, tabH, fontScale);
 
         // Item grid
-        int gridY = Padding + TabHeight + 8;
-        int gridH = screenHeight - gridY - BottomBarHeight - Padding;
-        int gridW = screenWidth - Padding * 2;
-        int cellW = (gridW - CellSpacing * (GridColumns - 1)) / GridColumns;
-        int cellH = (gridH - CellSpacing * (GridRows - 1)) / GridRows;
+        int gridY = pad + tabH + 4 * fontScale;
+        int gridH = screenHeight - gridY - botH - pad;
+        int gridW = screenWidth - pad * 2;
+        int cellW = (gridW - cellSp * (GridColumns - 1)) / GridColumns;
+        int cellH = (gridH - cellSp * (GridRows - 1)) / GridRows;
 
         if (_cellRects.Length != ItemsPerPage)
             _cellRects = new Rectangle[ItemsPerPage];
@@ -283,8 +284,8 @@ public class BagScreen : IScreenOverlay
         {
             int col = i % GridColumns;
             int row = i / GridColumns;
-            int cx = Padding + col * (cellW + CellSpacing);
-            int cy = gridY + row * (cellH + CellSpacing);
+            int cx = pad + col * (cellW + cellSp);
+            int cy = gridY + row * (cellH + cellSp);
             var cellRect = new Rectangle(cx, cy, cellW, cellH);
             _cellRects[i] = cellRect;
 
@@ -294,16 +295,16 @@ public class BagScreen : IScreenOverlay
             if (itemIdx < _currentPouchItems.Count)
             {
                 var slot = _currentPouchItems[itemIdx];
-                DrawFilledCell(sb, pixel, fontRenderer, fallbackFont, cellRect, slot, selected);
+                DrawFilledCell(sb, pixel, uiFont, cellRect, slot, selected, fontScale);
             }
             else
             {
-                DrawEmptyCell(sb, pixel, cellRect);
+                DrawEmptyCell(sb, pixel, cellRect, fontScale);
             }
         }
 
         // Bottom bar
-        DrawBottomBar(sb, pixel, fontRenderer, fallbackFont, screenWidth, screenHeight);
+        DrawBottomBar(sb, pixel, uiFont, screenWidth, screenHeight, pad, botH, fontScale);
 
         // Fade overlay
         float fadeAlpha = _phase switch
@@ -317,14 +318,15 @@ public class BagScreen : IScreenOverlay
     }
 
     private void DrawPouchTabs(SpriteBatch sb, Texture2D pixel,
-                                KermFontRenderer? fontRenderer, SpriteFont fallbackFont,
-                                int screenWidth)
+                                PixelFont uiFont,
+                                int screenWidth, int pad, int tabH, int fontScale)
     {
-        int tabW = (screenWidth - Padding * 2) / Pouches.Length;
-        int tabY = Padding;
+        uiFont.Scale = fontScale;
+        int tabW = (screenWidth - pad * 2) / Pouches.Length;
+        int tabY = pad;
 
         // Tab background strip
-        sb.Draw(pixel, new Rectangle(Padding, tabY, screenWidth - Padding * 2, TabHeight),
+        sb.Draw(pixel, new Rectangle(pad, tabY, screenWidth - pad * 2, tabH),
             new Color(255, 255, 255, 200));
 
         if (_tabRects.Length != Pouches.Length)
@@ -332,24 +334,28 @@ public class BagScreen : IScreenOverlay
 
         for (int i = 0; i < Pouches.Length; i++)
         {
-            int tx = Padding + i * tabW;
-            var tabRect = new Rectangle(tx + 2, tabY + 2, tabW - 4, TabHeight - 4);
+            int tx = pad + i * tabW;
+            var tabRect = new Rectangle(tx + 2 * fontScale, tabY + 2 * fontScale, tabW - 4 * fontScale, tabH - 4 * fontScale);
             _tabRects[i] = tabRect;
             bool selected = i == _selectedPouch;
 
             sb.Draw(pixel, tabRect, selected ? TabSelected : TabNormal);
             if (selected && _cursorZone == CursorZone.Pouches)
-                DrawBorder(sb, pixel, tabRect, 2, CellBorderSelected);
+                DrawBorder(sb, pixel, tabRect, 2 * fontScale, CellBorderSelected);
 
-            DrawText(sb, fontRenderer, fallbackFont, Pouches[i].Label,
-                new Vector2(tx + 10, tabY + 8), selected ? Color.Black : new Color(60, 60, 60), 2);
+            int labelW = uiFont.MeasureWidth(Pouches[i].Label);
+            int labelX = tabRect.X + (tabRect.Width - labelW) / 2;
+            int labelY = tabRect.Y + (tabRect.Height - uiFont.CharHeight) / 2;
+            DrawText(sb, uiFont, Pouches[i].Label,
+                new Vector2(labelX, labelY), selected ? Color.Black : new Color(60, 60, 60), fontScale);
         }
     }
 
     private void DrawFilledCell(SpriteBatch sb, Texture2D pixel,
-                                 KermFontRenderer? fontRenderer, SpriteFont fallbackFont,
-                                 Rectangle rect, InventorySlot slot, bool selected)
+                                 PixelFont uiFont,
+                                 Rectangle rect, InventorySlot slot, bool selected, int fontScale)
     {
+        uiFont.Scale = fontScale;
         // Top half
         int topH = rect.Height / 2;
         sb.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, topH), CellFillTop);
@@ -357,71 +363,73 @@ public class BagScreen : IScreenOverlay
         sb.Draw(pixel, new Rectangle(rect.X, rect.Y + topH, rect.Width, rect.Height - topH), CellFillBot);
 
         // Border
-        DrawBorder(sb, pixel, rect, 2, selected ? CellBorderSelected : CellBorder);
+        DrawBorder(sb, pixel, rect, 2 * fontScale, selected ? CellBorderSelected : CellBorder);
 
-        // Item name
+        // Item name — centered in top half
         var itemDef = ItemRegistry.GetItem(slot.ItemId);
         string name = itemDef?.Name ?? $"Item #{slot.ItemId}";
-        DrawText(sb, fontRenderer, fallbackFont, name,
-            new Vector2(rect.X + 6, rect.Y + 4), new Color(50, 40, 50), 2);
+        int nameW = uiFont.MeasureWidth(name);
+        int nameX = rect.X + (rect.Width - nameW) / 2;
+        int nameY = rect.Y + (topH - uiFont.CharHeight) / 2;
+        DrawText(sb, uiFont, name, new Vector2(nameX, nameY), new Color(50, 40, 50), fontScale);
 
-        // Quantity
+        // Quantity — centered in bottom half
         string qty = $"x{slot.Quantity}";
-        DrawText(sb, fontRenderer, fallbackFont, qty,
-            new Vector2(rect.X + 6, rect.Y + topH + 4), new Color(80, 70, 80), 2);
+        int qtyW = uiFont.MeasureWidth(qty);
+        int qtyX = rect.X + (rect.Width - qtyW) / 2;
+        int qtyY = rect.Y + topH + (rect.Height - topH - uiFont.CharHeight) / 2;
+        DrawText(sb, uiFont, qty, new Vector2(qtyX, qtyY), new Color(80, 70, 80), fontScale);
     }
 
-    private void DrawEmptyCell(SpriteBatch sb, Texture2D pixel, Rectangle rect)
+    private void DrawEmptyCell(SpriteBatch sb, Texture2D pixel, Rectangle rect, int fontScale)
     {
-        DrawBorder(sb, pixel, rect, 2, CellEmpty);
+        DrawBorder(sb, pixel, rect, 2 * fontScale, CellEmpty);
     }
 
     private void DrawBottomBar(SpriteBatch sb, Texture2D pixel,
-                                KermFontRenderer? fontRenderer, SpriteFont fallbackFont,
-                                int screenWidth, int screenHeight)
+                                PixelFont uiFont,
+                                int screenWidth, int screenHeight, int pad, int botH, int fontScale)
     {
-        int barY = screenHeight - BottomBarHeight;
+        uiFont.Scale = fontScale;
+        int barY = screenHeight - botH;
 
         // Page info
         string pageText = $"Page {_currentPage + 1}/{PageCount}";
-        DrawText(sb, fontRenderer, fallbackFont, pageText,
-            new Vector2(Padding + 80, barY + 12), Color.White, 2);
+        DrawText(sb, uiFont, pageText,
+            new Vector2(pad + 40 * fontScale, barY + 6 * fontScale), Color.White, fontScale);
 
         // Page arrows
-        _leftArrowRect = new Rectangle(Padding + 10, barY + 10, 30, 30);
-        _rightArrowRect = new Rectangle(Padding + 50, barY + 10, 30, 30);
+        _leftArrowRect = new Rectangle(pad + 5 * fontScale, barY + 5 * fontScale, 15 * fontScale, 15 * fontScale);
+        _rightArrowRect = new Rectangle(pad + 25 * fontScale, barY + 5 * fontScale, 15 * fontScale, 15 * fontScale);
         if (_currentPage > 0)
-            DrawText(sb, fontRenderer, fallbackFont, "<",
-                new Vector2(Padding + 10, barY + 10), Color.White, 3);
+            DrawText(sb, uiFont, "<",
+                new Vector2(pad + 5 * fontScale, barY + 5 * fontScale), Color.White, fontScale * 1.5f);
         if (_currentPage < PageCount - 1)
-            DrawText(sb, fontRenderer, fallbackFont, ">",
-                new Vector2(Padding + 50, barY + 10), Color.White, 3);
+            DrawText(sb, uiFont, ">",
+                new Vector2(pad + 25 * fontScale, barY + 5 * fontScale), Color.White, fontScale * 1.5f);
 
         // Cancel button
-        int cancelW = 100;
-        int cancelH = 32;
-        int cancelX = screenWidth - cancelW - Padding;
-        int cancelY = barY + (BottomBarHeight - cancelH) / 2;
+        int cancelW = 70 * fontScale;
+        int cancelH = 20 * fontScale;
+        int cancelX = screenWidth - cancelW - pad;
+        int cancelY = barY + (botH - cancelH) / 2;
         var cancelRect = new Rectangle(cancelX, cancelY, cancelW, cancelH);
         _cancelRect = cancelRect;
 
         bool cancelSel = _cursorZone == CursorZone.Cancel;
         sb.Draw(pixel, cancelRect, cancelSel ? CancelSelected : CancelNormal);
         if (cancelSel)
-            DrawBorder(sb, pixel, cancelRect, 2, new Color(255, 255, 255, 180));
+            DrawBorder(sb, pixel, cancelRect, 2 * fontScale, new Color(255, 255, 255, 180));
 
-        DrawText(sb, fontRenderer, fallbackFont, "CANCEL",
-            new Vector2(cancelX + 10, cancelY + 6), Color.White, 2);
+        DrawText(sb, uiFont, "CANCEL",
+            new Vector2(cancelX + (cancelW - uiFont.MeasureWidth("CANCEL")) / 2, cancelY + (cancelH - uiFont.CharHeight) / 2), Color.White, fontScale);
     }
 
-    private static void DrawText(SpriteBatch sb, KermFontRenderer? fontRenderer,
-                                  SpriteFont fallbackFont, string text,
-                                  Vector2 position, Color color, int scale)
+    private static void DrawText(SpriteBatch sb, PixelFont uiFont, string text,
+                                  Vector2 position, Color color, float scale)
     {
-        if (fontRenderer != null)
-            fontRenderer.DrawString(sb, text, position, scale, color);
-        else
-            sb.DrawString(fallbackFont, text, position, color);
+        uiFont.Scale = (int)Math.Max(1, scale);
+        UIStyle.DrawShadowedText(sb, uiFont, text, position, color, Color.Black * 0.5f);
     }
 
     private static void DrawBorder(SpriteBatch sb, Texture2D pixel, Rectangle r, int thickness, Color color)

@@ -6,9 +6,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Starfield2026.Core.Items;
 using Starfield2026.Core.Pokemon;
 using Starfield2026.Core.UI;
-using Starfield2026.Core.UI.Fonts;
 using Starfield2026.Core.UI.Screens;
 using Starfield2026.Core.Input;
+using Starfield2026.Core.Rendering;
 
 namespace Starfield2026.Core.Battle;
 
@@ -20,15 +20,13 @@ public class BattleUIManager
     // Rendering deps
     private SpriteBatch? _spriteBatch;
     private Texture2D? _pixel;
-    private KermFontRenderer? _kermFontRenderer;
-    private KermFont? _kermFont;
-    private SpriteFont? _fallbackFont;
+    private PixelFont? _uiFont;
 
     // Menus
-    private readonly UI.BattleMessageBox _messageBox = new();
-    private readonly BattleMenuBox _mainMenu = new() { Columns = 2 };
-    private readonly BattleMenuBox _moveMenu = new() { Columns = 2 };
-    private BattleMenuBox _activeMenu = null!;
+    private readonly MessageBox _messageBox = new();
+    private readonly MenuBox _mainMenu = new() { Columns = 2 };
+    private readonly MenuBox _moveMenu = new() { Columns = 2 };
+    private MenuBox _activeMenu = null!;
     private bool _inFightMenu;
     private int _fightGridCol;
     private int _fightGridRow;
@@ -46,14 +44,12 @@ public class BattleUIManager
     /// Store rendering dependencies. Call once from Initialize.
     /// </summary>
     public void Initialize(SpriteBatch spriteBatch, Texture2D pixel,
-        KermFontRenderer? kermFontRenderer, KermFont? kermFont,
-        SpriteFont? fallbackFont = null)
+        object? oldFontRendererKilled, object? oldKermFontKilled,
+        PixelFont? uiFont = null)
     {
         _spriteBatch = spriteBatch;
         _pixel = pixel;
-        _kermFontRenderer = kermFontRenderer;
-        _kermFont = kermFont;
-        _fallbackFont = fallbackFont;
+        _uiFont = uiFont;
         _activeMenu = _mainMenu;
     }
 
@@ -68,10 +64,10 @@ public class BattleUIManager
     public void SetMainMenuItems(Action onFight, Action onBag, Action onParty, Action onRun)
     {
         _mainMenu.SetItems(
-            new BattleMenuItem("Fight", onFight),
-            new BattleMenuItem("Bag", onBag),
-            new BattleMenuItem("Pokemon", onParty),
-            new BattleMenuItem("Run", onRun));
+            new MenuItem("Fight", onFight),
+            new MenuItem("Bag", onBag),
+            new MenuItem("Pokemon", onParty),
+            new MenuItem("Run", onRun));
         _mainMenu.Columns = 2;
     }
 
@@ -80,9 +76,9 @@ public class BattleUIManager
         BuildMoveMenu(allyPokemon, closeFightMenu);
 
         _mainMenu.SetItems(
-            new BattleMenuItem("Back", closeFightMenu),
-            new BattleMenuItem("Mega", () => { }),
-            new BattleMenuItem("Power", () => { }));
+            new MenuItem("Back", closeFightMenu),
+            new MenuItem("Mega", () => { }),
+            new MenuItem("Power", () => { }));
         _mainMenu.Columns = 2;
         _mainMenu.SelectedIndex = -1;
 
@@ -195,7 +191,7 @@ public class BattleUIManager
     {
         if (allyPokemon == null) return;
         var moves = allyPokemon.Moves;
-        var items = new BattleMenuItem[moves.Length];
+        var items = new MenuItem[moves.Length];
         for (int i = 0; i < moves.Length; i++)
         {
             var bm = moves[i];
@@ -203,7 +199,7 @@ public class BattleUIManager
             string name = data?.Name ?? $"Move#{bm.MoveId}";
             bool enabled = bm.CurrentPP > 0;
             int moveIndex = i;
-            items[i] = new BattleMenuItem(name, () => SelectMove(allyPokemon, moveIndex), enabled);
+            items[i] = new MenuItem(name, () => SelectMove(allyPokemon, moveIndex), enabled);
         }
         _moveMenu.SetItems(items);
         _moveMenu.OnCancel = closeFightMenu;
@@ -289,18 +285,11 @@ public class BattleUIManager
                     _moveMenu.SelectedIndex = -1;
                 }
 
-                _activeMenu.Update(
-                    false, false, false, false,
-                    confirm, cancel,
-                    Point.Zero, false);
+                _activeMenu.Update(input);
             }
             else
             {
-                _activeMenu.Update(
-                    input.Left, input.Right,
-                    input.Up, input.Down,
-                    confirm, cancel,
-                    Point.Zero, false);
+                _activeMenu.Update(input);
             }
         }
         else if (_messageBox.IsActive)
@@ -315,14 +304,14 @@ public class BattleUIManager
         bool introComplete, bool allySentOut,
         BattlePokemon? allyPokemon, BattlePokemon? foePokemon)
     {
-        if (_spriteBatch == null || _pixel == null) return;
+        if (_spriteBatch == null || _pixel == null || _uiFont == null) return;
 
         // Bottom panel fills the entire width, ~1/4 of screen height
         int panelH = h / 4;
         int panelY = h - panelH;
 
-        // Menu takes right 1/4, message/moves fill left 3/4
-        int menuW = w / 4;
+        // Menu takes right 1/3, message/moves fill left 2/3
+        int menuW = w / 3;
         int menuX = w - menuW;
         int leftW = w - menuW;
 
@@ -331,11 +320,11 @@ public class BattleUIManager
         int infoMargin = 20;
         int infoFontScale = fontScale;
         if (introComplete && foePokemon != null)
-            BattleInfoBar.DrawFoeBar(_spriteBatch, _pixel, _kermFontRenderer, _fallbackFont!,
+            BattleInfoBar.DrawFoeBar(_spriteBatch, _pixel, _uiFont!,
                 new Rectangle(infoMargin, infoMargin, infoBarW, panelH / 2), foePokemon, infoFontScale);
 
         if (allySentOut && allyPokemon != null)
-            BattleInfoBar.DrawAllyBar(_spriteBatch, _pixel, _kermFontRenderer, _fallbackFont!,
+            BattleInfoBar.DrawAllyBar(_spriteBatch, _pixel, _uiFont!,
                 new Rectangle(w - infoBarW, panelY - panelH / 2 - 14, infoBarW, panelH / 2 + 10),
                 allyPokemon, allyPokemon.EXPPercent, infoFontScale);
 
@@ -343,56 +332,31 @@ public class BattleUIManager
         {
             if (_inFightMenu)
             {
-                if (_kermFontRenderer != null && _kermFont != null)
-                {
-                    _moveMenu.Draw(_spriteBatch, _kermFontRenderer, _kermFont, _pixel,
-                        new Rectangle(0, panelY, leftW, panelH));
-                    _mainMenu.Draw(_spriteBatch, _kermFontRenderer, _kermFont, _pixel,
-                        new Rectangle(menuX, panelY, menuW, panelH));
-                }
-                else if (_fallbackFont != null)
-                {
-                    _moveMenu.Draw(_spriteBatch, _fallbackFont, _pixel,
-                        new Rectangle(0, panelY, leftW, panelH));
-                    _mainMenu.Draw(_spriteBatch, _fallbackFont, _pixel,
-                        new Rectangle(menuX, panelY, menuW, panelH));
-                }
+                _moveMenu.Draw(_spriteBatch, _uiFont, _pixel,
+                    new Rectangle(0, panelY, leftW, panelH), fontScale);
+                _mainMenu.Draw(_spriteBatch, _uiFont, _pixel,
+                    new Rectangle(menuX, panelY, menuW, panelH), fontScale);
             }
             else
             {
-                if (_kermFontRenderer != null && _kermFont != null)
-                {
-                    _activeMenu.Draw(_spriteBatch, _kermFontRenderer, _kermFont, _pixel,
-                        new Rectangle(menuX, panelY, menuW, panelH));
-                    _messageBox.Draw(_spriteBatch, _kermFontRenderer, _pixel,
-                        new Rectangle(0, panelY, leftW, panelH), fontScale);
-                }
-                else if (_fallbackFont != null)
-                {
-                    _activeMenu.Draw(_spriteBatch, _fallbackFont, _pixel,
-                        new Rectangle(menuX, panelY, menuW, panelH));
-                    _messageBox.Draw(_spriteBatch, _fallbackFont, _pixel,
-                        new Rectangle(0, panelY, leftW, panelH));
-                }
+                _activeMenu.Draw(_spriteBatch, _uiFont, _pixel,
+                    new Rectangle(menuX, panelY, menuW, panelH), fontScale);
+                _messageBox.Draw(_spriteBatch, _uiFont, _pixel,
+                    new Rectangle(0, panelY, leftW, panelH), fontScale);
             }
         }
-        else if (_messageBox.IsActive)
+        else if (_messageBox.IsActive && _uiFont != null)
         {
             // Full-width message box (intro / battle messages)
-            if (_kermFontRenderer != null)
-                _messageBox.Draw(_spriteBatch, _kermFontRenderer, _pixel,
-                    new Rectangle(0, panelY, w, panelH), fontScale);
-            else if (_fallbackFont != null)
-                _messageBox.Draw(_spriteBatch, _fallbackFont, _pixel,
-                    new Rectangle(0, panelY, w, panelH));
+            _messageBox.Draw(_spriteBatch, _uiFont, _pixel,
+                new Rectangle(0, panelY, w, panelH), fontScale);
         }
 
         // Draw overlay on top
-        if (_overlayStack.Count > 0)
+        if (_overlayStack.Count > 0 && _uiFont != null)
         {
             var overlay = _overlayStack.Peek();
-            overlay.Draw(_spriteBatch, _pixel, _kermFontRenderer, _kermFont,
-                _fallbackFont!, w, h, fontScale);
+            overlay.Draw(_spriteBatch, _pixel, _uiFont, w, h, fontScale);
         }
     }
 }

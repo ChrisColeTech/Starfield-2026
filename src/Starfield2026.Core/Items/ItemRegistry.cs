@@ -1,23 +1,47 @@
 using System.Collections.Generic;
-using System.Text.Json;
+using System.Linq;
+using Starfield2026.Core.Data;
 
 namespace Starfield2026.Core.Items;
 
+/// <summary>
+/// Item registry backed by GameDataDb (SQLite).
+/// Loads all items from the database on first access and caches them.
+/// </summary>
 public static class ItemRegistry
 {
     private static Dictionary<int, ItemDefinition>? _items;
     private static readonly object _lock = new();
-    
-    public static void Initialize(string jsonData)
+
+    private static ItemCategory ParseCategory(string category) => category switch
     {
+        "Pokeball" => ItemCategory.Pokeball,
+        "Medicine" => ItemCategory.Medicine,
+        "Battle" => ItemCategory.Battle,
+        "Berry" => ItemCategory.Berry,
+        "KeyItem" => ItemCategory.KeyItem,
+        "TM" => ItemCategory.TM,
+        "HM" => ItemCategory.HM,
+        "EvolutionStone" => ItemCategory.EvolutionStone,
+        "HeldItem" => ItemCategory.HeldItem,
+        "Valuable" => ItemCategory.Valuable,
+        "Mail" => ItemCategory.Mail,
+        _ => ItemCategory.Valuable
+    };
+
+    private static void EnsureInitialized()
+    {
+        if (_items != null) return;
+
         lock (_lock)
         {
-            var items = JsonSerializer.Deserialize<ItemData[]>(jsonData);
+            if (_items != null) return;
+
             _items = new Dictionary<int, ItemDefinition>();
-            
-            if (items != null)
+            try
             {
-                foreach (var data in items)
+                var dbItems = GameDataDb.GetAllItems();
+                foreach (var data in dbItems)
                 {
                     var category = ParseCategory(data.Category);
                     var definition = new ItemDefinition(
@@ -34,41 +58,13 @@ public static class ItemRegistry
                     _items[data.Id] = definition;
                 }
             }
-        }
-    }
-    
-    private static void EnsureInitialized()
-    {
-        if (_items == null)
-        {
-            try 
-            {
-                var json = System.IO.File.ReadAllText("Starfield2026.Assets/Data/items.json");
-                Initialize(json);
-            } 
             catch
             {
-                _items = new Dictionary<int, ItemDefinition>();
+                // DB not available — empty registry
             }
         }
     }
-    
-    private static ItemCategory ParseCategory(string category) => category switch
-    {
-        "Pokeball" => ItemCategory.Pokeball,
-        "Medicine" => ItemCategory.Medicine,
-        "Battle" => ItemCategory.Battle,
-        "Berry" => ItemCategory.Berry,
-        "KeyItem" => ItemCategory.KeyItem,
-        "TM" => ItemCategory.TM,
-        "HM" => ItemCategory.HM,
-        "EvolutionStone" => ItemCategory.EvolutionStone,
-        "HeldItem" => ItemCategory.HeldItem,
-        "Valuable" => ItemCategory.Valuable,
-        "Mail" => ItemCategory.Mail,
-        _ => ItemCategory.Valuable
-    };
-    
+
     public static ItemDefinition? GetItem(int id)
     {
         EnsureInitialized();

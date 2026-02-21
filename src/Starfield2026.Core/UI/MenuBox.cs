@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Starfield2026.Core.Input;
+using Starfield2026.Core.Rendering;
 
 namespace Starfield2026.Core.UI;
 
@@ -83,31 +84,36 @@ public class MenuBox
 
     /// <summary>
     /// Draw the menu box with selection highlight.
+    /// All layout is proportional to the bounds — no magic pixel numbers.
     /// </summary>
-    public void Draw(SpriteBatch spriteBatch, Texture2D pixel, Rectangle bounds)
+    public void Draw(SpriteBatch spriteBatch, PixelFont uiFont, Texture2D pixel, Rectangle bounds, int fontScale = 1)
     {
         if (_items.Count == 0) return;
 
+        uiFont.Scale = fontScale;
+
         // Background
-        spriteBatch.Draw(pixel, bounds, Color.Black * 0.85f);
+        spriteBatch.Draw(pixel, bounds, UITheme.MenuBackground);
 
         // Border
-        int b = 2;
+        int b = Math.Max(1, fontScale / 2);
         spriteBatch.Draw(pixel, new Rectangle(bounds.X, bounds.Y, bounds.Width, b), Color.White * 0.6f);
         spriteBatch.Draw(pixel, new Rectangle(bounds.X, bounds.Bottom - b, bounds.Width, b), Color.White * 0.6f);
         spriteBatch.Draw(pixel, new Rectangle(bounds.X, bounds.Y, b, bounds.Height), Color.White * 0.6f);
         spriteBatch.Draw(pixel, new Rectangle(bounds.Right - b, bounds.Y, b, bounds.Height), Color.White * 0.6f);
 
-        int padding = 10;
-        int itemW = (bounds.Width - padding * 2) / Columns;
-        int itemH = 24;
+        // Layout from bounds — proportional, never overflows
+        int pad = bounds.Height / 10;
+        int rows = (_items.Count + Columns - 1) / Columns;
+        int itemW = (bounds.Width - pad * 2) / Columns;
+        int itemH = (bounds.Height - pad * 2) / Math.Max(1, rows);
 
         for (int i = 0; i < _items.Count; i++)
         {
             int col = i % Columns;
             int row = i / Columns;
-            int ix = bounds.X + padding + col * itemW;
-            int iy = bounds.Y + padding + row * itemH;
+            int ix = bounds.X + pad + col * itemW;
+            int iy = bounds.Y + pad + row * itemH;
 
             var item = _items[i];
             Color textColor = item.Enabled ? Color.White : Color.Gray * 0.5f;
@@ -115,29 +121,20 @@ public class MenuBox
             // Selection highlight
             if (i == SelectedIndex && IsActive)
             {
-                spriteBatch.Draw(pixel, new Rectangle(ix - 2, iy, itemW - 4, itemH - 2), Color.Cyan * 0.25f);
+                spriteBatch.Draw(pixel, new Rectangle(ix, iy, itemW, itemH), Color.White * 0.15f);
 
-                // Selector arrow
-                spriteBatch.Draw(pixel, new Rectangle(ix - 8, iy + 4, 5, 5), Color.Cyan);
+                // Selector arrow — left of item, vertically centered
+                int arrowSize = uiFont.CharHeight / 2;
+                UIStyle.DrawRightArrow(spriteBatch, pixel,
+                    new Vector2(ix - arrowSize - 2, iy + (itemH - arrowSize) / 2),
+                    arrowSize, Color.White);
             }
 
-            // Item label (pixel-block text)
-            DrawPixelText(spriteBatch, pixel, item.Label, ix + 4, iy + 4, textColor);
-        }
-    }
-
-    private static void DrawPixelText(SpriteBatch sb, Texture2D pixel, string text, int x, int y, Color color)
-    {
-        int charW = 7, charH = 12, spacing = 1;
-        foreach (char c in text)
-        {
-            if (c == ' ')
-            {
-                x += charW + spacing;
-                continue;
-            }
-            sb.Draw(pixel, new Rectangle(x, y, charW - 1, charH - 1), color * 0.9f);
-            x += charW + spacing;
+            // Item label — vertically centered in row
+            int textX = ix + pad;
+            int textY = iy + (itemH - uiFont.CharHeight) / 2;
+            UIStyle.DrawShadowedText(spriteBatch, uiFont, item.Label,
+                new Vector2(textX, textY), textColor, Color.Black * 0.5f);
         }
     }
 }

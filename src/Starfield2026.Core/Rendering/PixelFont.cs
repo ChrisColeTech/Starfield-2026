@@ -39,7 +39,9 @@ public class PixelFont
         CharHeight = GlyphH * _scale;
     }
 
-    private static readonly Dictionary<char, uint[]> Glyphs = new()
+    public Dictionary<char, uint[]> CurrentGlyphs { get; set; }
+
+    public static readonly Dictionary<char, uint[]> StandardGlyphs = new()
     {
         ['A'] = new uint[] { 0b01110, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001 },
         ['B'] = new uint[] { 0b11110, 0b10001, 0b10001, 0b11110, 0b10001, 0b10001, 0b11110 },
@@ -84,19 +86,19 @@ public class PixelFont
         ['!'] = new uint[] { 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00000, 0b00100 },
         ['%'] = new uint[] { 0b11001, 0b11010, 0b00010, 0b00100, 0b01000, 0b01011, 0b10011 },
         ['+'] = new uint[] { 0b00000, 0b00100, 0b00100, 0b11111, 0b00100, 0b00100, 0b00000 },
+        ['?'] = new uint[] { 0b01110, 0b10001, 0b00001, 0b00110, 0b00100, 0b00000, 0b00100 },
     };
 
     public PixelFont(SpriteBatch spriteBatch, Texture2D pixel)
     {
         _spriteBatch = spriteBatch;
         _pixel = pixel;
+        CurrentGlyphs = StandardGlyphs;
         UpdateCharSize();
     }
     
-    public void SetScaleFromResolution(int screenWidth, int baseWidth = 800)
-    {
-        Scale = Math.Max(1, screenWidth / baseWidth * 2);
-    }
+
+
 
     /// <summary>
     /// Draw text at the given position. Text is auto-uppercased.
@@ -114,7 +116,7 @@ public class PixelFont
                 continue;
             }
 
-            if (Glyphs.TryGetValue(c, out var glyph))
+            if (CurrentGlyphs.TryGetValue(c, out var glyph))
             {
                 DrawGlyph(glyph, x, y, color);
             }

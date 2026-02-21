@@ -33,7 +33,55 @@ public static class GameDataDb
         _initialized = true;
     }
 
-    // --- Species ---
+    // --- Items ---
+
+    public static ItemData? GetItem(int itemId)
+    {
+        EnsureInitialized();
+
+        using var cmd = _conn!.CreateCommand();
+        cmd.CommandText = "SELECT id, name, sprite, category, buy_price, sell_price, usable_in_battle, usable_overworld, effect FROM items WHERE id = @id";
+        cmd.Parameters.AddWithValue("@id", itemId);
+
+        using var reader = cmd.ExecuteReader();
+        if (!reader.Read()) return null;
+        return ReadItemRow(reader);
+    }
+
+    public static IReadOnlyList<ItemData> GetAllItems()
+    {
+        EnsureInitialized();
+
+        var list = new List<ItemData>();
+        using var cmd = _conn!.CreateCommand();
+        cmd.CommandText = "SELECT id, name, sprite, category, buy_price, sell_price, usable_in_battle, usable_overworld, effect FROM items ORDER BY id";
+
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            list.Add(ReadItemRow(reader));
+        }
+        return list;
+    }
+
+    public record ItemData(int Id, string Name, string Sprite, string Category,
+        int BuyPrice, int SellPrice, bool UsableInBattle, bool UsableOverworld, string? Effect);
+
+    private static ItemData ReadItemRow(SqliteDataReader reader)
+    {
+        return new ItemData(
+            Id: reader.GetInt32(0),
+            Name: reader.GetString(1),
+            Sprite: reader.GetString(2),
+            Category: reader.GetString(3),
+            BuyPrice: reader.GetInt32(4),
+            SellPrice: reader.GetInt32(5),
+            UsableInBattle: reader.GetInt32(6) != 0,
+            UsableOverworld: reader.GetInt32(7) != 0,
+            Effect: reader.IsDBNull(8) ? null : reader.GetString(8)
+        );
+    }
+
 
     public static SpeciesData? GetSpecies(int speciesId)
     {

@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Starfield2026.Core.Pokemon;
 using Starfield2026.Core.UI;
-using Starfield2026.Core.UI.Fonts;
+using Starfield2026.Core.Rendering;
 
 namespace Starfield2026.Core.Battle;
 
@@ -30,43 +30,45 @@ public static class BattleInfoBar
     /// Draw the foe's info bar (compact — no HP numbers, no EXP bar).
     /// </summary>
     public static void DrawFoeBar(SpriteBatch sb, Texture2D pixel,
-        KermFontRenderer? fontRenderer, SpriteFont fallbackFont,
+        PixelFont uiFont,
         Rectangle bounds, BattlePokemon pkmn, int fontScale = 2)
     {
+        int internalScale = Math.Max(1, fontScale - 1);
+        uiFont.Scale = internalScale;
         DrawPanel(sb, pixel, bounds);
 
-        int pad = 16;
-        int fontH = fontScale * 7;
-        int charW = fontScale * 6; // approximate KermFont character width
+        int pad = 6 * fontScale;
+        int fontH = uiFont.CharHeight;
+        int charW = uiFont.CharWidth;
 
         // ── Row 1: Name + Gender (left), Level (right) ──
         int nameY = bounds.Y + pad;
 
-        DrawText(sb, fontRenderer, fallbackFont, pkmn.Nickname,
-            new Vector2(bounds.X + pad, nameY), NameColor, fontScale);
+        DrawText(sb, uiFont, pkmn.Nickname,
+            new Vector2(bounds.X + pad, nameY), NameColor, internalScale);
 
-        int nameWidth = pkmn.Nickname.Length * charW;
-        DrawGenderSymbol(sb, fontRenderer, fallbackFont, pkmn.Gender,
-            bounds.X + pad + nameWidth + charW / 2, nameY, fontScale);
+        int nameWidth = uiFont.MeasureWidth(pkmn.Nickname);
+        DrawGenderSymbol(sb, uiFont, pkmn.Gender,
+            bounds.X + pad + nameWidth + charW / 2, nameY, internalScale);
 
         string lvText = $"Lv{pkmn.Level}";
-        int lvWidth = lvText.Length * charW;
-        DrawText(sb, fontRenderer, fallbackFont, lvText,
-            new Vector2(bounds.Right - pad - lvWidth, nameY), LevelColor, fontScale);
+        int lvWidth = uiFont.MeasureWidth(lvText);
+        DrawText(sb, uiFont, lvText,
+            new Vector2(bounds.Right - pad - lvWidth, nameY), LevelColor, internalScale);
 
         // ── Separator line ──
-        int sepY = nameY + fontH + 8;
+        int sepY = nameY + fontH + 2 * fontScale;
         sb.Draw(pixel, new Rectangle(bounds.X + pad, sepY, bounds.Width - pad * 2, 1), SeparatorColor);
 
         // ── Row 2: "HP" label + HP bar ──
-        int hpRowY = sepY + 8;
-        int hpLabelW = 2 * charW + charW / 2; // "HP" + small gap
-        DrawText(sb, fontRenderer, fallbackFont, "HP",
-            new Vector2(bounds.X + pad, hpRowY), HPLabelColor, fontScale);
+        int hpRowY = sepY + 2 * fontScale;
+        int hpLabelW = uiFont.MeasureWidth("HP "); // "HP" + small gap
+        DrawText(sb, uiFont, "HP",
+            new Vector2(bounds.X + pad, hpRowY), HPLabelColor, internalScale);
 
         int barX = bounds.X + pad + hpLabelW;
         int barW = bounds.Right - pad - barX;
-        int barH = 12;
+        int barH = 3 * fontScale;
         int barY = hpRowY + (fontH - barH) / 2; // vertically center bar with label
         UIStyle.DrawTripleLineHPBar(sb, pixel,
             new Rectangle(barX, barY, barW, barH),
@@ -75,8 +77,8 @@ public static class BattleInfoBar
         // ── Status (below HP bar, if set) ──
         if (pkmn.StatusAbbreviation != null)
         {
-            DrawText(sb, fontRenderer, fallbackFont, pkmn.StatusAbbreviation,
-                new Vector2(bounds.X + pad, hpRowY + fontH + 3), new Color(255, 100, 100), fontScale);
+            DrawText(sb, uiFont, pkmn.StatusAbbreviation,
+                new Vector2(bounds.X + pad, hpRowY + fontH + fontScale), new Color(255, 100, 100), internalScale);
         }
     }
 
@@ -84,64 +86,66 @@ public static class BattleInfoBar
     /// Draw the ally's info bar (full — HP numbers + EXP bar).
     /// </summary>
     public static void DrawAllyBar(SpriteBatch sb, Texture2D pixel,
-        KermFontRenderer? fontRenderer, SpriteFont fallbackFont,
+        PixelFont uiFont,
         Rectangle bounds, BattlePokemon pkmn, float expPercent, int fontScale = 2)
     {
+        int internalScale = Math.Max(1, fontScale - 1);
+        uiFont.Scale = internalScale;
         DrawPanel(sb, pixel, bounds);
 
-        int pad = 12;
-        int fontH = fontScale * 7;
-        int charW = fontScale * 6;
+        int pad = 6 * fontScale;
+        int fontH = uiFont.CharHeight;
+        int charW = uiFont.CharWidth;
 
         // ── Row 1: Name + Gender (left), Level (right) ──
         int nameY = bounds.Y + pad;
 
-        DrawText(sb, fontRenderer, fallbackFont, pkmn.Nickname,
-            new Vector2(bounds.X + pad, nameY), NameColor, fontScale);
+        DrawText(sb, uiFont, pkmn.Nickname,
+            new Vector2(bounds.X + pad, nameY), NameColor, internalScale);
 
-        int nameWidth = pkmn.Nickname.Length * charW;
-        DrawGenderSymbol(sb, fontRenderer, fallbackFont, pkmn.Gender,
-            bounds.X + pad + nameWidth + charW / 2, nameY, fontScale);
+        int nameWidth = uiFont.MeasureWidth(pkmn.Nickname);
+        DrawGenderSymbol(sb, uiFont, pkmn.Gender,
+            bounds.X + pad + nameWidth + charW / 2, nameY, internalScale);
 
         string lvText = $"Lv{pkmn.Level}";
-        int lvWidth = lvText.Length * charW;
-        DrawText(sb, fontRenderer, fallbackFont, lvText,
-            new Vector2(bounds.Right - pad - lvWidth, nameY), LevelColor, fontScale);
+        int lvWidth = uiFont.MeasureWidth(lvText);
+        DrawText(sb, uiFont, lvText,
+            new Vector2(bounds.Right - pad - lvWidth, nameY), LevelColor, internalScale);
 
         // ── Separator line ──
-        int sepY = nameY + fontH + 5;
+        int sepY = nameY + fontH + 2 * fontScale;
         sb.Draw(pixel, new Rectangle(bounds.X + pad, sepY, bounds.Width - pad * 2, 1), SeparatorColor);
 
         // ── Row 2: "HP" label + HP bar ──
-        int hpRowY = sepY + 5;
-        int hpLabelW = 2 * charW + charW / 2;
-        DrawText(sb, fontRenderer, fallbackFont, "HP",
-            new Vector2(bounds.X + pad, hpRowY), HPLabelColor, fontScale);
+        int hpRowY = sepY + 2 * fontScale;
+        int hpLabelW = uiFont.MeasureWidth("HP ");
+        DrawText(sb, uiFont, "HP",
+            new Vector2(bounds.X + pad, hpRowY), HPLabelColor, internalScale);
 
         int barX = bounds.X + pad + hpLabelW;
         int barW = bounds.Right - pad - barX;
-        int barH = 8;
+        int barH = 2 * fontScale;
         int barY = hpRowY + (fontH - barH) / 2;
         UIStyle.DrawTripleLineHPBar(sb, pixel,
             new Rectangle(barX, barY, barW, barH),
             pkmn.DisplayHPPercent);
 
         // ── Row 3: HP numbers (right-aligned) ──
-        int hpTextY = hpRowY + fontH + 2;
+        int hpTextY = hpRowY + fontH + fontScale;
         string hpText = $"{(int)pkmn.DisplayHP}/{pkmn.MaxHP}";
-        int hpTextWidth = hpText.Length * charW;
-        DrawText(sb, fontRenderer, fallbackFont, hpText,
-            new Vector2(bounds.Right - pad - hpTextWidth, hpTextY), HPTextColor, fontScale);
+        int hpTextWidth = uiFont.MeasureWidth(hpText);
+        DrawText(sb, uiFont, hpText,
+            new Vector2(bounds.Right - pad - hpTextWidth, hpTextY), HPTextColor, internalScale);
 
         // ── Status (left side of HP numbers row) ──
         if (pkmn.StatusAbbreviation != null)
         {
-            DrawText(sb, fontRenderer, fallbackFont, pkmn.StatusAbbreviation,
-                new Vector2(bounds.X + pad, hpTextY), new Color(255, 100, 100), fontScale);
+            DrawText(sb, uiFont, pkmn.StatusAbbreviation,
+                new Vector2(bounds.X + pad, hpTextY), new Color(255, 100, 100), internalScale);
         }
 
         // ── EXP bar at bottom ──
-        int expBarH = 6;
+        int expBarH = 2 * fontScale;
         int expY = bounds.Bottom - expBarH - pad / 2;
         UIStyle.DrawEXPBar(sb, pixel,
             new Rectangle(bounds.X + pad, expY, bounds.Width - pad * 2, expBarH),
@@ -161,21 +165,19 @@ public static class BattleInfoBar
         sb.Draw(pixel, fill, PanelBG);
     }
 
-    private static void DrawGenderSymbol(SpriteBatch sb, KermFontRenderer? fontRenderer,
-        SpriteFont fallbackFont, Gender gender, int x, int y, int scale)
+    private static void DrawGenderSymbol(SpriteBatch sb,
+        PixelFont uiFont, Gender gender, int x, int y, int scale)
     {
         if (gender == Gender.Unknown) return;
         string symbol = gender == Gender.Male ? "M" : "F";
         Color color = gender == Gender.Male ? GenderMale : GenderFemale;
-        DrawText(sb, fontRenderer, fallbackFont, symbol, new Vector2(x, y), color, scale);
+        DrawText(sb, uiFont, symbol, new Vector2(x, y), color, scale);
     }
 
-    private static void DrawText(SpriteBatch sb, KermFontRenderer? fontRenderer,
-        SpriteFont fallbackFont, string text, Vector2 position, Color color, int scale)
+    private static void DrawText(SpriteBatch sb,
+        PixelFont uiFont, string text, Vector2 position, Color color, int scale)
     {
-        if (fontRenderer != null)
-            fontRenderer.DrawString(sb, text, position, scale, color);
-        else
-            sb.DrawString(fallbackFont, text, position, color);
+        uiFont.Scale = scale;
+        UIStyle.DrawShadowedText(sb, uiFont, text, position, color, Color.Black * 0.5f);
     }
 }

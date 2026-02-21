@@ -101,21 +101,20 @@ public class PlayerInventory
     public static PlayerInventory CreateTestInventory()
     {
         var inv = new PlayerInventory();
-        // Medicine
-        inv.AddItem(100, 5);  // Potion
-        inv.AddItem(101, 3);  // Super Potion
-        inv.AddItem(102, 1);  // Hyper Potion
-        inv.AddItem(120, 3);  // Antidote
-        inv.AddItem(124, 2);  // Parlyz Heal
-        inv.AddItem(105, 1);  // Full Heal
-        inv.AddItem(130, 2);  // Revive
+        // Medicine (PokeAPI IDs)
+        inv.AddItem(17, 5);   // Potion
+        inv.AddItem(26, 3);   // Super Potion
+        inv.AddItem(25, 1);   // Hyper Potion
+        inv.AddItem(18, 3);   // Antidote
+        inv.AddItem(27, 1);   // Full Heal
+        inv.AddItem(28, 2);   // Revive
         // Pokeballs
-        inv.AddItem(0, 10);   // Poke Ball
-        inv.AddItem(1, 3);    // Great Ball
+        inv.AddItem(4, 10);   // Poke Ball
+        inv.AddItem(3, 3);    // Great Ball
         // Berries
-        inv.AddItem(200, 5);  // Oran Berry
-        inv.AddItem(201, 3);  // Sitrus Berry
-        inv.AddItem(212, 2);  // Pecha Berry
+        inv.AddItem(132, 5);  // Oran Berry
+        inv.AddItem(135, 3);  // Sitrus Berry
+        inv.AddItem(128, 2);  // Pecha Berry
         return inv;
     }
 }

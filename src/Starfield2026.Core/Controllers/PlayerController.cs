@@ -25,12 +25,12 @@ public class PlayerController
     private float _gravity = 60f;
     private float _jumpForce = 32f;
     private bool _runningToggled;
-    private bool _wasJumpHeld;
     private float _hoverTime;
     private float _hoverDuration = 10f;
     private float _hoverBobTimer;
-    private float _hoverDescentSpeed = 8f;
     private float _hoverRiseSpeed = 15f;
+    private float _currentSpeed;
+    private float _currentTurnSpeed;
     
     public float WorldHalfSize
     {
@@ -63,14 +63,15 @@ public class PlayerController
     
     public void Update(float dt, InputSnapshot input, Starfield2026.Core.Maps.MapDefinition? map = null)
     {
-        if (input.RunPressed && IsGrounded)
+        if (input.RunPressed)
             _runningToggled = !_runningToggled;
         IsRunning = _runningToggled;
         
-        bool jumpHeld = input.JumpHeld;
         bool jumpTriggered = input.JumpPressed;
         
-        if (IsGrounded)
+        bool wasGrounded = IsGrounded;
+        
+        if (wasGrounded)
         {
             if (jumpTriggered)
             {
@@ -83,42 +84,36 @@ public class PlayerController
         
         if (!IsGrounded)
         {
-            if (jumpTriggered)
+            // Only allow boost jumping if the player was already in the air before this frame began
+            if (jumpTriggered && !wasGrounded)
             {
                 if (!IsHovering && Boosts != null && Boosts.BoostCount > 0)
                 {
                     IsHovering = true;
                     Boosts.UseBoost(1);
                     _hoverTime = _hoverDuration;
-                    _verticalVelocity = _hoverRiseSpeed;
+                    _verticalVelocity = 0f; // Perfect levitation on first tap
                 }
-                else if (IsHovering)
+                else if (IsHovering && Boosts != null && Boosts.BoostCount > 0)
                 {
-                    if (Boosts != null && Boosts.BoostCount > 0)
-                    {
-                        Boosts.UseBoost(1);
-                        _hoverTime += _hoverDuration;
-                        // Accumulate velocity rather than hard-setting, giving a satisfying "double jump" feel
-                        _verticalVelocity = Math.Max(_verticalVelocity, 0) + _hoverRiseSpeed;
-                    }
+                    Boosts.UseBoost(1);
+                    _hoverTime += _hoverDuration;
+                    _verticalVelocity = _hoverRiseSpeed; // Rocket upwards on second tap
                 }
             }
             
             if (IsHovering)
             {
-                // Only allow descent if we aren't currently shooting upwards from a fresh boost
-                if (jumpHeld && !jumpTriggered && _verticalVelocity <= 0)
+                if (_verticalVelocity < 0)
                 {
-                    _verticalVelocity = -_hoverDescentSpeed;
-                }
-                else if (_verticalVelocity < 0 && !jumpHeld)
-                {
+                    // Lock falling speed to zero for pure levitation
                     _verticalVelocity = 0f;
                 }
                 else if (_verticalVelocity > 0)
                 {
-                    // Apply heavy gravity to the upward boost burst so it feels punchy and short
-                    _verticalVelocity -= _gravity * 1.5f * dt;
+                    // Gravity gently tugs at the upward boost so they don't shoot to space forever
+                    _verticalVelocity -= _gravity * 2f * dt;
+                    if (_verticalVelocity < 0) _verticalVelocity = 0f;
                 }
                 
                 _hoverTime -= dt;
@@ -164,41 +159,65 @@ public class PlayerController
         float moveX = input.MoveX;
         float moveZ = input.MoveZ;
         
-        if (moveX != 0)
-            Yaw -= moveX * _rotationSpeed * dt;
+        IsMoving = (Math.Abs(_currentSpeed) > 0.1f) || (moveZ != 0);
         
-        IsMoving = false;
-        Speed = 0f;
+        // Rotational momentum: smoothly interpolate towards target rotation speed using stable exp decay
+        float targetTurnSpeed = moveX != 0 ? -moveX * _rotationSpeed : 0f;
+        float turnBlend = 1f - (float)Math.Exp(-10f * dt);
+        _currentTurnSpeed = MathHelper.Lerp(_currentTurnSpeed, targetTurnSpeed, turnBlend);
+        Yaw += _currentTurnSpeed * dt;
         
+        float targetSpeed = 0f;
         if (moveZ != 0)
         {
-            float speed = IsRunning ? _runSpeed : _walkSpeed;
-            Speed = speed;
-            IsMoving = true;
-            
+            targetSpeed = (IsRunning ? _runSpeed : _walkSpeed) * Math.Sign(moveZ);
+        }
+        
+        // Acceleration / Deceleration
+        float accelRate = moveZ != 0 ? 8f : 12f;
+        float speedBlend = 1f - (float)Math.Exp(-accelRate * dt);
+        _currentSpeed = MathHelper.Lerp(_currentSpeed, targetSpeed, speedBlend);
+        Speed = Math.Abs(_currentSpeed);
+        
+        if (Math.Abs(_currentSpeed) > 0.01f)
+        {
             var forward = new Vector3(
                 (float)Math.Sin(Yaw),
                 0f,
                 (float)Math.Cos(Yaw));
             
-            var newPos = Position + forward * moveZ * speed * dt;
+            var newPos = Position + forward * _currentSpeed * dt;
             newPos.X = MathHelper.Clamp(newPos.X, -_worldHalfSize, _worldHalfSize);
             newPos.Z = MathHelper.Clamp(newPos.Z, -_worldHalfSize, _worldHalfSize);
             
             if (map != null)
             {
-                int nx = (int)Math.Floor(newPos.X / 2f + map.Width / 2f);
-                int nz = (int)Math.Floor(newPos.Z / 2f + map.Height / 2f);
-                if (nx >= 0 && nx < map.Width && nz >= 0 && nz < map.Height)
+                // Test X axis independently
+                int nxX = (int)Math.Floor(newPos.X / 2f + map.Width / 2f);
+                int nzOrig = (int)Math.Floor(Position.Z / 2f + map.Height / 2f);
+                if (nxX >= 0 && nxX < map.Width && nzOrig >= 0 && nzOrig < map.Height)
                 {
-                    float targetGround = 0.825f + map.GetTileHeight(nx, nz);
-                    bool hasWarp = map.GetWarp(nx, nz, Starfield2026.Core.Maps.WarpTrigger.Step) != null || 
-                                   map.GetWarp(nx, nz, Starfield2026.Core.Maps.WarpTrigger.Interact) != null;
-                                   
-                    if (!hasWarp && targetGround > Position.Y + 0.5f)
+                    float targetGroundX = 0.825f + map.GetTileHeight(nxX, nzOrig);
+                    bool hasWarpX = map.GetWarp(nxX, nzOrig, Starfield2026.Core.Maps.WarpTrigger.Step) != null || 
+                                    map.GetWarp(nxX, nzOrig, Starfield2026.Core.Maps.WarpTrigger.Interact) != null;
+                                    
+                    if (!hasWarpX && targetGroundX > Position.Y + 0.5f)
                     {
-                        // Wall collision: prevent XZ movement
                         newPos.X = Position.X;
+                    }
+                }
+                
+                // Test Z axis independently
+                int nxOrig = (int)Math.Floor(Position.X / 2f + map.Width / 2f);
+                int nzZ = (int)Math.Floor(newPos.Z / 2f + map.Height / 2f);
+                if (nxOrig >= 0 && nxOrig < map.Width && nzZ >= 0 && nzZ < map.Height)
+                {
+                    float targetGroundZ = 0.825f + map.GetTileHeight(nxOrig, nzZ);
+                    bool hasWarpZ = map.GetWarp(nxOrig, nzZ, Starfield2026.Core.Maps.WarpTrigger.Step) != null || 
+                                    map.GetWarp(nxOrig, nzZ, Starfield2026.Core.Maps.WarpTrigger.Interact) != null;
+                                    
+                    if (!hasWarpZ && targetGroundZ > Position.Y + 0.5f)
+                    {
                         newPos.Z = Position.Z;
                     }
                 }

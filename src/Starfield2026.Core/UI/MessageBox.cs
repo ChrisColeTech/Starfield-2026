@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Starfield2026.Core.Rendering;
 
 namespace Starfield2026.Core.UI;
 
@@ -72,12 +73,10 @@ public class MessageBox
         {
             if (!IsTextFullyRevealed)
             {
-                // Skip to full reveal
                 _revealedChars = _currentMessage.Length;
             }
             else
             {
-                // Advance to next message
                 AdvanceToNext();
             }
             return;
@@ -97,33 +96,40 @@ public class MessageBox
     }
 
     /// <summary>
-    /// Draw the message box — dark background with pixel-block text.
+    /// Draw the message box. All layout proportional to bounds.
     /// </summary>
-    public void Draw(SpriteBatch spriteBatch, Texture2D pixel, Rectangle bounds)
+    public void Draw(SpriteBatch spriteBatch, PixelFont uiFont, Texture2D pixel, Rectangle bounds, int fontScale = 1)
     {
         if (_currentMessage.Length == 0) return;
 
+        uiFont.Scale = fontScale;
+
         // Background
-        spriteBatch.Draw(pixel, bounds, Color.Black * 0.85f);
+        spriteBatch.Draw(pixel, bounds, UITheme.MenuBackground);
 
         // Border
-        int b = 2;
+        int b = Math.Max(1, fontScale / 2);
         spriteBatch.Draw(pixel, new Rectangle(bounds.X, bounds.Y, bounds.Width, b), Color.White * 0.6f);
         spriteBatch.Draw(pixel, new Rectangle(bounds.X, bounds.Bottom - b, bounds.Width, b), Color.White * 0.6f);
         spriteBatch.Draw(pixel, new Rectangle(bounds.X, bounds.Y, b, bounds.Height), Color.White * 0.6f);
         spriteBatch.Draw(pixel, new Rectangle(bounds.Right - b, bounds.Y, b, bounds.Height), Color.White * 0.6f);
 
-        // Text (pixel-block characters)
+        // Text — inset proportionally from bounds
+        int padX = bounds.Width / 20;
+        int padY = bounds.Height / 6;
         string visibleText = _currentMessage[.._revealedChars];
-        DrawPixelText(spriteBatch, pixel, visibleText, bounds.X + 12, bounds.Y + 10, Color.White);
+        UIStyle.DrawShadowedText(spriteBatch, uiFont, visibleText,
+            new Vector2(bounds.X + padX, bounds.Y + padY),
+            Color.White, Color.Black * 0.5f);
 
-        // Advance indicator (blinking arrow when fully revealed)
-        if (IsTextFullyRevealed && _messageQueue.Count > 0)
+        // Blinking advance arrow when fully revealed
+        if (IsTextFullyRevealed)
         {
-            int arrowX = bounds.Right - 20;
-            int arrowY = bounds.Bottom - 16;
+            int arrowSize = uiFont.CharHeight / 2;
+            int arrowX = bounds.Right - padX;
+            int arrowY = bounds.Bottom - padY;
             if ((int)(DateTime.Now.TimeOfDay.TotalSeconds * 3) % 2 == 0)
-                spriteBatch.Draw(pixel, new Rectangle(arrowX, arrowY, 6, 6), Color.Yellow);
+                UIStyle.DrawDownArrow(spriteBatch, pixel, new Vector2(arrowX, arrowY), arrowSize, Color.White);
         }
     }
 
@@ -141,30 +147,6 @@ public class MessageBox
             _revealedChars = 0;
             IsFinished = true;
             OnFinished?.Invoke();
-        }
-    }
-
-    private static void DrawPixelText(SpriteBatch sb, Texture2D pixel, string text, int x, int y, Color color)
-    {
-        int charW = 7, charH = 12, spacing = 1;
-        int startX = x;
-
-        foreach (char c in text)
-        {
-            if (c == '\n')
-            {
-                x = startX;
-                y += charH + 4;
-                continue;
-            }
-            if (c == ' ')
-            {
-                x += charW + spacing;
-                continue;
-            }
-
-            sb.Draw(pixel, new Rectangle(x, y, charW - 1, charH - 1), color * 0.9f);
-            x += charW + spacing;
         }
     }
 }

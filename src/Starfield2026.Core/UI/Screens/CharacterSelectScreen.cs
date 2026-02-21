@@ -4,7 +4,7 @@ using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Starfield2026.Core.Input;
-using Starfield2026.Core.UI.Fonts;
+using Starfield2026.Core.Rendering;
 
 namespace Starfield2026.Core.UI.Screens;
 
@@ -283,14 +283,12 @@ public class CharacterSelectScreen : IScreenOverlay
     private void BeginExit() { _phase = Phase.FadeOut; _fadeTimer = 0f; }
 
     public void Draw(SpriteBatch sb, Texture2D pixel,
-                     KermFontRenderer? fontRenderer, KermFont? font,
-                     SpriteFont fallbackFont, int screenWidth, int screenHeight, int fontScale = 3)
+                     PixelFont uiFont, int screenWidth, int screenHeight, int fontScale = 3)
     {
+        uiFont.Scale = fontScale;
         // Derived sizes from font scale
-        int charW = fontScale * 5 / 3;    // approx glyph width at scale=3 → 5
-        int lineH = fontScale * 7;
+        int lineH = uiFont.CharHeight;
         int smallScale = Math.Max(1, fontScale * 2 / 3);
-        int smallCharW = smallScale * 5 / 3;
 
         var fullRect = new Rectangle(0, 0, screenWidth, screenHeight);
         UIStyle.DrawTripleGradient(sb, pixel, fullRect, GradTop, GradMid, GradBot);
@@ -301,13 +299,13 @@ public class CharacterSelectScreen : IScreenOverlay
             title = "SELECT CATEGORY";
         else
             title = $"{CurrentCat.Label.ToUpperInvariant()}  ({_page + 1}/{TotalPages})  [{CurrentCat.Folders.Length}]";
-        DrawText(sb, fontRenderer, fallbackFont, title, new Vector2(Padding, Padding - 4), Color.White, fontScale);
+        DrawText(sb, uiFont, title, new Vector2(Padding, Padding - 4 * fontScale), Color.White, fontScale);
 
         // Breadcrumb for item level
         if (_level == Level.Items)
         {
-            DrawText(sb, fontRenderer, fallbackFont, "< Esc to go back",
-                new Vector2(Padding, Padding + lineH + 2), new Color(140, 160, 200), smallScale);
+            DrawText(sb, uiFont, "< Esc to go back",
+                new Vector2(Padding, Padding + lineH + 2 * fontScale), new Color(140, 160, 200), smallScale);
         }
 
         // Grid
@@ -339,22 +337,28 @@ public class CharacterSelectScreen : IScreenOverlay
             {
                 int gi = CatPageStart + i;
                 var cat = _categories[gi];
-                DrawText(sb, fontRenderer, fallbackFont, cat.Label,
-                    new Vector2(cx + cardW / 2 - cat.Label.Length * charW, cy + cardH / 2 - lineH), Color.White, fontScale);
+                uiFont.Scale = fontScale;
+                DrawText(sb, uiFont, cat.Label,
+                    new Vector2(cx + cardW / 2 - uiFont.MeasureWidth(cat.Label) / 2, cy + cardH / 2 - lineH), Color.White, fontScale);
                 string countStr = $"{cat.Folders.Length} models";
-                DrawText(sb, fontRenderer, fallbackFont, countStr,
-                    new Vector2(cx + cardW / 2 - countStr.Length * smallCharW, cy + cardH / 2 + 4), new Color(160, 180, 220), smallScale);
-                DrawText(sb, fontRenderer, fallbackFont, cat.Prefix,
-                    new Vector2(cx + 8, cy + cardH - lineH - 4), new Color(120, 120, 140), smallScale);
+                uiFont.Scale = smallScale;
+                DrawText(sb, uiFont, countStr,
+                    new Vector2(cx + cardW / 2 - uiFont.MeasureWidth(countStr) / 2, cy + cardH / 2 + 4 * fontScale), new Color(160, 180, 220), smallScale);
+                DrawText(sb, uiFont, cat.Prefix,
+                    new Vector2(cx + 8 * fontScale, cy + cardH - lineH - 4 * fontScale), new Color(120, 120, 140), smallScale);
+                uiFont.Scale = fontScale;
             }
             else
             {
                 int gi = PageStart + i;
                 string name = gi < CurrentCat.Names.Length ? CurrentCat.Names[gi] : CurrentCat.Folders[gi];
-                DrawText(sb, fontRenderer, fallbackFont, name,
-                    new Vector2(cx + cardW / 2 - name.Length * charW, cy + cardH / 2 - lineH / 2), Color.White, fontScale);
-                DrawText(sb, fontRenderer, fallbackFont, CurrentCat.Folders[gi],
-                    new Vector2(cx + 8, cy + cardH - lineH - 4), new Color(160, 160, 180), smallScale);
+                uiFont.Scale = fontScale;
+                DrawText(sb, uiFont, name,
+                    new Vector2(cx + cardW / 2 - uiFont.MeasureWidth(name) / 2, cy + cardH / 2 - lineH / 2), Color.White, fontScale);
+                uiFont.Scale = smallScale;
+                DrawText(sb, uiFont, CurrentCat.Folders[gi],
+                    new Vector2(cx + 8 * fontScale, cy + cardH - lineH - 4 * fontScale), new Color(160, 160, 180), smallScale);
+                uiFont.Scale = fontScale;
             }
         }
 
@@ -367,19 +371,20 @@ public class CharacterSelectScreen : IScreenOverlay
         bool hasNext = _page < totalPages - 1;
 
         _prevRect = new Rectangle(Padding, bottomY, btnW, btnH);
-        DrawButton(sb, pixel, fontRenderer, fallbackFont, _prevRect, "<< Q",
+        DrawButton(sb, pixel, uiFont, _prevRect, "<< Q",
             _bottomFocus == BottomFocus.Prev, hasPrev, fontScale);
 
         _nextRect = new Rectangle(Padding + btnW + CardSpacing, bottomY, btnW, btnH);
-        DrawButton(sb, pixel, fontRenderer, fallbackFont, _nextRect, "E >>",
+        DrawButton(sb, pixel, uiFont, _nextRect, "E >>",
             _bottomFocus == BottomFocus.Next, hasNext, fontScale);
 
         _backRect = new Rectangle(screenWidth - btnW - Padding, bottomY, btnW, btnH);
         sb.Draw(pixel, _backRect, _bottomFocus == BottomFocus.Back ? BtnBackSel : BtnBack);
         if (_bottomFocus == BottomFocus.Back) DrawBorder(sb, pixel, _backRect, 2, CardBorder);
         string backLabel = _level == Level.Items ? "Back" : "Close";
-        DrawText(sb, fontRenderer, fallbackFont, backLabel,
-            new Vector2(_backRect.X + btnW / 2 - backLabel.Length * charW, _backRect.Y + (btnH - lineH) / 2), Color.White, fontScale);
+        uiFont.Scale = fontScale;
+        DrawText(sb, uiFont, backLabel,
+            new Vector2(_backRect.X + btnW / 2 - uiFont.MeasureWidth(backLabel) / 2, _backRect.Y + (btnH - lineH) / 2), Color.White, fontScale);
 
         // Page dots
         if (totalPages > 1 && totalPages <= 30)
@@ -397,8 +402,10 @@ public class CharacterSelectScreen : IScreenOverlay
         else if (totalPages > 30)
         {
             string pageStr = $"Page {_page + 1}/{totalPages}";
-            DrawText(sb, fontRenderer, fallbackFont, pageStr,
-                new Vector2(screenWidth / 2 - pageStr.Length * smallCharW, bottomY + (btnH - lineH) / 2), new Color(180, 180, 200), smallScale);
+            uiFont.Scale = smallScale;
+            DrawText(sb, uiFont, pageStr,
+                new Vector2(screenWidth / 2 - uiFont.MeasureWidth(pageStr) / 2, bottomY + (btnH - lineH) / 2), new Color(180, 180, 200), smallScale);
+            uiFont.Scale = fontScale;
         }
 
         // Fade
@@ -412,24 +419,23 @@ public class CharacterSelectScreen : IScreenOverlay
             sb.Draw(pixel, fullRect, Color.Black * fadeAlpha);
     }
 
-    private void DrawButton(SpriteBatch sb, Texture2D pixel, KermFontRenderer? fr, SpriteFont ff,
+    private void DrawButton(SpriteBatch sb, Texture2D pixel, PixelFont uiFont,
                             Rectangle rect, string label, bool selected, bool enabled, int fontScale = 3)
     {
-        int charW = fontScale * 5 / 3;
-        int lineH = fontScale * 7;
+        uiFont.Scale = fontScale;
+        int lineH = uiFont.CharHeight;
         Color bg = selected ? BtnSelected : (enabled ? BtnNormal : new Color(30, 30, 30, 100));
         sb.Draw(pixel, rect, bg);
         if (selected) DrawBorder(sb, pixel, rect, 2, CardBorder);
-        DrawText(sb, fr, ff, label,
-            new Vector2(rect.X + rect.Width / 2 - label.Length * charW, rect.Y + (rect.Height - lineH) / 2),
+        DrawText(sb, uiFont, label,
+            new Vector2(rect.X + rect.Width / 2 - uiFont.MeasureWidth(label) / 2, rect.Y + (rect.Height - lineH) / 2),
             enabled ? Color.White : new Color(80, 80, 80), fontScale);
     }
 
-    private static void DrawText(SpriteBatch sb, KermFontRenderer? fontRenderer,
-                                  SpriteFont fallbackFont, string text, Vector2 pos, Color color, int scale)
+    private static void DrawText(SpriteBatch sb, PixelFont uiFont, string text, Vector2 pos, Color color, float scale)
     {
-        if (fontRenderer != null) fontRenderer.DrawString(sb, text, pos, scale, color);
-        else sb.DrawString(fallbackFont, text, pos, color);
+        uiFont.Scale = (int)Math.Max(1, scale);
+        UIStyle.DrawShadowedText(sb, uiFont, text, pos, color, Color.Black * 0.5f);
     }
 
     private static void DrawBorder(SpriteBatch sb, Texture2D pixel, Rectangle r, int t, Color color)

@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.IO;
 using Microsoft.Xna.Framework;
@@ -10,7 +11,6 @@ using Starfield2026.Core.Save;
 using Starfield2026.Core.Screens;
 using Starfield2026.Core.Systems;
 using Starfield2026.Core.UI;
-using Starfield2026.Core.UI.Fonts;
 
 namespace Starfield2026._3D;
 
@@ -37,12 +37,10 @@ public class Starfield2026Game : Game
     private const bool DebugStartInBattle = true;
     
     private Starfield2026.Core.Battle.BattleScreen3D _battleScreen = new();
-    private KermFontRenderer _kermRenderer = null!;
-    private KermFont _kermFont = null!;
 
     private string FindAssetsRoot()
     {
-        string current = AppContext.BaseDirectory;
+        string? current = AppContext.BaseDirectory;
         while (current != null)
         {
             string maybe = Path.Combine(current, "Starfield2026.Assets");
@@ -143,16 +141,14 @@ public class Starfield2026Game : Game
         _hud = new HUDRenderer();
         _hud.Initialize(_spriteBatch, pixel);
 
+        PixelFont uiFont = new PixelFont(_spriteBatch, pixel);
+
+        _battleScreen.Initialize(_spriteBatch, pixel, null, null, uiFont);
         string assets = FindAssetsRoot();
-        string fontPath = Path.Combine(assets, "Fonts", "Battle.kermfont");
-        if (File.Exists(fontPath))
-        {
-            _kermFont = new KermFont(GraphicsDevice, fontPath);
-            _kermRenderer = new KermFontRenderer(_kermFont);
-        }
-        _battleScreen.Initialize(_spriteBatch, pixel, _kermRenderer, _kermFont, null);
         _battleScreen.LoadBattleModels(GraphicsDevice, Path.Combine(assets, "BattleBG"));
-        _battleScreen.SetPartyAndInventory(new Starfield2026.Core.Pokemon.Party(), new Starfield2026.Core.Items.PlayerInventory());
+        _battleScreen.SetPartyAndInventory(
+            Starfield2026.Core.Pokemon.Party.CreateTestParty(),
+            Starfield2026.Core.Items.PlayerInventory.CreateTestInventory());
         
         _battleScreen.OnBattleExit = () =>
         {
@@ -232,7 +228,7 @@ public class Starfield2026Game : Game
         {
             _battleScreen.Draw3DScene(GraphicsDevice);
             _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
-            _battleScreen.DrawUI(2, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+            _battleScreen.DrawUI(Starfield2026.Core.UI.UITheme.GetFontScale(GraphicsDevice.Viewport.Width), GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
             _spriteBatch.End();
         }
         else

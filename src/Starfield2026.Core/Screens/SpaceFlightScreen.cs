@@ -5,6 +5,7 @@ using Starfield2026.Core.Controllers;
 using Starfield2026.Core.Input;
 using Starfield2026.Core.Rendering;
 using Starfield2026.Core.Systems;
+using Starfield2026.Core.Systems.Coins;
 
 namespace Starfield2026.Core.Screens;
 
@@ -77,9 +78,14 @@ public class SpaceFlightScreen : IGameScreen
         _coinSystem = new CoinCollectibleSystem
         {
             DriftSpeed = 0f,
-            SpawnInterval = 3f,
         };
-        _coinSystem.Initialize(device);
+        _coinSystem.Initialize(device, new InfiniteRunnerCoinSpawner
+        {
+            SpawnInterval = 3f,
+            CorridorWidth = 25f,
+            CorridorHeight = 8f,
+            AheadDistance = 80f,
+        });
         
         _projectiles = new ProjectileSystem();
         _projectiles.Initialize(device);
@@ -124,7 +130,7 @@ public class SpaceFlightScreen : IGameScreen
         
         _background.Update(dt, _ship.CurrentSpeed, _ship.Position);
         
-        _coinSystem.Update(dt, _ship.Position, CoinCollectRadius, _ship.CurrentSpeed, 80f, 25f, 8f);
+        _coinSystem.Update(dt, _ship.Position, CoinCollectRadius, _ship.CurrentSpeed);
         
         if (input.IsKeyHeld(Microsoft.Xna.Framework.Input.Keys.Space) && Ammo != null && Ammo.CanFire(Ammo.SelectedType))
         {
@@ -192,7 +198,6 @@ public class SpaceFlightScreen : IGameScreen
     
     public void OnEnter()
     {
-        _coinSystem.ResetSpawnTimer();
         _projectiles.Clear();
         _boss.Active = false;
     }

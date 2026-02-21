@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Starfield2026.Core.Input;
-using Starfield2026.Core.UI.Fonts;
+using Starfield2026.Core.Rendering;
 
 namespace Starfield2026.Core.UI;
 
@@ -19,6 +19,5 @@ public interface IScreenOverlay
 
     /// <summary>Draw the full-screen overlay.</summary>
     void Draw(SpriteBatch spriteBatch, Texture2D pixel,
-              KermFontRenderer? fontRenderer, KermFont? font,
-              SpriteFont fallbackFont, int screenWidth, int screenHeight, int fontScale = 3);
+              PixelFont uiFont, int screenWidth, int screenHeight, int fontScale = 3);
 }

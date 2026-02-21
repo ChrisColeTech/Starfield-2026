@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Starfield2026.Core.Input;
 using Starfield2026.Core.Items;
 using Starfield2026.Core.Pokemon;
-using Starfield2026.Core.UI.Fonts;
+using Starfield2026.Core.Rendering;
 
 namespace Starfield2026.Core.UI.Screens;
 
@@ -20,9 +20,6 @@ public class PartyScreen : IScreenOverlay
     private const float FadeDuration = 0.3f;
     private const int GridColumns = 2;
     private const int GridRows = 3;
-    private const int CardSpacing = 8;
-    private const int BottomSectionHeight = 60;
-    private const int Padding = 20;
 
     // Card colors
     private static readonly Color CardFill = new(48, 48, 48, 196);
@@ -48,7 +45,7 @@ public class PartyScreen : IScreenOverlay
     private bool _onBackButton;
 
     // Action popup
-    private readonly BattleMenuBox _actionMenu = new() { Columns = 1, UseStandardStyle = true };
+    private readonly MenuBox _actionMenu = new() { Columns = 1 };
     private int _actionTarget = -1;
 
     // Cached layout for mouse hit testing (set during Draw)
@@ -84,9 +81,7 @@ public class PartyScreen : IScreenOverlay
                 break;
 
             case Phase.ActionPopup:
-                _actionMenu.Update(
-                    input.Left, input.Right, input.Up, input.Down,
-                    input.Confirm, input.Cancel, Point.Zero, false);
+                _actionMenu.Update(input);
                 break;
 
             case Phase.FadeOut:
@@ -146,14 +141,14 @@ public class PartyScreen : IScreenOverlay
             var items = _mode == PartyScreenMode.BattleSwitchIn
             ? new[]
             {
-                new BattleMenuItem("Switch In", ConfirmSwitchIn),
-                new BattleMenuItem("Summary"),
-                new BattleMenuItem("Cancel", CloseActionPopup),
+                new MenuItem("Switch In", ConfirmSwitchIn),
+                new MenuItem("Summary"),
+                new MenuItem("Cancel", CloseActionPopup),
             }
             : new[]
             {
-                new BattleMenuItem("Summary"),
-                new BattleMenuItem("Cancel", CloseActionPopup),
+                new MenuItem("Summary"),
+                new MenuItem("Cancel", CloseActionPopup),
             };
         _actionMenu.SetItems(items);
         _actionMenu.IsActive = true;
@@ -182,10 +177,14 @@ public class PartyScreen : IScreenOverlay
     }
 
     public void Draw(SpriteBatch sb, Texture2D pixel,
-                     KermFontRenderer? fontRenderer, KermFont? font,
-                     SpriteFont fallbackFont, int screenWidth, int screenHeight, int fontScale = 3)
+                     PixelFont uiFont, int screenWidth, int screenHeight, int fontScale = 3)
     {
+        uiFont.Scale = fontScale;
         var fullRect = new Rectangle(0, 0, screenWidth, screenHeight);
+
+        int pad = 10 * fontScale;
+        int cardSp = 4 * fontScale;
+        int botH = 20 * fontScale;
 
         // Gradient background
         Color top, mid, bot;
@@ -196,12 +195,12 @@ public class PartyScreen : IScreenOverlay
         UIStyle.DrawTripleGradient(sb, pixel, fullRect, top, mid, bot);
 
         // Calculate grid area
-        int gridX = Padding;
-        int gridY = Padding;
-        int gridW = screenWidth - Padding * 2;
-        int gridH = screenHeight - Padding * 2 - BottomSectionHeight;
-        int cardW = (gridW - CardSpacing) / GridColumns;
-        int cardH = (gridH - CardSpacing * (GridRows - 1)) / GridRows;
+        int gridX = pad;
+        int gridY = pad;
+        int gridW = screenWidth - pad * 2;
+        int gridH = screenHeight - pad * 2 - botH;
+        int cardW = (gridW - cardSp) / GridColumns;
+        int cardH = (gridH - cardSp * (GridRows - 1)) / GridRows;
 
         // Draw Pokemon cards and cache rects for mouse hit testing
         if (_cardRects.Length != _party.Count)
@@ -211,20 +210,20 @@ public class PartyScreen : IScreenOverlay
         {
             int col = i % GridColumns;
             int row = i / GridColumns;
-            int cx = gridX + col * (cardW + CardSpacing);
-            int cy = gridY + row * (cardH + CardSpacing);
+            int cx = gridX + col * (cardW + cardSp);
+            int cy = gridY + row * (cardH + cardSp);
             var cardRect = new Rectangle(cx, cy, cardW, cardH);
             _cardRects[i] = cardRect;
 
             bool selected = !_onBackButton && i == _selectedIndex;
-            DrawCard(sb, pixel, fontRenderer, font, fallbackFont, cardRect, _party[i], selected);
+            DrawCard(sb, pixel, uiFont, cardRect, _party[i], selected, fontScale);
         }
 
         // Bottom section — Back button
-        int backW = 120;
-        int backH = 40;
-        int backX = screenWidth - backW - Padding;
-        int backY = screenHeight - BottomSectionHeight + (BottomSectionHeight - backH) / 2;
+        int backW = 80 * fontScale;
+        int backH = 28 * fontScale;
+        int backX = screenWidth - backW - pad;
+        int backY = screenHeight - botH + (botH - backH) / 2;
         var backRect = new Rectangle(backX, backY, backW, backH);
         _backRect = backRect;
 
@@ -232,25 +231,21 @@ public class PartyScreen : IScreenOverlay
         if (_onBackButton)
         {
             // Selection border
-            DrawBorder(sb, pixel, backRect, 2, CardBorder);
+            DrawBorder(sb, pixel, backRect, 2 * fontScale, CardBorder);
         }
 
-        DrawText(sb, fontRenderer, fallbackFont, "Back",
-            new Vector2(backX + backW / 2 - 30, backY + 8), Color.White, 3);
+        DrawText(sb, uiFont, "Back",
+            new Vector2(backX + backW / 2 - uiFont.MeasureWidth("Back") / 2, backY + 4 * fontScale), Color.White, fontScale);
 
         // Action popup
         if (_phase == Phase.ActionPopup && _actionMenu.IsActive)
         {
-            int popW = 160;
-            int popH = _actionMenu.Items.Count * 40 + 16;
-            int popX = screenWidth / 2 + 80;
+            int popW = 80 * fontScale;
+            int popH = _actionMenu.Items.Count * 20 * fontScale + 8 * fontScale;
+            int popX = screenWidth / 2 + 40 * fontScale;
             int popY = screenHeight / 4;
-            if (fontRenderer != null && font != null)
-                _actionMenu.Draw(sb, fontRenderer, font, pixel,
-                    new Rectangle(popX, popY, popW, popH));
-            else
-                _actionMenu.Draw(sb, fallbackFont, pixel,
-                    new Rectangle(popX, popY, popW, popH));
+            _actionMenu.Draw(sb, uiFont, pixel,
+                new Rectangle(popX, popY, popW, popH), fontScale);
         }
 
         // Fade overlay
@@ -265,66 +260,106 @@ public class PartyScreen : IScreenOverlay
     }
 
     private void DrawCard(SpriteBatch sb, Texture2D pixel,
-                          KermFontRenderer? fontRenderer, KermFont? font,
-                          SpriteFont fallbackFont,
-                          Rectangle rect, PartyPokemon pkmn, bool selected)
+                          PixelFont uiFont,
+                          Rectangle rect, PartyPokemon pkmn, bool selected, int fontScale)
     {
+        uiFont.Scale = fontScale;
+
         // Card fill
         sb.Draw(pixel, rect, pkmn.IsFainted ? CardFillFainted : CardFill);
 
         // Selection border
         if (selected)
-            DrawBorder(sb, pixel, rect, 2, CardBorder);
+            DrawBorder(sb, pixel, rect, 2 * fontScale, CardBorder);
 
-        int pad = 10;
-        int textY = rect.Y + pad;
+        int pad = Math.Max(2, rect.Height / 16);
 
-        // Nickname
-        DrawText(sb, fontRenderer, fallbackFont, pkmn.Nickname,
-            new Vector2(rect.X + pad, textY), Color.White, 3);
+        // ── LEFT SIDE: Sprite placeholder + Level ──
+        int spriteSize = rect.Height - pad * 2;
+        int leftW = spriteSize;
+        int spriteX = rect.X + pad;
+        int spriteY = rect.Y + pad;
 
-        // Level (top-right)
+        // Placeholder box for sprite (dark square)
+        int placeholderSize = (int)(spriteSize * 0.65f);
+        int phX = spriteX + (leftW - placeholderSize) / 2;
+        int phY = spriteY;
+        sb.Draw(pixel, new Rectangle(phX, phY, placeholderSize, placeholderSize), new Color(30, 30, 30, 180));
+        DrawBorder(sb, pixel, new Rectangle(phX, phY, placeholderSize, placeholderSize), Math.Max(1, fontScale / 2), new Color(80, 80, 80, 120));
+
+        // Level — centered below placeholder
+        int lvScale = Math.Max(1, (int)(fontScale * 0.75f));
+        uiFont.Scale = lvScale;
         string lvText = $"Lv{pkmn.Level}";
-        DrawText(sb, fontRenderer, fallbackFont, lvText,
-            new Vector2(rect.Right - pad - lvText.Length * 10, textY), Color.White, 2);
+        int lvW = uiFont.MeasureWidth(lvText);
+        int lvY = phY + placeholderSize + pad / 2;
+        DrawText(sb, uiFont, lvText,
+            new Vector2(spriteX + (leftW - lvW) / 2, lvY), new Color(200, 200, 200), lvScale);
+        uiFont.Scale = fontScale;
 
-        // HP bar
-        int barY = textY + 32;
-        int barW = rect.Width - pad * 2;
-        UIStyle.DrawHPBar(sb, pixel, new Rectangle(rect.X + pad, barY, barW, 6), pkmn.HPPercent);
+        // ── RIGHT SIDE: Name + Gender, HP bar, HP text ──
+        int rightX = rect.X + pad + leftW + pad;
+        int rightW = rect.Right - pad - rightX;
+        int rightY = rect.Y + pad;
+        int rightH = rect.Height - pad * 2;
+        int rowH = rightH / 4; // 4 rows: name, hp bar, hp text, status/item
 
-        // HP text
-        string hpText = $"{pkmn.CurrentHP}/{pkmn.MaxHP}";
-        DrawText(sb, fontRenderer, fallbackFont, hpText,
-            new Vector2(rect.X + pad, barY + 10), new Color(200, 200, 200), 2);
+        // Row 1: Name + Gender
+        string name = pkmn.Nickname;
+        DrawText(sb, uiFont, name,
+            new Vector2(rightX, rightY), Color.White, fontScale);
 
-        // Status
-        if (pkmn.StatusAbbreviation != null)
+        // Gender icon next to name
+        if (pkmn.Gender != Pokemon.Gender.Unknown)
         {
-            DrawText(sb, fontRenderer, fallbackFont, pkmn.StatusAbbreviation,
-                new Vector2(rect.X + pad + 100, barY + 10), new Color(255, 100, 100), 2);
+            int nameW = uiFont.MeasureWidth(name);
+            string genderSym = pkmn.Gender == Pokemon.Gender.Male ? "M" : "F";
+            Color genderColor = pkmn.Gender == Pokemon.Gender.Male
+                ? new Color(80, 140, 255) : new Color(255, 100, 130);
+            DrawText(sb, uiFont, genderSym,
+                new Vector2(rightX + nameW + uiFont.CharWidth / 2, rightY), genderColor, fontScale);
         }
 
-        // Held item
+        // Row 2: HP bar
+        int barY = rightY + rowH;
+        int barH = Math.Max(2, rowH / 3);
+        UIStyle.DrawHPBar(sb, pixel, new Rectangle(rightX, barY, rightW, barH), pkmn.HPPercent);
+
+        // Row 3: HP text
+        float smallScale = Math.Max(1f, fontScale * 0.75f);
+        int hpY = barY + barH + pad / 2;
+        string hpText = $"{pkmn.CurrentHP}/{pkmn.MaxHP}";
+        DrawText(sb, uiFont, hpText,
+            new Vector2(rightX, hpY), new Color(200, 200, 200), smallScale);
+
+        // Status (next to HP text)
+        if (pkmn.StatusAbbreviation != null)
+        {
+            uiFont.Scale = (int)Math.Max(1, smallScale);
+            int hpTextW = uiFont.MeasureWidth(hpText);
+            DrawText(sb, uiFont, pkmn.StatusAbbreviation,
+                new Vector2(rightX + hpTextW + uiFont.CharWidth, hpY), new Color(255, 100, 100), smallScale);
+            uiFont.Scale = fontScale;
+        }
+
+        // Row 4: Held item
         if (pkmn.HeldItemId.HasValue)
         {
             var item = ItemRegistry.GetItem(pkmn.HeldItemId.Value);
             if (item != null)
             {
-                DrawText(sb, fontRenderer, fallbackFont, item.Name,
-                    new Vector2(rect.X + pad, barY + 26), new Color(180, 180, 220), 2);
+                int itemY = hpY + (int)(uiFont.CharHeight * smallScale / fontScale) + pad / 2;
+                DrawText(sb, uiFont, item.Name,
+                    new Vector2(rightX, itemY), new Color(180, 180, 220), smallScale);
             }
         }
     }
 
-    private static void DrawText(SpriteBatch sb, KermFontRenderer? fontRenderer,
-                                  SpriteFont fallbackFont, string text,
-                                  Vector2 position, Color color, int scale)
+    private static void DrawText(SpriteBatch sb, PixelFont uiFont, string text,
+                                  Vector2 position, Color color, float scale)
     {
-        if (fontRenderer != null)
-            fontRenderer.DrawString(sb, text, position, scale, color);
-        else
-            sb.DrawString(fallbackFont, text, position, color);
+        uiFont.Scale = (int)Math.Max(1, scale);
+        UIStyle.DrawShadowedText(sb, uiFont, text, position, color, Color.Black * 0.5f);
     }
 
     private static void DrawBorder(SpriteBatch sb, Texture2D pixel, Rectangle r, int thickness, Color color)

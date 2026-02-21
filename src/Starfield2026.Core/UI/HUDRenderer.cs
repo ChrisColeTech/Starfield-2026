@@ -24,7 +24,7 @@ public class HUDRenderer
         int screenW = device.Viewport.Width;
         int screenH = device.Viewport.Height;
         
-        _font.SetScaleFromResolution(screenW);
+        _font.Scale = Starfield2026.Core.UI.UITheme.GetFontScale(screenW);
         
         int margin = 10 + (screenW / 800 - 1) * 5;
         
