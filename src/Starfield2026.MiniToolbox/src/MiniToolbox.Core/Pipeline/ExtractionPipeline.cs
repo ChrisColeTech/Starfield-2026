@@ -30,7 +30,14 @@ public class ExtractionPipeline
     public async Task<ExtractionSummary> RunAsync(CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();
-        var jobs = _extractor.EnumerateJobs().ToList();
+        IEnumerable<ExtractionJob> enumerable = _extractor.EnumerateJobs();
+        if (!string.IsNullOrEmpty(_options.Filter))
+        {
+            string filter = _options.Filter;
+            enumerable = enumerable.Where(j =>
+                j.SourceFiles.Any(f => f.Contains(filter, StringComparison.OrdinalIgnoreCase)));
+        }
+        var jobs = enumerable.ToList();
         var results = new ConcurrentBag<ExtractionResult>();
 
         int completed = 0;
@@ -40,7 +47,7 @@ public class ExtractionPipeline
         foreach (var job in jobs)
         {
             job.TempPath = _workspace.GetJobTempPath(job.Id);
-            job.OutputPath = _workspace.GetJobOutputPath(job.Id);
+            job.OutputPath = _workspace.GetJobOutputPath(job.Id, job.Name);
         }
 
         // Process jobs in parallel
@@ -128,7 +135,7 @@ public class ExtractionPipeline
         }
 
         job.TempPath = _workspace.GetJobTempPath(job.Id);
-        job.OutputPath = _workspace.GetJobOutputPath(job.Id);
+        job.OutputPath = _workspace.GetJobOutputPath(job.Id, job.Name);
 
         var stopwatch = Stopwatch.StartNew();
         var result = await _extractor.ProcessJobAsync(job, cancellationToken);

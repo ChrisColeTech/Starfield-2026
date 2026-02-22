@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Starfield2026.Core.Controllers;
 using Starfield2026.Core.Input;
 using Starfield2026.Core.Rendering;
-using Starfield2026.Core.Rendering.Skeletal;
+using Starfield2026.ModelLoader.Skeletal;
 
 namespace Starfield2026.Core.Screens;
 
@@ -82,18 +82,40 @@ public class FreeRoamScreen : IGameScreen
 
     public void LoadCharacter(string folderPath)
     {
+        // Clear stale log
+        string logPath = System.IO.Path.Combine(AppContext.BaseDirectory, "character_load.log");
+        try { System.IO.File.Delete(logPath); } catch { }
+
         try
         {
             _character?.Dispose();
             _character = new OverworldCharacter();
             _character.Load(_device, folderPath);
             StatusText = $"Loaded: {System.IO.Path.GetFileName(folderPath)}";
+
+            // Diagnostic: log mesh stats
+            var (positions, normals, texCoords, indices, skinWeightIndices) =
+                ColladaSkeletalLoader.LoadGeometry(
+                    System.IO.Path.Combine(folderPath, "model.dae"));
+            var (weights, jointNames, _) =
+                ColladaSkeletalLoader.LoadSkinWeights(
+                    System.IO.Path.Combine(folderPath, "model.dae"));
+            System.IO.File.WriteAllText(logPath,
+                $"Folder: {folderPath}\n" +
+                $"Deduped verts: {positions.Length}\n" +
+                $"Indices: {indices.Length} ({indices.Length / 3} tris)\n" +
+                $"Skin weights: {weights.Length}\n" +
+                $"Joint names: {jointNames.Length}\n" +
+                $"SkinWeightIndices: {skinWeightIndices.Length}\n" +
+                $"SkinWeightIdx range: {(skinWeightIndices.Length > 0 ? $"{skinWeightIndices.Min()}..{skinWeightIndices.Max()}" : "empty")}\n");
         }
         catch (Exception ex)
         {
             _character?.Dispose();
             _character = null;
             StatusText = $"Load failed: {ex.Message}";
+            System.Diagnostics.Debug.WriteLine($"[FreeRoam] Character load failed: {ex}");
+            System.IO.File.WriteAllText(logPath, $"Folder: {folderPath}\n\n{ex}");
         }
     }
 

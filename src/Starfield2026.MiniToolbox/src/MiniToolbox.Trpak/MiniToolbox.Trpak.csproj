@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MiniToolbox.Core\MiniToolbox.Core.csproj" />
+    <ProjectReference Include="..\MiniToolbox.Manifests\MiniToolbox.Manifests.csproj" />
   </ItemGroup>
 
   <ItemGroup>

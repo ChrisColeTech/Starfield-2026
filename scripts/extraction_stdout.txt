@@ -1,0 +1,4 @@
+Loading hash cache...
+  408004 entries loaded.
+Opening archive: D:\Projects\Starfield-2026\src\Starfield2026.Tests\pokemon-lza-dump\arc
+  178109 files in descriptor, 9892 packs.

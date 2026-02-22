@@ -7,6 +7,7 @@ using MiniToolbox.Trpak.Exporters;
 using MiniToolbox.Trpak.Flatbuffers.GF.Animation;
 using MiniToolbox.Trpak.Flatbuffers.TR.Model;
 using System.Text.Json;
+using MiniToolbox.Manifests;
 
 namespace MiniToolbox.Trpak;
 
@@ -108,12 +109,16 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
                 }
             }
 
-            // Phase 5: Bake eye textures
+            // Phase 5: Bake layered material textures
             foreach (var mat in exportData.Materials)
             {
                 if (EyeTextureBaker.IsEyeMaterial(mat))
                 {
                     EyeTextureBaker.BakeEyeTexture(mat, job.TempPath, texOutDir);
+                }
+                else if (TrinityTextureBaker.NeedsLayerBaking(mat))
+                {
+                    TrinityTextureBaker.BakeLayeredTexture(mat, job.TempPath, texOutDir);
                 }
             }
 
@@ -122,7 +127,7 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
             Directory.CreateDirectory(clipOutDir);
 
             int animIndex = 0;
-            var clipManifestEntries = new List<object>();
+            var clipManifestEntries = new List<ManifestClipEntry>();
 
             if (exportData.Armature != null)
             {
@@ -169,14 +174,14 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
                             TrinityColladaExporter.ExportWithAnimation(clipDae, exportData, animDecoder);
                         }
 
-                        clipManifestEntries.Add(new
+                        clipManifestEntries.Add(new ManifestClipEntry
                         {
-                            index = animIndex,
-                            id = clipId,
-                            sourceName = clipName,
-                            file = (_splitMode ? "clips/" : "animations/") + clipId + ".dae",
-                            frameCount = (int)animDecoder.FrameCount,
-                            fps = (int)(animDecoder.FrameRate > 0 ? animDecoder.FrameRate : 30)
+                            Index = animIndex,
+                            Id = clipId,
+                            SourceName = clipName,
+                            File = (_splitMode ? "clips/" : "animations/") + clipId + ".dae",
+                            FrameCount = (int)animDecoder.FrameCount,
+                            Fps = (int)(animDecoder.FrameRate > 0 ? animDecoder.FrameRate : 30)
                         });
 
                         result.OutputFiles.Add($"{(_splitMode ? "clips" : "animations")}/{clipId}.dae");
@@ -201,19 +206,17 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
             }
 
             // Phase 7: Write manifest immediately
-            var manifest = new
+            var manifest = new ExportManifest
             {
-                version = 1,
-                format = Path.GetExtension(modelOut).TrimStart('.'),
-                modelFile = Path.GetFileName(modelOut),
-                animationMode = _splitMode ? "split" : "baked",
-                rawFiles = ".raw",
-                textures = exportedTextures.ToArray(),
-                clips = clipManifestEntries.ToArray()
+                Format = Path.GetExtension(modelOut).TrimStart('.'),
+                ModelFile = Path.GetFileName(modelOut),
+                AnimationMode = _splitMode ? "split" : "baked",
+                Textures = exportedTextures,
+                Clips = clipManifestEntries
             };
 
             string manifestPath = Path.Combine(job.OutputPath, "manifest.json");
-            await File.WriteAllTextAsync(manifestPath, JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }), cancellationToken);
+            await ManifestSerializer.WriteAsync(manifestPath, manifest, cancellationToken);
             result.OutputFiles.Add("manifest.json");
 
             // Record stats

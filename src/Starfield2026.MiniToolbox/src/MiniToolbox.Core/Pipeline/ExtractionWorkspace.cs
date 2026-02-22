@@ -51,11 +51,12 @@ public class ExtractionWorkspace : IDisposable
     }
 
     /// <summary>
-    /// Gets output path for a specific job.
+    /// Gets output path for a specific job, using displayName for the folder if provided.
     /// </summary>
-    public string GetJobOutputPath(string jobId)
+    public string GetJobOutputPath(string jobId, string? displayName = null)
     {
-        string path = Path.Combine(_outputRoot, jobId);
+        string folderName = !string.IsNullOrWhiteSpace(displayName) ? displayName : jobId;
+        string path = Path.Combine(_outputRoot, folderName);
         Directory.CreateDirectory(path);
         return path;
     }

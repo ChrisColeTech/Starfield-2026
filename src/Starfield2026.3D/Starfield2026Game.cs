@@ -10,7 +10,7 @@ using Starfield2026.Core.Managers;
 using Starfield2026.Core.Maps;
 using Starfield2026.Core.Rendering;
 using Starfield2026.Core.Save;
-using Starfield2026.Core.Rendering.Skeletal;
+using Starfield2026.ModelLoader.Skeletal;
 using Starfield2026.Core.Screens;
 using Starfield2026.Core.Screens.Battle;
 using Starfield2026.Core.Systems;
@@ -85,8 +85,11 @@ public class Starfield2026Game : Game
         InitializeDatabase();
 
         // Sync character manifests with DB (only rescans if count changed)
-        string modelsRoot = Path.Combine(AppContext.BaseDirectory, "Models", "Characters");
-        ManifestScanner.Sync(_database, modelsRoot);
+        string modelsRoot = Path.Combine(AppContext.BaseDirectory, "Models");
+        var scannedEntries = ManifestScanner.Scan(modelsRoot);
+        int dbCharCount = _database.GetCharacterCount();
+        if (dbCharCount != scannedEntries.Count)
+            _database.RebuildCharacters(scannedEntries);
 
         InitializeScreens();
 
@@ -203,11 +206,13 @@ public class Starfield2026Game : Game
             });
         };
 
+#pragma warning disable CS0162 // Unreachable code (toggle DebugStartInBattle for testing)
         if (DebugStartInBattle)
         {
             _mode = GameMode.Battle;
             _battleScreen.EnterBattle();
         }
+#pragma warning restore CS0162
     }
 
     protected override void Update(GameTime gameTime)
@@ -281,16 +286,14 @@ public class Starfield2026Game : Game
 
             if (input.CancelPressed && !_screens.IsTransitioning)
             {
-                IGameScreen next;
-                string name;
-                switch (_screens.ActiveScreen)
+                var (next, name) = _screens.ActiveScreen switch
                 {
-                    case OverworldScreen: next = _driving; name = "driving"; break;
-                    case DrivingScreen: next = _spaceflight; name = "space"; break;
-                    case SpaceFlightScreen: next = _freeRoam; name = "freeroam"; break;
-                    case FreeRoamScreen: next = _overworld; name = "overworld"; break;
-                    default: next = _overworld; name = "overworld"; break;
-                }
+                    OverworldScreen => ((IGameScreen)_driving, "driving"),
+                    DrivingScreen => ((IGameScreen)_spaceflight, "space"),
+                    SpaceFlightScreen => ((IGameScreen)_freeRoam, "freeroam"),
+                    FreeRoamScreen => ((IGameScreen)_overworld, "overworld"),
+                    _ => ((IGameScreen)_overworld, "overworld"),
+                };
                 _screens.TransitionTo(next, name);
             }
         }

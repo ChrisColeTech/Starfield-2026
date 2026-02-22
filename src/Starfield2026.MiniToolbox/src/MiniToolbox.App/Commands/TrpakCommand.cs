@@ -1,8 +1,12 @@
 using MiniToolbox.Core.Pipeline;
+using MiniToolbox.Core.Texture;
 using MiniToolbox.Hashes;
 using MiniToolbox.Trpak;
 using MiniToolbox.Trpak.Archive;
+using MiniToolbox.Trpak.Decoders;
+using MiniToolbox.Trpak.Exporters;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace MiniToolbox.App.Commands;
 
@@ -13,15 +17,21 @@ public static class TrpakCommand
 {
     public static int Run(string[] args)
     {
+        // Auto-flush stdout so output is always visible
+        Console.SetOut(new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true });
         string? arcDir = null;
         string? modelPath = null;
         string? outputDir = null;
+        string? convertDir = null;
+        int skip = 0;
+        int limit = int.MaxValue;
         bool listMode = false;
         bool allMode = false;
         bool scanMode = false;
         int parallelism = Environment.ProcessorCount;
         var format = ModelFormat.Dae;
         var animMode = AnimationMode.Split;
+        string? filter = null;
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -61,7 +71,26 @@ public static class TrpakCommand
                 case "--baked":
                     animMode = AnimationMode.Baked;
                     break;
+                case "--filter":
+                    filter = args[++i];
+                    break;
+                case "--convert-dir":
+                    convertDir = args[++i];
+                    break;
+                case "--skip":
+                    skip = int.Parse(args[++i]);
+                    break;
+                case "--limit":
+                    limit = int.Parse(args[++i]);
+                    break;
             }
+        }
+
+        // Convert-dir mode doesn't need --arc
+        if (!string.IsNullOrWhiteSpace(convertDir))
+        {
+            outputDir ??= Path.Combine(convertDir, "_converted");
+            return RunConvertDir(convertDir, outputDir, filter, skip, limit);
         }
 
         if (string.IsNullOrWhiteSpace(arcDir))
@@ -73,15 +102,21 @@ public static class TrpakCommand
         // Load hash cache
         Console.WriteLine("Loading hash cache...");
         var hashCache = new TrpakHashCache();
-        string hashFile = Path.Combine(AppContext.BaseDirectory, "hashes_inside_fd.txt");
-        if (File.Exists(hashFile))
+        string[] hashSearchPaths = new[]
         {
-            hashCache.LoadHashList(File.ReadAllLines(hashFile));
-            Console.WriteLine($"  {hashCache.Count} entries loaded.");
+            Path.Combine(arcDir, "hashes_inside_fd.txt"),
+            Path.Combine(AppContext.BaseDirectory, "hashes_inside_fd.txt"),
+        };
+
+        string? hashFile = hashSearchPaths.FirstOrDefault(File.Exists);
+        if (hashFile != null)
+        {
+            hashCache.LoadHashList(File.ReadLines(hashFile));
+            Console.WriteLine($"  {hashCache.Count} entries loaded from {hashFile}");
         }
         else
         {
-            Console.Error.WriteLine($"  WARNING: {hashFile} not found - will use raw hashes.");
+            Console.Error.WriteLine($"  WARNING: hashes_inside_fd.txt not found - will use raw hashes.");
         }
 
         // Open archive
@@ -149,7 +184,7 @@ public static class TrpakCommand
         if (allMode)
         {
             outputDir ??= Path.Combine(Directory.GetCurrentDirectory(), "export_all");
-            return RunAllAsync(loader, outputDir, format, animMode, parallelism).GetAwaiter().GetResult();
+            return RunAllAsync(loader, outputDir, format, animMode, parallelism, filter).GetAwaiter().GetResult();
         }
 
         // Single model mode
@@ -180,6 +215,7 @@ public static class TrpakCommand
         Console.WriteLine("  -p, --parallel Max parallel jobs (default: CPU count)");
         Console.WriteLine("  --list         List all available models");
         Console.WriteLine("  --all          Extract all models in parallel");
+        Console.WriteLine("  --filter       Only extract models whose path contains this string");
         Console.WriteLine("  --split        Export animations as clip-only DAEs (default)");
         Console.WriteLine("  --baked        Export animations with full baked geometry per clip");
     }
@@ -331,11 +367,13 @@ public static class TrpakCommand
         return 0;
     }
 
-    private static async Task<int> RunAllAsync(TrpfsLoader loader, string outputDir, ModelFormat format, AnimationMode animMode, int parallelism)
+    private static async Task<int> RunAllAsync(TrpfsLoader loader, string outputDir, ModelFormat format, AnimationMode animMode, int parallelism, string? filter = null)
     {
         Console.WriteLine($"Batch extracting all models (parallel: {parallelism})");
         Console.WriteLine($"Output: {outputDir}");
         Console.WriteLine($"Format: {format}");
+        if (filter != null)
+            Console.WriteLine($"Filter: {filter}");
         Console.WriteLine();
 
         var options = new ExtractionOptions
@@ -344,11 +382,15 @@ public static class TrpakCommand
             KeepRawFiles = true,
             ContinueOnError = true,
             OutputFormat = format.ToString().ToLowerInvariant(),
-            AnimationMode = animMode.ToString().ToLowerInvariant()
+            AnimationMode = animMode.ToString().ToLowerInvariant(),
+            Filter = filter
         };
 
         var extractor = new TrpakFileGroupExtractor(loader, options);
-        var jobCount = extractor.EnumerateJobs().Count();
+        var jobCount = extractor.EnumerateJobs()
+            .Where(j => string.IsNullOrEmpty(filter) ||
+                ((string)j.Metadata["modelPath"]).Contains(filter, StringComparison.OrdinalIgnoreCase))
+            .Count();
 
         Console.WriteLine($"Found {jobCount} models");
         Console.WriteLine();
@@ -455,7 +497,9 @@ public static class TrpakCommand
 
         // Iterate packs one at a time — stream to disk
         string logPath = Path.Combine(outputDir, "_scan_log.txt");
+        string hashListPath = Path.Combine(outputDir, "hashes_inside_fd.txt");
         using var log = new StreamWriter(logPath, false) { AutoFlush = true };
+        using var hashList = new StreamWriter(hashListPath, false) { AutoFlush = true };
         log.WriteLine($"Scan started at {DateTime.Now}");
 
         for (int packIdx = 0; packIdx < totalPacks; packIdx++)
@@ -568,6 +612,7 @@ public static class TrpakCommand
                     {
                         string trmdlName = modelBaseName + ".trmdl";
                         File.WriteAllBytes(Path.Combine(packDir, trmdlName), packFileData[trmdlFileIndex].data);
+                        hashList.WriteLine($"0x{packFileData[trmdlFileIndex].hash:X16} {safeName}/{trmdlName}");
                         filesWritten++;
                     }
 
@@ -631,6 +676,7 @@ public static class TrpakCommand
                         }
 
                         File.WriteAllBytes(Path.Combine(packDir, fileName), data);
+                        hashList.WriteLine($"0x{fileHash:X16} {safeName}/{fileName}");
                         filesWritten++;
                     }
                     packsWithModels++;
@@ -657,6 +703,168 @@ public static class TrpakCommand
         Console.WriteLine($"    Output:          {outputDir}");
 
         return 0;
+    }
+
+    /// <summary>
+    /// Convert extracted loose Trinity files to DAE + PNG textures.
+    /// Iterates each subdirectory containing a .trmdl + .trmsh + .trmbf.
+    /// </summary>
+    private static int RunConvertDir(string inputDir, string outputDir, string? filter, int skip = 0, int limit = int.MaxValue)
+    {
+        Console.WriteLine($"\nConvert-dir: converting extracted files to DAE + textures");
+        Console.WriteLine($"  Input:  {inputDir}");
+        Console.WriteLine($"  Output: {outputDir}");
+        if (filter != null)
+            Console.WriteLine($"  Filter: {filter}");
+        if (skip > 0)
+            Console.WriteLine($"  Skip:   {skip}");
+        if (limit < int.MaxValue)
+            Console.WriteLine($"  Limit:  {limit}");
+
+        Directory.CreateDirectory(outputDir);
+
+        // Find all subdirectories with .trmdl files
+        var modelDirs = new List<(string dir, string trmdlFile)>();
+        foreach (var dir in Directory.GetDirectories(inputDir))
+        {
+            string dirName = Path.GetFileName(dir);
+
+            // Apply filter if set
+            if (filter != null && !Regex.IsMatch(dirName, filter, RegexOptions.IgnoreCase))
+                continue;
+
+            var trmdlFiles = Directory.GetFiles(dir, "*.trmdl");
+            var trmshFiles = Directory.GetFiles(dir, "*.trmsh");
+            var trmbfFiles = Directory.GetFiles(dir, "*.trmbf");
+
+            if (trmdlFiles.Length == 0 || trmshFiles.Length == 0 || trmbfFiles.Length == 0)
+                continue;
+
+            // Pick the largest .trmdl as the primary (skip tiny fallback files)
+            var primaryTrmdl = trmdlFiles
+                .OrderByDescending(f => new FileInfo(f).Length)
+                .First();
+
+            modelDirs.Add((dir, primaryTrmdl));
+        }
+
+        Console.WriteLine($"  Found {modelDirs.Count} convertible model packs.");
+        if (modelDirs.Count == 0) return 0;
+
+        int converted = 0, failed = 0, skipped = 0;
+
+        for (int i = 0; i < modelDirs.Count; i++)
+        {
+            if (i < skip) { skipped++; continue; }
+            if (converted + failed >= limit) break;
+
+            var (dir, trmdlFile) = modelDirs[i];
+            string packName = Path.GetFileName(dir);
+            string modelOutDir = Path.Combine(outputDir, packName);
+
+            Console.Write($"\r  [{i + 1}/{modelDirs.Count}] {packName,-60}");
+
+            // Pre-validate schema FlatBuffers (.trmdl/.trmsh only — .trmbf has large binary buffers that confuse vtable checks)
+            bool valid = true;
+            foreach (var fb in Directory.GetFiles(dir).Where(f =>
+                f.EndsWith(".trmdl") || f.EndsWith(".trmsh")))
+            {
+                if (!ValidateFlatBuffer(fb))
+                {
+                    Console.Error.WriteLine($"\n    SKIP: {packName}: corrupt FlatBuffer {Path.GetFileName(fb)}");
+                    valid = false;
+                    break;
+                }
+            }
+            if (!valid) { failed++; continue; }
+
+            try
+            {
+                Directory.CreateDirectory(modelOutDir);
+
+                // Phase 1: Decode model (uses directory-mode fallback for LZA)
+                var decoder = new TrinityModelDecoder(trmdlFile);
+                var exportData = decoder.CreateExportData();
+
+                if (exportData.Submeshes.Count == 0)
+                {
+                    failed++;
+                    continue; // No geometry — skip
+                }
+
+                // Phase 2: Export DAE
+                string daeFile = Path.Combine(modelOutDir, "model.dae");
+                TrinityColladaExporter.Export(daeFile, exportData);
+
+                // Phase 3: Convert BNTX textures to PNG
+                string texDir = Path.Combine(modelOutDir, "textures");
+                Directory.CreateDirectory(texDir);
+
+                foreach (var bntxFile in Directory.GetFiles(dir, "*.bntx"))
+                {
+                    try
+                    {
+                        var bntxBytes = File.ReadAllBytes(bntxFile);
+                        var textures = BntxDecoder.Decode(bntxBytes);
+                        foreach (var tex in textures)
+                        {
+                            string pngPath = Path.Combine(texDir, tex.Name + ".png");
+                            tex.SavePng(pngPath);
+                        }
+                    }
+                    catch { /* skip bad textures */ }
+                }
+
+                converted++;
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"\n    FAIL: {packName}: {ex.Message}");
+                failed++;
+            }
+        }
+
+        Console.WriteLine($"\r  Done.{new string(' ', 70)}");
+        Console.WriteLine($"\n  Results:");
+        Console.WriteLine($"    Converted: {converted}");
+        Console.WriteLine($"    Failed:    {failed}");
+        if (skipped > 0)
+            Console.WriteLine($"    Skipped:   {skipped}");
+        Console.WriteLine($"    Output:    {outputDir}");
+
+        return failed > 0 && converted == 0 ? 1 : 0;
+    }
+
+    /// <summary>
+    /// Validate that a file contains a plausible FlatBuffer.
+    /// Checks: minimum size, root table offset within bounds, vtable sanity.
+    /// </summary>
+    private static bool ValidateFlatBuffer(string file)
+    {
+        try
+        {
+            var data = File.ReadAllBytes(file);
+            if (data.Length < 8) return false; // Too small for any FlatBuffer
+
+            // FlatBuffer format: first 4 bytes = offset to root table
+            int rootOffset = BitConverter.ToInt32(data, 0);
+            if (rootOffset < 4 || rootOffset >= data.Length - 4) return false;
+
+            // At rootOffset, there's a signed offset to the vtable
+            int vtableOffset = BitConverter.ToInt32(data, rootOffset);
+            int vtablePos = rootOffset - vtableOffset;
+            if (vtablePos < 0 || vtablePos >= data.Length - 2) return false;
+
+            // Vtable starts with its own size (uint16)
+            int vtableSize = BitConverter.ToUInt16(data, vtablePos);
+            if (vtableSize < 4 || vtablePos + vtableSize > data.Length) return false;
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     /// <summary>

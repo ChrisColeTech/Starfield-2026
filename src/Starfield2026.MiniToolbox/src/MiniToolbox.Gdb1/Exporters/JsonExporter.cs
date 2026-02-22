@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MiniToolbox.Gdb1.Models;
+using MiniToolbox.Manifests;
 
 namespace MiniToolbox.Gdb1.Exporters;
 
@@ -9,7 +10,7 @@ namespace MiniToolbox.Gdb1.Exporters;
 /// </summary>
 public static class JsonExporter
 {
-    private static readonly JsonSerializerOptions Options = new()
+    private static readonly JsonSerializerOptions AnimationOptions = new()
     {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -38,7 +39,7 @@ public static class JsonExporter
             }).ToList()
         };
 
-        string json = JsonSerializer.Serialize(data, Options);
+        string json = JsonSerializer.Serialize(data, AnimationOptions);
         File.WriteAllText(outputPath, json);
     }
 
@@ -47,17 +48,13 @@ public static class JsonExporter
     /// </summary>
     public static void ExportManifest(ModelPackage package, string outputPath)
     {
-        var manifest = new ManifestJson
+        var manifest = new ExportManifest
         {
+            Format = "obj",
             Id = package.Id,
-            Name = package.Name,
-            Model = new ModelInfoJson
-            {
-                File = "model.obj",
-                Vertices = package.Mesh?.Vertices.Count ?? 0,
-                Triangles = package.Mesh?.TriangleCount ?? 0
-            },
-            Textures = package.Textures.Select(t => new TextureInfoJson
+            ModelFile = "model.obj",
+            Textures = package.Textures.Select(t => t.FileName).ToList(),
+            TextureDetails = package.Textures.Select(t => new ManifestTextureEntry
             {
                 Name = t.Name,
                 File = t.FileName,
@@ -66,24 +63,24 @@ public static class JsonExporter
                 Format = t.FormatName,
                 Size = t.DataSize
             }).ToList(),
-            Clips = package.Animations.Select(a => new ClipInfoJson
+            Clips = package.Animations.Select((a, i) => new ManifestClipEntry
             {
+                Index = i,
                 Name = a.Name,
                 Duration = a.Duration,
-                Tracks = a.Tracks.Count
+                TrackCount = a.Tracks.Count
             }).ToList(),
-            Source = new SourceInfoJson
+            Source = new ManifestSourceInfo
             {
                 ModelGdb = package.SourceModelGdb,
                 ModelBin = package.SourceModelBin
             }
         };
 
-        string json = JsonSerializer.Serialize(manifest, Options);
-        File.WriteAllText(outputPath, json);
+        ManifestSerializer.Write(outputPath, manifest);
     }
 
-    // JSON DTOs
+    // Animation-specific JSON DTOs (not manifest-related)
     private class AnimationJson
     {
         public string Name { get; set; } = "";
@@ -103,45 +100,5 @@ public static class JsonExporter
     {
         public float Time { get; set; }
         public int[] Color { get; set; } = Array.Empty<int>();
-    }
-
-    private class ManifestJson
-    {
-        public string Id { get; set; } = "";
-        public string Name { get; set; } = "";
-        public ModelInfoJson Model { get; set; } = new();
-        public List<TextureInfoJson> Textures { get; set; } = new();
-        public List<ClipInfoJson> Clips { get; set; } = new();
-        public SourceInfoJson Source { get; set; } = new();
-    }
-
-    private class ModelInfoJson
-    {
-        public string File { get; set; } = "";
-        public int Vertices { get; set; }
-        public int Triangles { get; set; }
-    }
-
-    private class TextureInfoJson
-    {
-        public string Name { get; set; } = "";
-        public string File { get; set; } = "";
-        public int Width { get; set; }
-        public int Height { get; set; }
-        public string Format { get; set; } = "";
-        public int Size { get; set; }
-    }
-
-    private class ClipInfoJson
-    {
-        public string Name { get; set; } = "";
-        public float Duration { get; set; }
-        public int Tracks { get; set; }
-    }
-
-    private class SourceInfoJson
-    {
-        public string ModelGdb { get; set; } = "";
-        public string ModelBin { get; set; } = "";
     }
 }

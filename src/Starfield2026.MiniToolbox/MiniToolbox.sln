@@ -11,9 +11,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniToolbox.Core", "src\Min
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniToolbox.App", "src\MiniToolbox.App\MiniToolbox.App.csproj", "{F234AE90-4ECB-4414-A2E9-AEBE44DE68AA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniToolbox.Garc", "src\MiniToolbox.Garc\MiniToolbox.Garc.csproj", "{3D6A011E-4BE3-412C-9A53-571E4367C03E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniToolbox.Spica", "src\MiniToolbox.Spica\MiniToolbox.Spica.csproj", "{3D6A011E-4BE3-412C-9A53-571E4367C03E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniToolbox.Gdb1", "src\MiniToolbox.Gdb1\MiniToolbox.Gdb1.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniToolbox.Manifests", "src\MiniToolbox.Manifests\MiniToolbox.Manifests.csproj", "{DAF031AB-13A1-4271-992B-57546FB51F24}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -85,6 +87,18 @@ Global
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|x64.Build.0 = Release|Any CPU
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|x86.ActiveCfg = Release|Any CPU
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|x86.Build.0 = Release|Any CPU
+		{DAF031AB-13A1-4271-992B-57546FB51F24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DAF031AB-13A1-4271-992B-57546FB51F24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DAF031AB-13A1-4271-992B-57546FB51F24}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DAF031AB-13A1-4271-992B-57546FB51F24}.Debug|x64.Build.0 = Debug|Any CPU
+		{DAF031AB-13A1-4271-992B-57546FB51F24}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DAF031AB-13A1-4271-992B-57546FB51F24}.Debug|x86.Build.0 = Debug|Any CPU
+		{DAF031AB-13A1-4271-992B-57546FB51F24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DAF031AB-13A1-4271-992B-57546FB51F24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DAF031AB-13A1-4271-992B-57546FB51F24}.Release|x64.ActiveCfg = Release|Any CPU
+		{DAF031AB-13A1-4271-992B-57546FB51F24}.Release|x64.Build.0 = Release|Any CPU
+		{DAF031AB-13A1-4271-992B-57546FB51F24}.Release|x86.ActiveCfg = Release|Any CPU
+		{DAF031AB-13A1-4271-992B-57546FB51F24}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -95,5 +109,6 @@ Global
 		{F234AE90-4ECB-4414-A2E9-AEBE44DE68AA} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{3D6A011E-4BE3-412C-9A53-571E4367C03E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{DAF031AB-13A1-4271-992B-57546FB51F24} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

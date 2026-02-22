@@ -52,4 +52,9 @@ public class ExtractionOptions
     /// Animation export mode: "split" or "baked".
     /// </summary>
     public string AnimationMode { get; set; } = "split";
+
+    /// <summary>
+    /// Optional filter string. When set, only jobs whose source files contain this string are processed.
+    /// </summary>
+    public string? Filter { get; set; }
 }

@@ -13,7 +13,8 @@
     <ProjectReference Include="..\MiniToolbox.Trpak\MiniToolbox.Trpak.csproj" />
     <ProjectReference Include="..\MiniToolbox.Gdb1\MiniToolbox.Gdb1.csproj" />
     <ProjectReference Include="..\MiniToolbox.Hashes\MiniToolbox.Hashes.csproj" />
-    <ProjectReference Include="..\MiniToolbox.Garc\MiniToolbox.Garc.csproj" />
+    <ProjectReference Include="..\MiniToolbox.Spica\MiniToolbox.Spica.csproj" />
+    <ProjectReference Include="..\MiniToolbox.Manifests\MiniToolbox.Manifests.csproj" />
   </ItemGroup>
 
 </Project>

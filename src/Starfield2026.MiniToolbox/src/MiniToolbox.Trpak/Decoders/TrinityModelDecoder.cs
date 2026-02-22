@@ -93,31 +93,110 @@ namespace MiniToolbox.Trpak.Decoders
         {
             Name = Path.GetFileNameWithoutExtension(modelFile);
             _modelPath = new PathString(modelFile);
+            string modelDir = Path.GetDirectoryName(modelFile)!;
 
             var mdl = FlatBufferConverter.DeserializeFrom<TRMDL>(modelFile);
 
-            // Meshes
-            if (loadAllLods)
+            // Check if TRMDL references are valid AND resolvable (LZA has binary garbage or non-existent paths)
+            bool hasValidRefs = mdl.Meshes != null && mdl.Meshes.Length > 0
+                && IsValidPathRef(mdl.Meshes[0]?.PathName)
+                && File.Exists(_modelPath.Combine(mdl.Meshes[0].PathName));
+
+            if (hasValidRefs)
             {
-                foreach (var mesh in mdl.Meshes)
+                // Normal path: resolve files via TRMDL references (works for SV)
+                if (loadAllLods)
+                {
+                    foreach (var mesh in mdl.Meshes)
+                        ParseMesh(_modelPath.Combine(mesh.PathName));
+                }
+                else
+                {
+                    var mesh = mdl.Meshes[0]; // LOD0
                     ParseMesh(_modelPath.Combine(mesh.PathName));
+                }
+
+                _baseSkeletonCategoryHint = GuessBaseSkeletonCategoryFromMesh(
+                    mdl.Meshes[0].PathName);
+
+                foreach (var mat in mdl.Materials)
+                    ParseMaterial(_modelPath.Combine(mat));
+
+                if (mdl.Skeleton != null)
+                    ParseArmature(_modelPath.Combine(mdl.Skeleton.PathName));
             }
             else
             {
-                var mesh = mdl.Meshes[0]; // LOD0
-                ParseMesh(_modelPath.Combine(mesh.PathName));
+                // Directory mode: discover files by extension (works for LZA loose files)
+                var meshFiles = Directory.GetFiles(modelDir, "*.trmsh");
+
+                // Fallback: if no .trmsh found, probe .bin files as potential TRMSH
+                if (meshFiles.Length == 0)
+                {
+                    var probedMeshFiles = new List<string>();
+                    foreach (var binFile in Directory.GetFiles(modelDir, "*.bin"))
+                    {
+                        try
+                        {
+                            // TRMSH schema files are small (100-5000 bytes)
+                            var fi = new FileInfo(binFile);
+                            if (fi.Length < 100 || fi.Length > 5000) continue;
+
+                            // FlatBuffer header validation before FlatSharp
+                            var data = File.ReadAllBytes(binFile);
+                            int rootOff = BitConverter.ToInt32(data, 0);
+                            if (rootOff < 4 || rootOff >= data.Length - 4) continue;
+                            int vtOff = BitConverter.ToInt32(data, rootOff);
+                            int vtPos = rootOff - vtOff;
+                            if (vtPos < 0 || vtPos >= data.Length - 4) continue;
+                            int vtSize = BitConverter.ToUInt16(data, vtPos);
+                            if (vtSize < 4 || vtPos + vtSize > data.Length) continue;
+
+                            var probe = FlatBufferConverter.DeserializeFrom<TRMSH>(data);
+                            if (probe?.Meshes != null && probe.Meshes.Length > 0)
+                                probedMeshFiles.Add(binFile);
+                        }
+                        catch { /* Not a TRMSH */ }
+                    }
+                    meshFiles = probedMeshFiles.ToArray();
+                }
+
+                foreach (var mf in (loadAllLods ? meshFiles : meshFiles.Take(1)))
+                {
+                    try { ParseMesh(mf); }
+                    catch { /* Skip invalid mesh files */ }
+                }
+
+                _baseSkeletonCategoryHint = GuessBaseSkeletonCategoryFromMesh(
+                    meshFiles.Length > 0 ? Path.GetFileName(meshFiles[0]) : null);
+
+                foreach (var mtrFile in Directory.GetFiles(modelDir, "*.trmtr"))
+                {
+                    try { ParseMaterial(mtrFile); }
+                    catch { /* Skip invalid material files */ }
+                }
+
+                var sklFiles = Directory.GetFiles(modelDir, "*.trskl");
+                if (sklFiles.Length > 0)
+                {
+                    try { ParseArmature(sklFiles[0]); }
+                    catch { /* Skip invalid skeleton files */ }
+                }
             }
+        }
 
-            _baseSkeletonCategoryHint = GuessBaseSkeletonCategoryFromMesh(
-                mdl.Meshes != null && mdl.Meshes.Length > 0 ? mdl.Meshes[0].PathName : null);
-
-            // Materials
-            foreach (var mat in mdl.Materials)
-                ParseMaterial(_modelPath.Combine(mat));
-
-            // Skeleton
-            if (mdl.Skeleton != null)
-                ParseArmature(_modelPath.Combine(mdl.Skeleton.PathName));
+        /// <summary>
+        /// Check if a TRMDL PathName reference contains valid filename characters.
+        /// LZA archives store binary data in PathName fields instead of paths.
+        /// </summary>
+        private static bool IsValidPathRef(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return false;
+            foreach (char c in path)
+            {
+                if (c < 0x20 || c > 0x7E) return false; // non-ASCII
+            }
+            return true;
         }
 
         #endregion
@@ -168,24 +247,79 @@ namespace MiniToolbox.Trpak.Decoders
         private void ParseMesh(string file)
         {
             var msh = FlatBufferConverter.DeserializeFrom<TRMSH>(file);
-            var buffers = FlatBufferConverter.DeserializeFrom<TRMBF>(_modelPath.Combine(msh.bufferFilePath)).TRMeshBuffers;
-            var shapeCnt = msh.Meshes.Count();
+
+            if (msh?.Meshes == null || msh.Meshes.Length == 0)
+                return; // No mesh data
+
+            // Resolve buffer file — try TRMSH reference first, fallback to directory scan
+            string meshDir = Path.GetDirectoryName(file)!;
+            string? bufferPath = null;
+
+            // Try 1: TRMSH.bufferFilePath via model path
+            if (!string.IsNullOrEmpty(msh.bufferFilePath))
+            {
+                string candidate = _modelPath.Combine(msh.bufferFilePath);
+                if (File.Exists(candidate))
+                    bufferPath = candidate;
+            }
+
+            // Try 2: bufferFilePath basename in mesh directory
+            if (bufferPath == null && IsValidPathRef(msh.bufferFilePath))
+            {
+                string candidate = Path.Combine(meshDir, Path.GetFileName(msh.bufferFilePath));
+                if (File.Exists(candidate))
+                    bufferPath = candidate;
+            }
+
+            // Try 3: find .trmbf files by extension in same directory
+            if (bufferPath == null)
+            {
+                var trmbfFiles = Directory.GetFiles(meshDir, "*.trmbf");
+                if (trmbfFiles.Length == 0)
+                    return; // No buffer file — skip this mesh entirely
+                bufferPath = trmbfFiles[0];
+            }
+
+            var trmbf = FlatBufferConverter.DeserializeFrom<TRMBF>(bufferPath);
+            if (trmbf?.TRMeshBuffers == null || trmbf.TRMeshBuffers.Length == 0)
+                return; // No buffer data
+
+            var buffers = trmbf.TRMeshBuffers;
+            var shapeCnt = msh.Meshes.Length;
+
             for (int i = 0; i < shapeCnt; i++)
             {
                 var meshShape = msh.Meshes[i];
+                if (meshShape == null) continue;
+
+                // Bounds check: buffer array must have this mesh index
+                if (i >= buffers.Length) break;
+                if (buffers[i]?.VertexBuffer == null || buffers[i]?.IndexBuffer == null)
+                    continue;
+
                 var vertBufs = buffers[i].VertexBuffer;
+                if (buffers[i].IndexBuffer.Length == 0) continue;
                 var indexBuf = buffers[i].IndexBuffer[0]; // LOD0
+
+                if (meshShape.meshParts == null || meshShape.meshParts.Length == 0)
+                    continue;
+                if (meshShape.vertexDeclaration == null || meshShape.vertexDeclaration.Length == 0)
+                    continue;
 
                 foreach (var part in meshShape.meshParts)
                 {
-                    MaterialNames.Add(part.MaterialName);
-                    SubmeshNames.Add($"{meshShape.Name}:{part.MaterialName}");
+                    if (part == null) continue;
+                    MaterialNames.Add(part.MaterialName ?? "");
+                    SubmeshNames.Add($"{meshShape.Name ?? "Mesh"}:{part.MaterialName ?? "Mat"}");
                     int declIndex = part.vertexDeclarationIndex;
                     if (declIndex < 0 || declIndex >= meshShape.vertexDeclaration.Length)
                         declIndex = 0;
-                    ParseMeshBuffer(meshShape.vertexDeclaration[declIndex], vertBufs, indexBuf,
+                    var decl = meshShape.vertexDeclaration[declIndex];
+                    if (decl?.vertexElements == null || decl.vertexElements.Length == 0)
+                        continue;
+                    ParseMeshBuffer(decl, vertBufs, indexBuf,
                         meshShape.IndexType, part.indexOffset, part.indexCount,
-                        meshShape.boneWeight, meshShape.Name);
+                        meshShape.boneWeight, meshShape.Name ?? "Mesh");
                 }
             }
         }
