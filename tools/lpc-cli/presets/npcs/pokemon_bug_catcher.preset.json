@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "bodyType": "teen",
+  "selections": [
+    {
+      "itemId": "body",
+      "variant": "light"
+    },
+    {
+      "itemId": "heads_human_male",
+      "variant": "light"
+    },
+    {
+      "itemId": "face_neutral",
+      "variant": "light"
+    },
+    {
+      "itemId": "hair_plain",
+      "variant": "dark brown"
+    },
+    {
+      "itemId": "torso_clothes_tshirt",
+      "variant": "forest"
+    },
+    {
+      "itemId": "legs_shorts",
+      "variant": "brown"
+    },
+    {
+      "itemId": "feet_shoes_basic",
+      "variant": "black"
+    },
+    {
+      "itemId": "shadow"
+    }
+  ]
+}

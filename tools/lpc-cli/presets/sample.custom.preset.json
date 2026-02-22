@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "bodyType": "male",
+  "selections": [
+    {
+      "itemId": "body",
+      "variant": "light"
+    },
+    {
+      "itemId": "wheelchair",
+      "variant": "blue"
+    },
+    {
+      "itemId": "shadow"
+    }
+  ]
+}

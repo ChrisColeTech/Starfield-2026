@@ -20,6 +20,11 @@ namespace MiniToolbox.Trpak.Archive
         // Pack cache: packHash → deserialized PackedArchive
         private readonly Dictionary<ulong, PackedArchive> _packCache = new();
 
+        // O(1) lookup indexes — replaces Array.IndexOf which was O(n)
+        private readonly Dictionary<ulong, int> _fdHashIndex;
+        private readonly Dictionary<ulong, int> _fsHashIndex;
+        private readonly Dictionary<ulong, int>? _fdUnusedHashIndex;
+
         public TrpfsLoader(string arcDirectory, TrpakHashCache? hashCache = null)
         {
             string trpfdPath = Path.Combine(arcDirectory, "data.trpfd");
@@ -33,13 +38,39 @@ namespace MiniToolbox.Trpak.Archive
             _fd = FlatBufferConverter.DeserializeFrom<CustomFileDescriptor>(trpfdPath);
             _fs = ReadFileSystem(_trpfsPath);
             _hashCache = hashCache ?? new TrpakHashCache();
+
+            // Build O(1) lookup indexes
+            _fdHashIndex = BuildHashIndex(_fd.FileHashes);
+            _fsHashIndex = BuildHashIndex(_fs.FileHashes);
+            if (_fd.UnusedHashes != null && _fd.UnusedHashes.Length > 0)
+                _fdUnusedHashIndex = BuildHashIndex(_fd.UnusedHashes);
+        }
+
+        private static Dictionary<ulong, int> BuildHashIndex(ulong[]? hashes)
+        {
+            var dict = new Dictionary<ulong, int>();
+            if (hashes == null) return dict;
+            for (int i = 0; i < hashes.Length; i++)
+                dict.TryAdd(hashes[i], i);
+            return dict;
         }
 
         /// <summary>Number of files in the descriptor.</summary>
         public int FileCount => _fd.FileHashes?.Length ?? 0;
 
+        /// <summary>Raw file hashes from the descriptor.</summary>
+        public ulong[] FileHashes => _fd.FileHashes ?? Array.Empty<ulong>();
+
         /// <summary>All pack names registered in the descriptor.</summary>
         public IReadOnlyList<string> PackNames => _fd.PackNames;
+
+        /// <summary>Get file info (pack index) for a file by its index in FileHashes.</summary>
+        public Flatbuffers.TR.ResourceDictionary.FileInfo? GetFileInfo(int fileIndex)
+        {
+            if (_fd.FileInfo != null && fileIndex >= 0 && fileIndex < _fd.FileInfo.Length)
+                return _fd.FileInfo[fileIndex];
+            return null;
+        }
 
         /// <summary>
         /// Extract a file by its romfs-relative path (e.g. "pokemon/pokemon_model/pm0025/pm0025_00/mdl/pm0025_00.trmdl").
@@ -106,6 +137,41 @@ namespace MiniToolbox.Trpak.Archive
             return FindFiles(name => name.EndsWith(extension, StringComparison.OrdinalIgnoreCase));
         }
 
+        /// <summary>
+        /// Get the pack index for a given file hash.
+        /// </summary>
+        public int GetPackIndexForFile(ulong fileHash)
+        {
+            if (_fd.FileHashes == null || _fd.FileInfo == null) return -1;
+            if (!_fdHashIndex.TryGetValue(fileHash, out int idx)) return -1;
+            return (int)_fd.FileInfo[idx].PackIndex;
+        }
+
+        /// <summary>
+        /// Get all file hashes that belong to a given pack index.
+        /// </summary>
+        public List<ulong> GetFilesInPack(int packIndex)
+        {
+            var result = new List<ulong>();
+            if (_fd.FileHashes == null || _fd.FileInfo == null) return result;
+            for (int i = 0; i < _fd.FileHashes.Length; i++)
+            {
+                if ((int)_fd.FileInfo[i].PackIndex == packIndex)
+                    result.Add(_fd.FileHashes[i]);
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Get the pack name for a given pack index.
+        /// </summary>
+        public string? GetPackName(int packIndex)
+        {
+            if (_fd.PackNames != null && packIndex >= 0 && packIndex < _fd.PackNames.Length)
+                return _fd.PackNames[packIndex];
+            return null;
+        }
+
         #region Private helpers
 
         private static string NormalizePath(string path)
@@ -140,8 +206,7 @@ namespace MiniToolbox.Trpak.Archive
             if (_fd.FileHashes == null || _fd.FileInfo == null || _fd.PackNames == null || _fd.PackInfo == null)
                 return false;
 
-            int idx = Array.IndexOf(_fd.FileHashes, fileHash);
-            if (idx >= 0)
+            if (_fdHashIndex.TryGetValue(fileHash, out int idx))
             {
                 ulong packIndex = _fd.FileInfo[idx].PackIndex;
                 if (packIndex < (ulong)_fd.PackNames.Length && packIndex < (ulong)_fd.PackInfo.Length)
@@ -154,10 +219,9 @@ namespace MiniToolbox.Trpak.Archive
             }
 
             // Check unused files
-            if (_fd.UnusedHashes != null && _fd.UnusedFileInfo != null)
+            if (_fdUnusedHashIndex != null && _fd.UnusedFileInfo != null)
             {
-                int unusedIdx = Array.IndexOf(_fd.UnusedHashes, fileHash);
-                if (unusedIdx >= 0 && unusedIdx < _fd.UnusedFileInfo.Length)
+                if (_fdUnusedHashIndex.TryGetValue(fileHash, out int unusedIdx) && unusedIdx < _fd.UnusedFileInfo.Length)
                 {
                     ulong packIndex = _fd.UnusedFileInfo[unusedIdx].PackIndex;
                     if (packIndex < (ulong)_fd.PackNames.Length && packIndex < (ulong)_fd.PackInfo.Length)
@@ -172,27 +236,36 @@ namespace MiniToolbox.Trpak.Archive
             return false;
         }
 
+        private const int MaxPackCacheSize = 10;
+
         private bool TryGetPack(ulong packHash, long packSize, out PackedArchive pack)
         {
             if (_packCache.TryGetValue(packHash, out pack!))
                 return true;
 
-            int fileIndex = Array.IndexOf(_fs.FileHashes, packHash);
-            if (fileIndex < 0)
+            if (!_fsHashIndex.TryGetValue(packHash, out int fileIndex))
             {
                 pack = null!;
                 return false;
             }
 
-            // Read raw pack bytes from TRPFS
+            // Read raw pack bytes from TRPFS (streaming, not buffered)
             using var br = new BinaryReader(File.OpenRead(_trpfsPath));
             br.BaseStream.Position = (long)_fs.FileOffsets[fileIndex];
             byte[] packBytes = br.ReadBytes((int)packSize);
 
             pack = FlatBufferConverter.DeserializeFrom<PackedArchive>(packBytes);
+
+            // Evict oldest if cache is full
+            if (_packCache.Count >= MaxPackCacheSize)
+                _packCache.Remove(_packCache.Keys.First());
+
             _packCache[packHash] = pack;
             return true;
         }
+
+        /// <summary>Clear the pack cache to free memory.</summary>
+        public void ClearPackCache() => _packCache.Clear();
 
         private static int FindEntryIndex(PackedArchive pack, ulong fileHash)
         {

@@ -9,8 +9,7 @@ using Starfield2026.Core.Rendering;
 namespace Starfield2026.Core.UI.Screens;
 
 /// <summary>
-/// Two-level character select: pick a category, then pick a character.
-/// Categories are auto-grouped by folder prefix (tr → Trainers, pm → Pokemon, etc.).
+/// Two-level character select: pick a category (Characters/Pokemon), then scroll a list of model names.
 /// </summary>
 public class CharacterSelectScreen : IScreenOverlay
 {
@@ -18,98 +17,49 @@ public class CharacterSelectScreen : IScreenOverlay
     private enum Level { Category, Items }
 
     private const float FadeDuration = 0.25f;
-    private const int GridColumns = 4;
-    private const int GridRows = 3;
-    private const int ItemsPerPage = GridColumns * GridRows;
-    private const int CardSpacing = 10;
-    private const int BottomHeight = 50;
     private const int Padding = 20;
+    private const int CardSpacing = 10;
 
     private readonly Category[] _categories;
     private Level _level = Level.Category;
     private int _catIndex;
     private int _itemIndex;
-    private int _page;
+    private int _scrollOffset;
     private Phase _phase = Phase.FadeIn;
     private float _fadeTimer;
 
-    private enum BottomFocus { None, Prev, Next, Back }
-    private BottomFocus _bottomFocus = BottomFocus.None;
-
-    private Rectangle[] _cardRects = Array.Empty<Rectangle>();
-    private Rectangle _prevRect, _nextRect, _backRect;
+    private Rectangle[] _catCardRects = Array.Empty<Rectangle>();
     private readonly PopupModal _popup = new();
 
     public string? SelectedFolder { get; private set; }
     public bool IsFinished { get; private set; }
 
-    public CharacterSelectScreen(string[] folders, string[] displayNames)
+    public CharacterSelectScreen(string[] folders, string[] displayNames, string[] categories)
     {
         var groups = new Dictionary<string, List<(string folder, string name)>>(StringComparer.OrdinalIgnoreCase);
         for (int i = 0; i < folders.Length; i++)
         {
             string f = folders[i];
             string n = i < displayNames.Length ? displayNames[i] : f;
-            string prefix = GetPrefix(f);
-            if (!groups.TryGetValue(prefix, out var list))
+            string cat = i < categories.Length ? categories[i] : "Other";
+            if (!groups.TryGetValue(cat, out var list))
             {
                 list = new List<(string, string)>();
-                groups[prefix] = list;
+                groups[cat] = list;
             }
             list.Add((f, n));
         }
 
-        var cats = new List<Category>();
-        foreach (var kvp in groups.OrderBy(g => CategorySortKey(g.Key)))
-        {
-            cats.Add(new Category
+        _categories = groups
+            .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(g => new Category
             {
-                Prefix = kvp.Key,
-                Label = GetCategoryLabel(kvp.Key),
-                Folders = kvp.Value.Select(x => x.folder).ToArray(),
-                Names = kvp.Value.Select(x => x.name).ToArray(),
-            });
-        }
-        _categories = cats.ToArray();
+                Label = g.Key,
+                Folders = g.Value.Select(x => x.folder).ToArray(),
+                Names = g.Value.Select(x => x.name).ToArray(),
+            })
+            .ToArray();
     }
-
-    private static string GetPrefix(string folder)
-    {
-        int i = 0;
-        while (i < folder.Length && char.IsLetter(folder[i])) i++;
-        string prefix = i > 0 ? folder[..i] : "other";
-        return prefix.ToLowerInvariant();
-    }
-
-    private static string GetCategoryLabel(string prefix) => prefix switch
-    {
-        "tr" => "Trainers",
-        "pm" => "Pokemon",
-        "ob" => "Objects",
-        "group" => "Other Models",
-        _ => prefix.ToUpperInvariant(),
-    };
-
-    private static int CategorySortKey(string prefix) => prefix switch
-    {
-        "tr" => 0,
-        "pm" => 1,
-        "ob" => 2,
-        "group" => 3,
-        _ => 4,
-    };
-
-    private Category CurrentCat => _categories[_catIndex];
-    private int TotalPages => Math.Max(1, (int)Math.Ceiling(CurrentCat.Folders.Length / (double)ItemsPerPage));
-    private int PageStart => _page * ItemsPerPage;
-    private int PageCount => Math.Min(ItemsPerPage, CurrentCat.Folders.Length - PageStart);
-
-    private int CatPages => Math.Max(1, (int)Math.Ceiling(_categories.Length / (double)ItemsPerPage));
-    private int CatPageStart => _page * ItemsPerPage;
-    private int CatPageCount => Math.Min(ItemsPerPage, _categories.Length - CatPageStart);
-
-    private int VisibleCount => _level == Level.Category ? CatPageCount : PageCount;
-    private int CurrentTotalPages => _level == Level.Category ? CatPages : TotalPages;
 
     public void Update(float deltaTime, InputSnapshot input)
     {
@@ -139,144 +89,80 @@ public class CharacterSelectScreen : IScreenOverlay
 
         if (input.Cancel)
         {
-            if (_level == Level.Items) { _level = Level.Category; _page = 0; _itemIndex = 0; _bottomFocus = BottomFocus.None; }
+            if (_level == Level.Items) { _level = Level.Category; _itemIndex = 0; _scrollOffset = 0; }
             else { SelectedFolder = null; BeginExit(); }
             return;
         }
 
-        if (input.PageLeft) ChangePage(-1);
-        if (input.PageRight) ChangePage(1);
+        if (_level == Level.Category)
+            UpdateCategoryNav(input);
+        else
+            UpdateListNav(input);
+    }
 
-        int selIdx = _level == Level.Category ? _catIndex : _itemIndex;
-        int count = VisibleCount;
-
-        // Mouse
+    private void UpdateCategoryNav(InputSnapshot input)
+    {
+        // Mouse click on category cards
         if (input.MouseClicked)
         {
-            for (int i = 0; i < _cardRects.Length && i < count; i++)
+            for (int i = 0; i < _catCardRects.Length && i < _categories.Length; i++)
             {
-                if (_cardRects[i].Contains(input.MousePosition))
+                if (_catCardRects[i].Contains(input.MousePosition))
                 {
-                    _bottomFocus = BottomFocus.None;
-                    if (_level == Level.Category) { _catIndex = CatPageStart + i; EnterItems(); }
-                    else { ShowSelectPopup(PageStart + i); }
+                    _catIndex = i;
+                    EnterItems();
                     return;
                 }
-            }
-            if (_prevRect.Contains(input.MousePosition)) { ChangePage(-1); return; }
-            if (_nextRect.Contains(input.MousePosition)) { ChangePage(1); return; }
-            if (_backRect.Contains(input.MousePosition))
-            {
-                if (_level == Level.Items) { _level = Level.Category; _page = 0; _itemIndex = 0; _bottomFocus = BottomFocus.None; }
-                else { SelectedFolder = null; BeginExit(); }
-                return;
             }
         }
 
         // Mouse hover
-        if (!input.MouseClicked)
+        for (int i = 0; i < _catCardRects.Length && i < _categories.Length; i++)
         {
-            for (int i = 0; i < _cardRects.Length && i < count; i++)
-            {
-                if (_cardRects[i].Contains(input.MousePosition))
-                {
-                    if (_level == Level.Category) _catIndex = CatPageStart + i; else _itemIndex = i;
-                    _bottomFocus = BottomFocus.None;
-                }
-            }
-            if (_prevRect.Contains(input.MousePosition)) _bottomFocus = BottomFocus.Prev;
-            else if (_nextRect.Contains(input.MousePosition)) _bottomFocus = BottomFocus.Next;
-            else if (_backRect.Contains(input.MousePosition)) _bottomFocus = BottomFocus.Back;
+            if (_catCardRects[i].Contains(input.MousePosition))
+                _catIndex = i;
         }
 
-        // Bottom row keyboard nav
-        if (_bottomFocus != BottomFocus.None)
-        {
-            if (input.Up && count > 0)
-            {
-                _bottomFocus = BottomFocus.None;
-                int idx = Math.Min(count - 1, (GridRows - 1) * GridColumns);
-                if (_level == Level.Category) _catIndex = CatPageStart + idx; else _itemIndex = idx;
-                return;
-            }
-            if (input.Left)
-            {
-                _bottomFocus = _bottomFocus switch { BottomFocus.Back => BottomFocus.Next, BottomFocus.Next => BottomFocus.Prev, _ => _bottomFocus };
-                return;
-            }
-            if (input.Right)
-            {
-                _bottomFocus = _bottomFocus switch { BottomFocus.Prev => BottomFocus.Next, BottomFocus.Next => BottomFocus.Back, _ => _bottomFocus };
-                return;
-            }
-            if (input.Confirm)
-            {
-                if (_bottomFocus == BottomFocus.Prev) ChangePage(-1);
-                else if (_bottomFocus == BottomFocus.Next) ChangePage(1);
-                else if (_bottomFocus == BottomFocus.Back)
-                {
-                    if (_level == Level.Items) { _level = Level.Category; _page = 0; _itemIndex = 0; _bottomFocus = BottomFocus.None; }
-                    else { SelectedFolder = null; BeginExit(); }
-                }
-            }
-            return;
-        }
+        // Keyboard
+        if (input.Left && _catIndex > 0) _catIndex--;
+        if (input.Right && _catIndex < _categories.Length - 1) _catIndex++;
+        if (input.Up && _catIndex > 0) _catIndex--;
+        if (input.Down && _catIndex < _categories.Length - 1) _catIndex++;
 
-        // Grid nav
-        int localIdx = _level == Level.Category ? _catIndex - CatPageStart : _itemIndex;
-        int col = localIdx % GridColumns;
-        int row = localIdx / GridColumns;
-
-        if (input.Left && col > 0) localIdx--;
-        if (input.Right && col < GridColumns - 1 && localIdx + 1 < count) localIdx++;
-        if (input.Up && row > 0) localIdx -= GridColumns;
-        if (input.Down)
-        {
-            int next = localIdx + GridColumns;
-            if (next < count) localIdx = next;
-            else { _bottomFocus = BottomFocus.Prev; return; }
-        }
-
-        if (_level == Level.Category) _catIndex = CatPageStart + localIdx; else _itemIndex = localIdx;
-
-        if (input.Confirm && localIdx < count)
-        {
-            if (_level == Level.Category) { _catIndex = CatPageStart + localIdx; EnterItems(); }
-            else { ShowSelectPopup(PageStart + localIdx); }
-        }
+        if (input.Confirm && _categories.Length > 0)
+            EnterItems();
     }
 
-    private void ShowSelectPopup(int folderIndex)
+    private void UpdateListNav(InputSnapshot input)
     {
-        var anchor = _cardRects[_level == Level.Category ? _catIndex - CatPageStart : _itemIndex];
-        string name = folderIndex < CurrentCat.Names.Length ? CurrentCat.Names[folderIndex] : CurrentCat.Folders[folderIndex];
+        var cat = _categories[_catIndex];
+        int count = cat.Folders.Length;
+        if (count == 0) return;
+
+        // Keyboard
+        if (input.Up && _itemIndex > 0) _itemIndex--;
+        if (input.Down && _itemIndex < count - 1) _itemIndex++;
+
+        if (input.Confirm)
+            ShowSelectPopup(_itemIndex);
+    }
+
+    private void ShowSelectPopup(int itemIndex)
+    {
+        var cat = _categories[_catIndex];
+        string name = itemIndex < cat.Names.Length ? cat.Names[itemIndex] : cat.Folders[itemIndex];
         string[] options = { "Select", "Cancel" };
-        _popup.ShowMenu(name, options, anchor, idx =>
+        _popup.ShowMenu(name, options, Rectangle.Empty, idx =>
         {
-            if (idx == 0) { SelectedFolder = CurrentCat.Folders[folderIndex]; BeginExit(); }
+            if (idx == 0) { SelectedFolder = cat.Folders[itemIndex]; BeginExit(); }
         }, () => { /* cancel closes */ });
     }
 
     private void EnterItems()
     {
         _level = Level.Items;
-        _page = 0;
         _itemIndex = 0;
-        _bottomFocus = BottomFocus.None;
-    }
-
-    private void ChangePage(int delta)
-    {
-        int total = CurrentTotalPages;
-        int newPage = Math.Clamp(_page + delta, 0, total - 1);
-        if (newPage == _page) return;
-        _page = newPage;
-        int count = VisibleCount;
-        int localIdx = _level == Level.Category ? _catIndex - CatPageStart : _itemIndex;
-        if (localIdx >= count)
-        {
-            if (_level == Level.Category) _catIndex = CatPageStart + count - 1; else _itemIndex = count - 1;
-        }
+        _scrollOffset = 0;
     }
 
     private void BeginExit() { _phase = Phase.FadeOut; _fadeTimer = 0f; }
@@ -293,128 +179,11 @@ public class CharacterSelectScreen : IScreenOverlay
         var fullRect = new Rectangle(0, 0, screenWidth, screenHeight);
         UIDraw.VerticalGradient(sb, pixel, fullRect, UITheme.GradTop, UITheme.GradBot);
 
-        // Title
-        string title;
         if (_level == Level.Category)
-            title = "SELECT CATEGORY";
+            DrawCategories(sb, pixel, uiFont, screenWidth, screenHeight, fontScale, lineH, radius, shadowOff);
         else
-            title = $"{CurrentCat.Label.ToUpperInvariant()}  ({_page + 1}/{TotalPages})  [{CurrentCat.Folders.Length}]";
-        DrawText(sb, uiFont, title, new Vector2(Padding, Padding - 4 * fontScale), UITheme.TextPrimary, fontScale);
+            DrawItemList(sb, pixel, uiFont, screenWidth, screenHeight, fontScale, lineH, radius, shadowOff, smallScale);
 
-        // Breadcrumb for item level
-        if (_level == Level.Items)
-        {
-            DrawText(sb, uiFont, "< Esc to go back",
-                new Vector2(Padding, Padding + lineH + 2 * fontScale), UITheme.TextSecondary, smallScale);
-        }
-
-        // Grid
-        int gridY = Padding + (_level == Level.Items ? lineH * 2 + 4 : lineH + 12);
-        int bottomBarH = 14 * fontScale;
-        int gridW = screenWidth - Padding * 2;
-        int gridH = screenHeight - gridY - Padding - bottomBarH;
-        int cardW = (gridW - CardSpacing * (GridColumns - 1)) / GridColumns;
-        int cardH = (gridH - CardSpacing * (GridRows - 1)) / GridRows;
-
-        int count = VisibleCount;
-        if (_cardRects.Length < ItemsPerPage)
-            _cardRects = new Rectangle[ItemsPerPage];
-
-        for (int i = 0; i < count; i++)
-        {
-            int c = i % GridColumns;
-            int r = i / GridColumns;
-            int cx = Padding + c * (cardW + CardSpacing);
-            int cy = gridY + r * (cardH + CardSpacing);
-            _cardRects[i] = new Rectangle(cx, cy, cardW, cardH);
-
-            int localSel = _level == Level.Category ? _catIndex - CatPageStart : _itemIndex;
-            bool selected = _bottomFocus == BottomFocus.None && i == localSel;
-
-            UIDraw.ShadowedPanel(sb, pixel, _cardRects[i], radius,
-                selected ? UITheme.PurpleSelected : UITheme.SlateCard, shadowOff, Color.Black * 0.3f);
-            if (selected)
-                UIDraw.GlowBorder(sb, pixel, _cardRects[i], radius, UITheme.PurpleGlow);
-
-            if (_level == Level.Category)
-            {
-                int gi = CatPageStart + i;
-                var cat = _categories[gi];
-                uiFont.Scale = fontScale;
-                DrawText(sb, uiFont, cat.Label,
-                    new Vector2(cx + cardW / 2 - uiFont.MeasureWidth(cat.Label) / 2, cy + cardH / 2 - lineH), Color.White, fontScale);
-                string countStr = $"{cat.Folders.Length} models";
-                uiFont.Scale = smallScale;
-                DrawText(sb, uiFont, countStr,
-                    new Vector2(cx + cardW / 2 - uiFont.MeasureWidth(countStr) / 2, cy + cardH / 2 + 4 * fontScale), UITheme.TextSecondary, smallScale);
-                DrawText(sb, uiFont, cat.Prefix,
-                    new Vector2(cx + 8 * fontScale, cy + cardH - lineH - 4 * fontScale), UITheme.TextDisabled, smallScale);
-                uiFont.Scale = fontScale;
-            }
-            else
-            {
-                int gi = PageStart + i;
-                string name = gi < CurrentCat.Names.Length ? CurrentCat.Names[gi] : CurrentCat.Folders[gi];
-                uiFont.Scale = fontScale;
-                DrawText(sb, uiFont, name,
-                    new Vector2(cx + cardW / 2 - uiFont.MeasureWidth(name) / 2, cy + cardH / 2 - lineH / 2), Color.White, fontScale);
-                uiFont.Scale = smallScale;
-                DrawText(sb, uiFont, CurrentCat.Folders[gi],
-                    new Vector2(cx + 8 * fontScale, cy + cardH - lineH - 4 * fontScale), UITheme.TextDisabled, smallScale);
-                uiFont.Scale = fontScale;
-            }
-        }
-
-        // Bottom bar
-        int btnW = 32 * fontScale;
-        int btnH = 10 * fontScale;
-        int bottomY = screenHeight - bottomBarH + (bottomBarH - btnH) / 2;
-        int totalPages = CurrentTotalPages;
-        bool hasPrev = _page > 0;
-        bool hasNext = _page < totalPages - 1;
-
-        _prevRect = new Rectangle(Padding, bottomY, btnW, btnH);
-        DrawButton(sb, pixel, uiFont, _prevRect, "<< Q",
-            _bottomFocus == BottomFocus.Prev, hasPrev, fontScale);
-
-        _nextRect = new Rectangle(Padding + btnW + CardSpacing, bottomY, btnW, btnH);
-        DrawButton(sb, pixel, uiFont, _nextRect, "E >>",
-            _bottomFocus == BottomFocus.Next, hasNext, fontScale);
-
-        _backRect = new Rectangle(screenWidth - btnW - Padding, bottomY, btnW, btnH);
-        UIDraw.ShadowedPanel(sb, pixel, _backRect, radius,
-            _bottomFocus == BottomFocus.Back ? new Color(120, 50, 50) : UITheme.SlateCard,
-            shadowOff, Color.Black * 0.3f);
-        if (_bottomFocus == BottomFocus.Back)
-            UIDraw.GlowBorder(sb, pixel, _backRect, radius, UITheme.PurpleGlow);
-        string backLabel = _level == Level.Items ? "Back" : "Close";
-        uiFont.Scale = fontScale;
-        DrawText(sb, uiFont, backLabel,
-            new Vector2(_backRect.X + btnW / 2 - uiFont.MeasureWidth(backLabel) / 2, _backRect.Y + (btnH - lineH) / 2), Color.White, fontScale);
-
-        // Page dots
-        if (totalPages > 1 && totalPages <= 30)
-        {
-            int dotSize = Math.Max(4, fontScale * 2);
-            int dotSpacing = dotSize * 2;
-            int dotsW = totalPages * dotSpacing - (dotSpacing - dotSize);
-            int dotsX = screenWidth / 2 - dotsW / 2;
-            for (int p = 0; p < totalPages; p++)
-            {
-                var dotR = new Rectangle(dotsX + p * dotSpacing, bottomY + btnH / 2 - dotSize / 2, dotSize, dotSize);
-                sb.Draw(pixel, dotR, p == _page ? UITheme.PurpleAccent : UITheme.PurpleMuted);
-            }
-        }
-        else if (totalPages > 30)
-        {
-            string pageStr = $"Page {_page + 1}/{totalPages}";
-            uiFont.Scale = smallScale;
-            DrawText(sb, uiFont, pageStr,
-                new Vector2(screenWidth / 2 - uiFont.MeasureWidth(pageStr) / 2, bottomY + (btnH - lineH) / 2), UITheme.TextSecondary, smallScale);
-            uiFont.Scale = fontScale;
-        }
-
-        // ── Popup (via PopupModal) ──
         _popup.Draw(sb, pixel, uiFont, fontScale, screenWidth, screenHeight);
 
         // Fade
@@ -428,20 +197,98 @@ public class CharacterSelectScreen : IScreenOverlay
             sb.Draw(pixel, fullRect, Color.Black * fadeAlpha);
     }
 
-    private void DrawButton(SpriteBatch sb, Texture2D pixel, PixelFont uiFont,
-                            Rectangle rect, string label, bool selected, bool enabled, int fontScale = 3)
+    private void DrawCategories(SpriteBatch sb, Texture2D pixel, PixelFont uiFont,
+        int sw, int sh, int fs, int lineH, int radius, int shadowOff)
     {
-        uiFont.Scale = fontScale;
-        int lineH = uiFont.CharHeight;
-        int radius = Math.Max(2, fontScale * 2);
-        int shadowOff = Math.Max(1, fontScale);
+        DrawText(sb, uiFont, "SELECT CATEGORY", new Vector2(Padding, Padding), UITheme.TextPrimary, fs);
 
-        Color bg = selected ? UITheme.PurpleAccent : (enabled ? UITheme.SlateCard : new Color(20, 22, 32, 100));
-        UIDraw.ShadowedPanel(sb, pixel, rect, radius, bg, shadowOff, Color.Black * 0.3f);
-        if (selected) UIDraw.GlowBorder(sb, pixel, rect, radius, UITheme.PurpleGlow);
-        DrawText(sb, uiFont, label,
-            new Vector2(rect.X + rect.Width / 2 - uiFont.MeasureWidth(label) / 2, rect.Y + (rect.Height - lineH) / 2),
-            enabled ? Color.White : UITheme.TextDisabled, fontScale);
+        int cardW = Math.Min(300 * fs / 3, (sw - Padding * 3) / Math.Max(1, _categories.Length));
+        int cardH = 80 * fs / 3;
+        int totalW = _categories.Length * cardW + (_categories.Length - 1) * CardSpacing;
+        int startX = sw / 2 - totalW / 2;
+        int startY = sh / 2 - cardH / 2;
+
+        if (_catCardRects.Length < _categories.Length)
+            _catCardRects = new Rectangle[_categories.Length];
+
+        for (int i = 0; i < _categories.Length; i++)
+        {
+            int cx = startX + i * (cardW + CardSpacing);
+            _catCardRects[i] = new Rectangle(cx, startY, cardW, cardH);
+            bool selected = i == _catIndex;
+
+            UIDraw.ShadowedPanel(sb, pixel, _catCardRects[i], radius,
+                selected ? UITheme.PurpleSelected : UITheme.SlateCard, shadowOff, Color.Black * 0.3f);
+            if (selected)
+                UIDraw.GlowBorder(sb, pixel, _catCardRects[i], radius, UITheme.PurpleGlow);
+
+            var cat = _categories[i];
+            uiFont.Scale = fs;
+            DrawText(sb, uiFont, cat.Label,
+                new Vector2(cx + cardW / 2 - uiFont.MeasureWidth(cat.Label) / 2, startY + cardH / 2 - lineH),
+                Color.White, fs);
+
+            string countStr = $"{cat.Folders.Length} models";
+            uiFont.Scale = Math.Max(1, fs * 2 / 3);
+            DrawText(sb, uiFont, countStr,
+                new Vector2(cx + cardW / 2 - uiFont.MeasureWidth(countStr) / 2, startY + cardH / 2 + 4 * fs / 3),
+                UITheme.TextSecondary, Math.Max(1, fs * 2 / 3));
+            uiFont.Scale = fs;
+        }
+    }
+
+    private void DrawItemList(SpriteBatch sb, Texture2D pixel, PixelFont uiFont,
+        int sw, int sh, int fs, int lineH, int radius, int shadowOff, int smallScale)
+    {
+        var cat = _categories[_catIndex];
+
+        // Title + breadcrumb
+        DrawText(sb, uiFont, cat.Label.ToUpperInvariant(), new Vector2(Padding, Padding), UITheme.TextPrimary, fs);
+        uiFont.Scale = smallScale;
+        DrawText(sb, uiFont, "< Esc to go back",
+            new Vector2(Padding, Padding + lineH + 2 * fs / 3), UITheme.TextSecondary, smallScale);
+        uiFont.Scale = fs;
+
+        // List area
+        int listTop = Padding + lineH * 2 + fs;
+        int listBottom = sh - Padding;
+        int rowH = lineH + fs * 2;
+        int visibleCount = Math.Max(1, (listBottom - listTop) / rowH);
+        int listW = sw - Padding * 2;
+
+        // Keep selection visible
+        if (_itemIndex < _scrollOffset) _scrollOffset = _itemIndex;
+        if (_itemIndex >= _scrollOffset + visibleCount) _scrollOffset = _itemIndex - visibleCount + 1;
+        _scrollOffset = Math.Clamp(_scrollOffset, 0, Math.Max(0, cat.Folders.Length - visibleCount));
+
+        for (int vi = 0; vi < visibleCount && _scrollOffset + vi < cat.Folders.Length; vi++)
+        {
+            int idx = _scrollOffset + vi;
+            int y = listTop + vi * rowH;
+            var rowRect = new Rectangle(Padding, y, listW, rowH - 2);
+            bool selected = idx == _itemIndex;
+
+            UIDraw.ShadowedPanel(sb, pixel, rowRect, radius,
+                selected ? UITheme.PurpleSelected : UITheme.SlateCard, shadowOff, Color.Black * 0.2f);
+            if (selected)
+                UIDraw.GlowBorder(sb, pixel, rowRect, radius, UITheme.PurpleGlow);
+
+            string name = idx < cat.Names.Length ? cat.Names[idx] : cat.Folders[idx];
+            uiFont.Scale = fs;
+            DrawText(sb, uiFont, name,
+                new Vector2(Padding + fs * 3, y + (rowH - 2 - lineH) / 2), Color.White, fs);
+        }
+
+        // Scroll indicator
+        if (cat.Folders.Length > visibleCount)
+        {
+            uiFont.Scale = smallScale;
+            string scrollInfo = $"{_itemIndex + 1}/{cat.Folders.Length}";
+            DrawText(sb, uiFont, scrollInfo,
+                new Vector2(sw - Padding - uiFont.MeasureWidth(scrollInfo), listTop - lineH),
+                UITheme.TextSecondary, smallScale);
+            uiFont.Scale = fs;
+        }
     }
 
     private static void DrawText(SpriteBatch sb, PixelFont uiFont, string text, Vector2 pos, Color color, float scale)
@@ -452,7 +299,6 @@ public class CharacterSelectScreen : IScreenOverlay
 
     private sealed class Category
     {
-        public string Prefix = "";
         public string Label = "";
         public string[] Folders = Array.Empty<string>();
         public string[] Names = Array.Empty<string>();

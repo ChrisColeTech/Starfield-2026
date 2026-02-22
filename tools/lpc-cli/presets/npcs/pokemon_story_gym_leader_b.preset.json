@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "bodyType": "male",
+  "selections": [
+    {
+      "itemId": "body",
+      "variant": "bronze"
+    },
+    {
+      "itemId": "heads_human_male",
+      "variant": "bronze"
+    },
+    {
+      "itemId": "face_neutral",
+      "variant": "bronze"
+    },
+    {
+      "itemId": "hair_plain",
+      "variant": "ginger"
+    },
+    {
+      "itemId": "torso_clothes_tshirt",
+      "variant": "red"
+    },
+    {
+      "itemId": "legs_shorts",
+      "variant": "navy"
+    },
+    {
+      "itemId": "feet_shoes_basic",
+      "variant": "black"
+    },
+    {
+      "itemId": "shadow"
+    }
+  ]
+}

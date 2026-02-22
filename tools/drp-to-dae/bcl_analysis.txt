@@ -1,0 +1,244 @@
+BCA to DAE Animation Converter (R&D)
+====================================
+
+========== BCL DEEP ANALYSIS ==========
+
+BCL: 88648 bytes (86.6 KB)
+BCA: 4620 bytes
+VBN: 9548 bytes
+VBN bones: 85
+
+--- BCL Header ---
+  Magic: BCL 
+  0x04: 0x11010100 (285278464) float=0.0000
+  0x08: 0x00000089 (137) float=0.0000
+  0x30: 0x19E9F372 (434762610) float=0.0000
+
+--- Bone Name Search in BCL ---
+  Total bone names found: 0 / 85
+
+--- All Strings in BCL ---
+  Found 29 strings (min 3 chars):
+  0x0000: "BCL "
+  0x00ED: "]r>"
+  0x6954: "pL2"
+  0x8688: "DNk"
+  0x8748: "DNk"
+  0x8804: "DNk"
+  0x8A3A: "TS>"
+  0x8AF6: "TS>"
+  0x9131: "]w|"
+  0x98F4: "yL5"
+  0xACA9: "[B1"
+  0xAF9D: "-Vx"
+  0xC584: ">fe"
+  0xD038: "zJYm"
+  0xD0F8: "Dk%"
+  0xD1B0: "Dk%"
+  0xD32C: "Dk%"
+  0xD568: "Dk%"
+  0xD6E4: "Dk%"
+  0xDA40: "Dk%"
+  0xDD9C: "Dk%"
+  0xE2D8: "Dk%"
+  0xE6F4: "Dk%"
+  0x10F85: "PQm"
+  0x11049: "PQm"
+  0x129D0: "Dk%"
+  0x1392C: "Dk%"
+  0x14921: "p=]"
+  0x14988: "A@&"
+
+--- BCA Track Hashes in BCL ---
+  BCA track[0] hash 0x05650D6C found at BCL offset 0xEAF8
+  BCA track[4] hash 0x094D07AF found at BCL offset 0xABEC
+  BCA track[5] hash 0x09E1C634 found at BCL offset 0xA9B8
+  BCA track[6] hash 0x0A74BF03 found at BCL offset 0xB0B8
+  BCA track[10] hash 0x10E52743 found at BCL offset 0x8A8C
+  BCA track[12] hash 0x15F86E29 found at BCL offset 0x14E44
+  BCA track[13] hash 0x1852FCDB found at BCL offset 0x14630
+  BCA track[14] hash 0x1C2C8919 found at BCL offset 0xFD94
+  BCA track[15] hash 0x1ED64CCE found at BCL offset 0xD9D8
+  BCA track[16] hash 0x1F3F38C2 found at BCL offset 0x14574
+  BCA track[19] hash 0x20F04EE2 found at BCL offset 0x9838
+  BCA track[20] hash 0x20F330F1 found at BCL offset 0xC9EC
+  BCA track[24] hash 0x28630F20 found at BCL offset 0x8620
+  BCA track[25] hash 0x2E174217 found at BCL offset 0xD148
+  BCA track[26] hash 0x31425B88 found at BCL offset 0xACA8
+  BCA track[27] hash 0x333A9B21 found at BCL offset 0xC874
+  BCA track[33] hash 0x3611FDD5 found at BCL offset 0x14D88
+  BCA track[34] hash 0x366CDFAB found at BCL offset 0xE8C4
+  BCA track[35] hash 0x3686AFF2 found at BCL offset 0xE980
+  BCA track[36] hash 0x39CF5776 found at BCL offset 0x8EFC
+  BCA track[38] hash 0x3BDE2A3B found at BCL offset 0xA840
+  BCA track[39] hash 0x3F99D338 found at BCL offset 0x8E40
+  BCA track[42] hash 0x41AB9653 found at BCL offset 0xAA74
+  BCA track[43] hash 0x41DB6B53 found at BCL offset 0xF1A4
+  BCA track[46] hash 0x43F9CD59 found at BCL offset 0xD500
+  BCA track[47] hash 0x469E56D2 found at BCL offset 0x1577C
+  BCA track[48] hash 0x47F7D503 found at BCL offset 0xF380
+  BCA track[49] hash 0x49C0BEA7 found at BCL offset 0x14864
+  BCA track[51] hash 0x4F9CE793 found at BCL offset 0x6DC8
+  BCA track[52] hash 0x4FB14FE3 found at BCL offset 0x149DC
+  BCA track[53] hash 0x5191FE68 found at BCL offset 0x21C0
+  BCA track[54] hash 0x51D1A41D found at BCL offset 0x8FB8
+  BCA track[55] hash 0x5509DF7F found at BCL offset 0x7A24
+  BCA track[56] hash 0x558E316B found at BCL offset 0x100F0
+  BCA track[62] hash 0x5A32D9BA found at BCL offset 0x14C10
+  BCA track[64] hash 0x5BB2C812 found at BCL offset 0x14FC0
+  BCA track[65] hash 0x5CDF0C0B found at BCL offset 0x1548C
+  BCA track[66] hash 0x5D3D70CC found at BCL offset 0x14920
+  BCA track[69] hash 0x624FE35C found at BCL offset 0xB3AC
+  BCA track[70] hash 0x62C4FA54 found at BCL offset 0x15604
+  BCA track[72] hash 0x631B5FB9 found at BCL offset 0xA5A8
+  BCA track[73] hash 0x635691DB found at BCL offset 0xAE80
+  BCA track[75] hash 0x65EFEE37 found at BCL offset 0xC7B8
+  BCA track[76] hash 0x68BD3E37 found at BCL offset 0xB2F0
+  BCA track[77] hash 0x6949D3E4 found at BCL offset 0xEEA8
+  BCA track[78] hash 0x698B1243 found at BCL offset 0xE68C
+  BCA track[79] hash 0x6FD0FA2E found at BCL offset 0xA784
+  BCA track[80] hash 0x72B3F8F8 found at BCL offset 0x147A8
+  BCA track[81] hash 0x732E936B found at BCL offset 0x11408
+  BCA track[82] hash 0x75DE3CE1 found at BCL offset 0x146EC
+  BCA track[83] hash 0x77D3ADF0 found at BCL offset 0xCAA8
+  BCA track[84] hash 0x77DBA476 found at BCL offset 0xF4FC
+  BCA track[86] hash 0x78562DA5 found at BCL offset 0xAF9C
+  BCA track[87] hash 0x797DAF21 found at BCL offset 0xD67C
+  BCA track[88] hash 0x7C775DEE found at BCL offset 0x9130
+  BCA track[89] hash 0x7E6ED3B7 found at BCL offset 0x89D0
+  BCA track[91] hash 0x7F900DB5 found at BCL offset 0x9604
+  BCA track[92] hash 0x80D89899 found at BCL offset 0xCB64
+  BCA track[93] hash 0x848AF693 found at BCL offset 0xCD98
+  BCA track[95] hash 0x8AAC9F6B found at BCL offset 0x96C0
+  BCA track[97] hash 0x8B43AD69 found at BCL offset 0xEDEC
+  BCA track[98] hash 0x8B58830E found at BCL offset 0x91EC
+  BCA track[100] hash 0x900936E9 found at BCL offset 0x8798
+  BCA track[101] hash 0x9066DA98 found at BCL offset 0x15138
+  BCA track[102] hash 0x9164A869 found at BCL offset 0x977C
+  BCA track[103] hash 0x91650F00 found at BCL offset 0x437C
+  BCA track[104] hash 0x92024DE3 found at BCL offset 0xEC70
+  BCA track[105] hash 0x942B7EB4 found at BCL offset 0x15548
+  BCA track[106] hash 0x95C0C531 found at BCL offset 0xAD64
+  BCA track[112] hash 0x99D48982 found at BCL offset 0x8CC4
+  BCA track[114] hash 0x9D354C79 found at BCL offset 0x98F4
+  BCA track[115] hash 0x9E5D0FE3 found at BCL offset 0x10ECC
+  BCA track[116] hash 0xA2F689CA found at BCL offset 0xC40C
+  BCA track[119] hash 0xA7D029D9 found at BCL offset 0x99B0
+  BCA track[120] hash 0xA85CB477 found at BCL offset 0xD2C4
+  BCA track[121] hash 0xAB67AC2A found at BCL offset 0x158F4
+  BCA track[122] hash 0xABA590EB found at BCL offset 0x144B8
+  BCA track[123] hash 0xAC1B7EF9 found at BCL offset 0xDD34
+  BCA track[124] hash 0xADB8ABAB found at BCL offset 0xE270
+  BCA track[125] hash 0xADEA3FF8 found at BCL offset 0xE748
+  BCA track[127] hash 0xB116BD29 found at BCL offset 0xC060
+  BCA track[128] hash 0xB19FF6F0 found at BCL offset 0xCF14
+  BCA track[130] hash 0xB2FDA5CF found at BCL offset 0x13AA0
+  BCA track[132] hash 0xB3703D00 found at BCL offset 0x15310
+  BCA track[133] hash 0xB6F232E9 found at BCL offset 0xCCDC
+  BCA track[134] hash 0xB783A345 found at BCL offset 0x86DC
+  BCA track[135] hash 0xBADA3BB3 found at BCL offset 0xC4C8
+  BCA track[136] hash 0xBB9503B9 found at BCL offset 0xC294
+  BCA track[137] hash 0xBBC75B9A found at BCL offset 0x14B54
+  BCA track[138] hash 0xBD0A341C found at BCL offset 0xA8FC
+  BCA track[139] hash 0xBDCF9F41 found at BCL offset 0xEA3C
+  BCA track[140] hash 0xBE374BAD found at BCL offset 0x13FDC
+  BCA track[142] hash 0xC3139A76 found at BCL offset 0xC640
+  BCA track[144] hash 0xC793B6F0 found at BCL offset 0xEBB4
+  BCA track[146] hash 0xC8B81905 found at BCL offset 0x6AD0
+  BCA track[148] hash 0xCA419E91 found at BCL offset 0x6C4C
+  BCA track[149] hash 0xCA648EDC found at BCL offset 0xFA38
+  BCA track[150] hash 0xCC17A886 found at BCL offset 0xB1D4
+  BCA track[151] hash 0xCC6577B8 found at BCL offset 0x15254
+  BCA track[154] hash 0xD108A227 found at BCL offset 0xBEE8
+  BCA track[156] hash 0xD2C7527B found at BCL offset 0x156C0
+  BCA track[157] hash 0xD5AA9662 found at BCL offset 0x159B0
+  BCA track[158] hash 0xD665663E found at BCL offset 0xC584
+  BCA track[161] hash 0xDB22831D found at BCL offset 0x8914
+  BCA track[162] hash 0xDE14A893 found at BCL offset 0x14A98
+  BCA track[164] hash 0xE015DBC5 found at BCL offset 0xAB30
+  BCA track[165] hash 0xE27B7513 found at BCL offset 0x1507C
+  BCA track[166] hash 0xE3449E27 found at BCL offset 0x9548
+  BCA track[167] hash 0xE4E82718 found at BCL offset 0x9074
+  BCA track[168] hash 0xE5729CE4 found at BCL offset 0xC6FC
+  BCA track[171] hash 0xE6324C70 found at BCL offset 0x6954
+  BCA track[172] hash 0xE73E7201 found at BCL offset 0xBFA4
+  BCA track[173] hash 0xEB399B98 found at BCL offset 0xC1D8
+  BCA track[175] hash 0xEE137D29 found at BCL offset 0xC930
+  BCA track[176] hash 0xEE1BCC98 found at BCL offset 0xCFD0
+  BCA track[177] hash 0xF15BA74E found at BCL offset 0x12B44
+  BCA track[178] hash 0xF1FB311E found at BCL offset 0x9A6C
+  BCA track[181] hash 0xF6232A02 found at BCL offset 0xC350
+  BCA track[182] hash 0xF72EA2C7 found at BCL offset 0x14CCC
+  BCA track[184] hash 0xF882DBDE found at BCL offset 0x15838
+  BCA track[185] hash 0xF900472D found at BCL offset 0xCC20
+  BCA track[188] hash 0xFE3CCFC2 found at BCL offset 0xD08C
+  BCA track[189] hash 0xFF9E2AE6 found at BCL offset 0x4438
+  Hashes found in BCL: 123 / 190
+
+--- VBN Bone IDs in BCL ---
+  Bone IDs found in BCL: 0 / 85
+
+--- BCL First 256 bytes ---
+  000000: 42 43 4C 20 00 01 01 11  89 00 00 00 00 00 00 00  |BCL ............|
+  000010: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  000020: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  000030: 72 F3 E9 19 00 00 00 00  00 00 00 00 00 00 00 00  |r...............|
+  000040: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  000050: 01 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  000060: 00 00 00 00 01 00 00 00  00 00 00 00 02 00 00 00  |................|
+  000070: 01 00 00 00 00 02 00 00  01 00 00 00 01 00 00 00  |................|
+  000080: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  000090: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  0000A0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  0000B0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  0000C0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  0000D0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  0000E0: 00 00 00 00 00 00 00 00  00 00 00 00 1B 5D 72 3E  |.............]r>|
+  0000F0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+
+--- BCL Structure Detection ---
+  BCL bone count field (0x08): 137
+  First non-zero data after 0x0C: offset 0x30
+
+--- BCL Data around first data offset ---
+  000030: 72 F3 E9 19 00 00 00 00  00 00 00 00 00 00 00 00  |r...............|
+  000040: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  000050: 01 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  000060: 00 00 00 00 01 00 00 00  00 00 00 00 02 00 00 00  |................|
+  000070: 01 00 00 00 00 02 00 00  01 00 00 00 01 00 00 00  |................|
+  000080: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  000090: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  0000A0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+
+--- BCL Pointer Table Check ---
+  0x50: -> 0x1 (1)
+  0x64: -> 0x1 (1)
+  0x6C: -> 0x2 (2)
+  0x70: -> 0x1 (1)
+  0x74: -> 0x200 (512)
+  0x78: -> 0x1 (1)
+  0x7C: -> 0x1 (1)
+  0x10C: -> 0x1 (1)
+  0x114: -> 0x1 (1)
+  0x120: -> 0x4 (4)
+  0x128: -> 0x2 (2)
+  0x12C: -> 0x2 (2)
+  0x130: -> 0x10 (16)
+  0x134: -> 0x7 (7)
+  0x138: -> 0x1 (1)
+  0x184: -> 0x1 (1)
+  0x194: -> 0x23 (35)
+  0x198: -> 0x1 (1)
+  0x1E4: -> 0x2 (2)
+  0x1E8: -> 0x2 (2)
+  26 possible pointers found
+  Pointer deltas:
+    [0]->[1]: 0 bytes (0x0)
+    [1]->[2]: 1 bytes (0x1)
+    [2]->[3]: -1 bytes (0xFFFFFFFF)
+    [3]->[4]: 511 bytes (0x1FF)
+    [4]->[5]: -511 bytes (0xFFFFFE01)
+    [5]->[6]: 0 bytes (0x0)
+    [6]->[7]: 0 bytes (0x0)
+    [7]->[8]: 0 bytes (0x0)
+    [8]->[9]: 3 bytes (0x3)

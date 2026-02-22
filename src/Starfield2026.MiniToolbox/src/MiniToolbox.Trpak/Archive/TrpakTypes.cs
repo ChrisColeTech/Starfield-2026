@@ -131,7 +131,15 @@ namespace MiniToolbox.Trpak.Archive
 
         public void Add(ulong hash, string name) => _cache[hash] = name;
 
+        public void MergeFrom(Dictionary<ulong, string> entries)
+        {
+            foreach (var (hash, name) in entries)
+                _cache.TryAdd(hash, name);
+        }
+
         public string? GetName(ulong hash) => _cache.TryGetValue(hash, out var name) ? name : null;
+
+        public IReadOnlyList<string> AllPaths() => _cache.Values.Distinct().ToList();
 
         private static bool TryParseHex(string text, out ulong value)
         {

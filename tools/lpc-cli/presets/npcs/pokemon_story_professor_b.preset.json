@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "bodyType": "female",
+  "selections": [
+    {
+      "itemId": "body",
+      "variant": "light"
+    },
+    {
+      "itemId": "heads_human_female",
+      "variant": "light"
+    },
+    {
+      "itemId": "face_neutral",
+      "variant": "light"
+    },
+    {
+      "itemId": "hair_plain",
+      "variant": "chestnut"
+    },
+    {
+      "itemId": "torso_clothes_tshirt",
+      "variant": "teal"
+    },
+    {
+      "itemId": "legs_shorts",
+      "variant": "navy"
+    },
+    {
+      "itemId": "feet_shoes_basic",
+      "variant": "black"
+    },
+    {
+      "itemId": "shadow"
+    }
+  ]
+}

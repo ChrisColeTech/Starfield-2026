@@ -1,0 +1,320 @@
+BCA to DAE Animation Converter (R&D)
+====================================
+
+========== HASH COMPARISON ==========
+
+VBN: 85 bones, Big-endian
+
+--- VBN Bones: ID vs CRC32 ---
+  [ 0] "BASE                " id=0x4F101F52 crc32=0xF62113D5 
+  [ 1] "CENTER_RT           " id=0x7024616A crc32=0x913C7086 
+  [ 2] "THROW_NULL          " id=0xF9253621 crc32=0x0AADB0C2 
+  [ 3] "EXTRA0              " id=0x6602A695 crc32=0x02D892B5 
+  [ 4] "EXTRA1              " id=0x6602A696 crc32=0x75DFA223 
+  [ 5] "EXTRA2              " id=0x6602A697 crc32=0xECD6F399 
+  [ 6] "EXTRA3              " id=0x6602A698 crc32=0x9BD1C30F 
+  [ 7] "EXTRA4              " id=0x6602A699 crc32=0x05B556AC 
+  [ 8] "Spine1              " id=0x93136EBA crc32=0x8F39FA4E 
+  [ 9] "Spine2              " id=0x93136EB9 crc32=0x1630ABF4 
+  [10] "Hip                 " id=0xFB51F942 crc32=0x65F2A4B8 
+  [11] "Neck1               " id=0x0B690D4B crc32=0xB05FD12B 
+  [12] "Neck2               " id=0x0B690D74 crc32=0x29568091 
+  [13] "Neck3               " id=0x0B690D75 crc32=0x5E51B007 
+  [14] "Head                " id=0x4ADBF3FE crc32=0x07C159A2 
+  [15] "R_Shoulder          " id=0x129EDEF6 crc32=0xC04F3086 
+  [16] "R_Arm               " id=0x07362D48 crc32=0x48CD9524 
+  [17] "R_ForeArm           " id=0xB85B7AAC crc32=0x386A3400 
+  [18] "R_Hand              " id=0x691A99E7 crc32=0xECD362E8 
+  [19] "L_Shoulder          " id=0xC7C67D45 crc32=0xF92881DD 
+  [20] "L_Arm               " id=0x799FA287 crc32=0x971DBCC7 
+  [21] "L_ForeArm           " id=0x48E7C5C4 crc32=0x5C68ADE3 
+  [22] "L_Hand              " id=0x5DA8387F crc32=0xD50F0103 
+  [23] "R_UpLeg             " id=0x4684B583 crc32=0xFDEE6258 
+  [24] "R_Leg               " id=0x0738B04E crc32=0xA5436BFF 
+  [25] "R_Foot              " id=0x6931D652 crc32=0x023E19F4 
+  [26] "L_UpLeg             " id=0x7EEE50B5 crc32=0xCA0F85CB 
+  [27] "L_Leg               " id=0x799F9CC7 crc32=0x7A93421C 
+  [28] "L_Foot              " id=0x5D03A7FC crc32=0x3BE27A1F 
+  [29] "R_Toe1              " id=0x69EE86DC crc32=0x0477DB75 
+  [30] "L_Toe1              " id=0x6320CC9D crc32=0x3DABB89E 
+  [31] "Waist_scale         " id=0x934E7C82 crc32=0x19A32B0A 
+  [32] "R_Thumb1            " id=0x4689CBD0 crc32=0x831AC523 
+  [33] "R_Thumb2            " id=0x4689CBD1 crc32=0x1A139499 
+  [34] "R_Index1            " id=0x07DAE47E crc32=0xE589BA5F 
+  [35] "R_Index2            " id=0x07DAE479 crc32=0x7C80EBE5 
+  [36] "R_Middle1           " id=0xBD5EE123 crc32=0xECE3CA5A 
+  [37] "R_Middle2           " id=0xBD5EE122 crc32=0x75EA9BE0 
+  [38] "L_Thumb1            " id=0xAEA7B48F crc32=0xEA2BE63A 
+  [39] "L_Thumb2            " id=0xAEA7B48E crc32=0x7322B780 
+  [40] "L_Index1            " id=0x2F245E94 crc32=0x8CB89946 
+  [41] "L_Index2            " id=0x2F245E93 crc32=0x15B1C8FC 
+  [42] "L_Middle1           " id=0xAE25DADE crc32=0x88E153B9 
+  [43] "L_Middle2           " id=0xAE25DADF crc32=0x11E80203 
+  [44] "Jaw                 " id=0xFB51DA1F crc32=0x30CB6F7D 
+  [45] "Tongue              " id=0x7F9E958F crc32=0xC44E4E2F 
+  [46] "HLP_R_Arm_Mid       " id=0x6973E14E crc32=0xED68637D 
+  [47] "HLP_L_Arm_Mid       " id=0x2F64C29A crc32=0x896AFA9E 
+  [48] "HLP_R_Elbow         " id=0x0057AC07 crc32=0xB2F85FF3 
+  [49] "HLP_L_Elbow         " id=0xE2443478 crc32=0x8519B860 
+  [50] "HLP_R_ForeArm_Mid   " id=0x5C8D99DB crc32=0xAB6DFE15 
+  [51] "HLP_L_ForeArm_Mid   " id=0x41A70F92 crc32=0xE58C547F 
+  [52] "HLP_R_Butt          " id=0x3E4455EA crc32=0x52E37795 
+  [53] "HLP_L_Butt          " id=0x8FBC3198 crc32=0x6B3F147E 
+  [54] "HLP_R_UpLeg_Mid     " id=0x3271DB30 crc32=0xE79C5235 
+  [55] "HLP_L_UpLeg_Mid     " id=0x181A4048 crc32=0x1B1CBDF8 
+  [56] "HLP_R_Knee          " id=0x3FEB9309 crc32=0x06F1776C 
+  [57] "HLP_L_Knee          " id=0x8A17AD0A crc32=0x3F2D1487 
+  [58] "SWG_Tail1__swing    " id=0x2D7DE722 crc32=0x6DA826C7 
+  [59] "SWG_Tail2__swing    " id=0xD299DC01 crc32=0xE3272124 
+  [60] "SWG_Tail3__swing    " id=0xC421A7DF crc32=0x2F8D21BA 
+  [61] "SWG_Tail4__swing    " id=0x64B04E31 crc32=0x254828A3 
+  [62] "SWG_Tail5__swing    " id=0xD9B259D8 crc32=0xE9E2283D 
+  [63] "SWG_Tail6__swing    " id=0xBD77B67D crc32=0x676D2FDE 
+  [64] "SWG_Tail7__swing    " id=0xF7BD8381 crc32=0xABC72F40 
+  [65] "SWG_L_Wing1__swing  " id=0x446370F0 crc32=0xED56E065 
+  [66] "SWG_L_Wing2__swing  " id=0xCACA8D67 crc32=0x63D9E786 
+  [67] "SWG_L_Wing3__swing  " id=0x9455E2AF crc32=0xAF73E718 
+  [68] "SWG_L_Wing4__swing  " id=0x93B86337 crc32=0xA5B6EE01 
+  [69] "SWG_L_Wing5__swing  " id=0xBCBD8A3B crc32=0x691CEE9F 
+  [70] "SWG_L_Wing6__swing  " id=0x493CA0A3 crc32=0xE793E97C 
+  [71] "SWG_L_Wing1_b__swing" id=0x49C7C876 crc32=0x210418C2 
+  [72] "SWG_L_Wing2_b__swing" id=0x26C51ECA crc32=0xCA33A3C1 
+  [73] "SWG_L_Wing3_b__swing" id=0x66E4798F crc32=0x25F1C8FF 
+  [74] "SWG_L_Wing4_b__swing" id=0x6160267A crc32=0xC72DD386 
+  [75] "SWG_R_Wing1__swing  " id=0x5CBB00D8 crc32=0x407F8989 
+  [76] "SWG_R_Wing2__swing  " id=0x7E5A179A crc32=0xCEF08E6A 
+  [77] "SWG_R_Wing3__swing  " id=0x97AF776F crc32=0x025A8EF4 
+  [78] "SWG_R_Wing4__swing  " id=0x1383D1A7 crc32=0x089F87ED 
+  [79] "SWG_R_Wing5__swing  " id=0x7A61F681 crc32=0xC4358773 
+  [80] "SWG_R_Wing6__swing  " id=0x0F92A43D crc32=0x4ABA8090 
+  [81] "SWG_R_Wing1_b__swing" id=0xD476C84B crc32=0xE7A1D0F7 
+  [82] "SWG_R_Wing2_b__swing" id=0x02209788 crc32=0x0C966BF4 
+  [83] "SWG_R_Wing3_b__swing" id=0x7293CD51 crc32=0xE35400CA 
+  [84] "SWG_R_Wing4_b__swing" id=0xD07F1A2D crc32=0x01881BB3 
+
+BCA: 192 tracks (header), 190 tracks (fit in file), 100 frames
+
+--- Direct BCA hash  VBN bone ID matches ---
+Direct VBN ID matches: 0 / 190
+
+--- BCA hash  CRC32(bone name) matches ---
+CRC32 matches: 0 / 190
+
+--- BCA hash  DRP-style CRC matches ---
+DRP-style CRC matches: 0 / 190
+
+--- Flag Distribution ---
+  0x00: 71 tracks (binary: 00000000)
+  0x06: 8 tracks (binary: 00000110)
+  0x0A: 6 tracks (binary: 00001010)
+  0x0E: 21 tracks (binary: 00001110)
+  0x12: 28 tracks (binary: 00010010)
+  0x16: 11 tracks (binary: 00010110)
+  0x1A: 13 tracks (binary: 00011010)
+  0x1E: 9 tracks (binary: 00011110)
+  0x22: 20 tracks (binary: 00100010)
+  0x26: 3 tracks (binary: 00100110)
+
+--- Flag Bit Analysis ---
+  Bit pattern analysis (flags vs keyframe count):
+  Animated tracks: 133, Static tracks: 57
+  Animated track flags: 0x22, 0x12, 0x1A, 0x16, 0xE, 0x1E, 0x6, 0x0, 0x26, 0xA
+  Static track flags: 0x0, 0x22, 0x1A, 0x26
+
+--- Component Grouping Theory ---
+  Tracks/bones ratio: 2.24
+  192/1 = 192 (one track per something)
+  192/2 = 96 bones (2 tracks each: rot+pos?)
+  192/3 = 64 (3 components: X,Y,Z)
+
+--- All BCA Tracks ---
+  [  0] 0x05650D6C def=    2.9703 flags=0x22 dOff=0 dSz=0 ANIMATED(keys=73)
+  [  1] 0x05CF13D8 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [  2] 0x0740B6EE def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [  3] 0x08DB1127 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [  4] 0x094D07AF def=    6.6126 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=80)
+  [  5] 0x09E1C634 def=    6.1618 flags=0x1A dOff=0 dSz=1 ANIMATED(keys=100)
+  [  6] 0x0A74BF03 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [  7] 0x0FD66B87 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [  8] 0x107D3F11 def=    2.9720 flags=0x22 dOff=0 dSz=0
+  [  9] 0x10D97B80 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [ 10] 0x10E52743 def=    9.1702 flags=0x12 dOff=0 dSz=0 ANIMATED(keys=118)
+  [ 11] 0x14DCCC36 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [ 12] 0x15F86E29 def=    2.2040 flags=0x16 dOff=0 dSz=1 ANIMATED(keys=130)
+  [ 13] 0x1852FCDB def=    4.0389 flags=0x0E dOff=0 dSz=1 ANIMATED(keys=20)
+  [ 14] 0x1C2C8919 def=    2.0634 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=110)
+  [ 15] 0x1ED64CCE def=    2.0634 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=84)
+  [ 16] 0x1F3F38C2 def=    3.6361 flags=0x1E dOff=0 dSz=0 ANIMATED(keys=120)
+  [ 17] 0x209C5D47 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [ 18] 0x20E1EFE8 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [ 19] 0x20F04EE2 def=    6.1618 flags=0x1A dOff=0 dSz=1 ANIMATED(keys=100)
+  [ 20] 0x20F330F1 def=    4.8996 flags=0x06 dOff=0 dSz=0 ANIMATED(keys=39)
+  [ 21] 0x255153FC def=    0.0000 flags=0x00 dOff=0 dSz=0 ANIMATED(keys=56)
+  [ 22] 0x278D987F def=    2.9492 flags=0x22 dOff=0 dSz=0
+  [ 23] 0x28028B8E def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [ 24] 0x28630F20 def=    7.3153 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=30)
+  [ 25] 0x2E174217 def=    2.1363 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=154)
+  [ 26] 0x31425B88 def=    6.9892 flags=0x06 dOff=0 dSz=1 ANIMATED(keys=64)
+  [ 27] 0x333A9B21 def=    3.3578 flags=0x1E dOff=0 dSz=0 ANIMATED(keys=69)
+  [ 28] 0x3343E281 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [ 29] 0x341F63C8 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [ 30] 0x34C6F910 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [ 31] 0x34D5BE2F def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [ 32] 0x355FE6EB def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [ 33] 0x3611FDD5 def=    3.0412 flags=0x16 dOff=0 dSz=1 ANIMATED(keys=138)
+  [ 34] 0x366CDFAB def=    1.9505 flags=0x26 dOff=0 dSz=1 ANIMATED(keys=120)
+  [ 35] 0x3686AFF2 def=    3.0627 flags=0x1E dOff=0 dSz=1 ANIMATED(keys=69)
+  [ 36] 0x39CF5776 def=    7.0119 flags=0x12 dOff=0 dSz=0 ANIMATED(keys=103)
+  [ 37] 0x3A40CA43 def=    2.9492 flags=0x22 dOff=0 dSz=1
+  [ 38] 0x3BDE2A3B def=    2.6165 flags=0x22 dOff=0 dSz=1 ANIMATED(keys=91)
+  [ 39] 0x3F99D338 def=    4.8996 flags=0x06 dOff=0 dSz=0 ANIMATED(keys=39)
+  [ 40] 0x402EC5F5 def=    2.9492 flags=0x22 dOff=0 dSz=0
+  [ 41] 0x4120A556 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [ 42] 0x41AB9653 def=    3.3578 flags=0x1E dOff=0 dSz=1 ANIMATED(keys=69)
+  [ 43] 0x41DB6B53 def=    2.2144 flags=0x12 dOff=0 dSz=0 ANIMATED(keys=188)
+  [ 44] 0x4249C2FE def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [ 45] 0x425A85C1 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [ 46] 0x43F9CD59 def=    2.0634 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=154)
+  [ 47] 0x469E56D2 def=    1.3954 flags=0x0A dOff=0 dSz=1 ANIMATED(keys=80)
+  [ 48] 0x47F7D503 def=    2.2144 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=111)
+  [ 49] 0x49C0BEA7 def=    3.0422 flags=0x16 dOff=0 dSz=0 ANIMATED(keys=130)
+  [ 50] 0x4F5DD006 def=    4.9004 flags=0x06 dOff=0 dSz=1 ANIMATED(keys=39)
+  [ 51] 0x4F9CE793 def=   10.8571 flags=0x0E dOff=0 dSz=1 ANIMATED(keys=206)
+  [ 52] 0x4FB14FE3 def=    3.0627 flags=0x1E dOff=0 dSz=1 ANIMATED(keys=69)
+  [ 53] 0x5191FE68 def=   10.8572 flags=0x0E dOff=0 dSz=1 ANIMATED(keys=126)
+  [ 54] 0x51D1A41D def=    2.6166 flags=0x22 dOff=0 dSz=1 ANIMATED(keys=91)
+  [ 55] 0x5509DF7F def=   10.8572 flags=0x0E dOff=0 dSz=1 ANIMATED(keys=126)
+  [ 56] 0x558E316B def=    3.0412 flags=0x16 dOff=0 dSz=0 ANIMATED(keys=138)
+  [ 57] 0x56002196 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [ 58] 0x565B1851 def=   10.8572 flags=0x0E dOff=0 dSz=0 ANIMATED(keys=126)
+  [ 59] 0x569E9430 def=    0.0000 flags=0x00 dOff=0 dSz=0 ANIMATED(keys=126)
+  [ 60] 0x57606DB9 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [ 61] 0x581AE446 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [ 62] 0x5A32D9BA def=    2.0634 flags=0x12 dOff=0 dSz=0 ANIMATED(keys=30)
+  [ 63] 0x5AFA3DE4 def=    2.9492 flags=0x22 dOff=0 dSz=1
+  [ 64] 0x5BB2C812 def=    3.0422 flags=0x16 dOff=0 dSz=1 ANIMATED(keys=130)
+  [ 65] 0x5CDF0C0B def=    0.0000 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=30)
+  [ 66] 0x5D3D70CC def=    3.2724 flags=0x12 dOff=0 dSz=0 ANIMATED(keys=160)
+  [ 67] 0x60474828 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [ 68] 0x608F9B88 def=   10.8572 flags=0x0E dOff=0 dSz=1 ANIMATED(keys=126)
+  [ 69] 0x624FE35C def=   10.7074 flags=0x0E dOff=0 dSz=1 ANIMATED(keys=56)
+  [ 70] 0x62C4FA54 def=    3.0813 flags=0x16 dOff=0 dSz=0 ANIMATED(keys=138)
+  [ 71] 0x62C5FFB0 def=    2.9492 flags=0x22 dOff=0 dSz=1
+  [ 72] 0x631B5FB9 def=    0.0000 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=56)
+  [ 73] 0x635691DB def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [ 74] 0x63691478 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [ 75] 0x65EFEE37 def=    6.9892 flags=0x06 dOff=0 dSz=1 ANIMATED(keys=64)
+  [ 76] 0x68BD3E37 def=    4.8999 flags=0x06 dOff=0 dSz=1 ANIMATED(keys=39)
+  [ 77] 0x6949D3E4 def=    3.2152 flags=0x1A dOff=0 dSz=1 ANIMATED(keys=182)
+  [ 78] 0x698B1243 def=    2.0634 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=84)
+  [ 79] 0x6FD0FA2E def=    0.0000 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=56)
+  [ 80] 0x72B3F8F8 def=    1.8572 flags=0x0A dOff=0 dSz=1 ANIMATED(keys=40)
+  [ 81] 0x732E936B def=    3.0422 flags=0x16 dOff=0 dSz=1 ANIMATED(keys=130)
+  [ 82] 0x75DE3CE1 def=    2.2144 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=60)
+  [ 83] 0x77D3ADF0 def=    3.2152 flags=0x1A dOff=0 dSz=1 ANIMATED(keys=74)
+  [ 84] 0x77DBA476 def=    3.0412 flags=0x16 dOff=0 dSz=0 ANIMATED(keys=138)
+  [ 85] 0x7814C145 def=    0.0000 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=126)
+  [ 86] 0x78562DA5 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [ 87] 0x797DAF21 def=    2.0634 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=84)
+  [ 88] 0x7C775DEE def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [ 89] 0x7E6ED3B7 def=    8.7407 flags=0x00 dOff=0 dSz=0 ANIMATED(keys=70)
+  [ 90] 0x7F42172A def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [ 91] 0x7F900DB5 def=    2.1762 flags=0x22 dOff=0 dSz=1 ANIMATED(keys=96)
+  [ 92] 0x80D89899 def=    0.0000 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=150)
+  [ 93] 0x848AF693 def=    0.0000 flags=0x00 dOff=0 dSz=0 ANIMATED(keys=68)
+  [ 94] 0x87D32E52 def=   10.8572 flags=0x0E dOff=0 dSz=1 ANIMATED(keys=126)
+  [ 95] 0x8AAC9F6B def=    5.6815 flags=0x1A dOff=0 dSz=0 ANIMATED(keys=100)
+  [ 96] 0x8AB79483 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [ 97] 0x8B43AD69 def=    4.6936 flags=0x1A dOff=0 dSz=1 ANIMATED(keys=100)
+  [ 98] 0x8B58830E def=    2.1762 flags=0x22 dOff=0 dSz=0 ANIMATED(keys=104)
+  [ 99] 0x8DB59F81 def=    0.0000 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=56)
+  [100] 0x900936E9 def=    9.1675 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=118)
+  [101] 0x9066DA98 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [102] 0x9164A869 def=    1.7076 flags=0x1A dOff=0 dSz=1
+  [103] 0x91650F00 def=    0.0000 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=100)
+  [104] 0x92024DE3 def=    1.7076 flags=0x1A dOff=0 dSz=1
+  [105] 0x942B7EB4 def=    3.0627 flags=0x1E dOff=0 dSz=1 ANIMATED(keys=69)
+  [106] 0x95C0C531 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [107] 0x95FF4092 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [108] 0x96A576BE def=   10.8572 flags=0x0E dOff=0 dSz=0 ANIMATED(keys=126)
+  [109] 0x97710B1B def=    2.9492 flags=0x22 dOff=0 dSz=0 ANIMATED(keys=73)
+  [110] 0x989B3F32 def=   10.7221 flags=0x0E dOff=0 dSz=0 ANIMATED(keys=126)
+  [111] 0x993AA372 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [112] 0x99D48982 def=    7.0139 flags=0x12 dOff=0 dSz=0 ANIMATED(keys=103)
+  [113] 0x9C73A4AB def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [114] 0x9D354C79 def=    3.3578 flags=0x1E dOff=0 dSz=1 ANIMATED(keys=69)
+  [115] 0x9E5D0FE3 def=    3.2152 flags=0x1A dOff=0 dSz=1 ANIMATED(keys=244)
+  [116] 0xA2F689CA def=    6.9892 flags=0x06 dOff=0 dSz=0 ANIMATED(keys=64)
+  [117] 0xA33FCAF4 def=    0.0000 flags=0x00 dOff=0 dSz=0 ANIMATED(keys=56)
+  [118] 0xA4F1B202 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [119] 0xA7D029D9 def=    2.9720 flags=0x22 dOff=0 dSz=1 ANIMATED(keys=100)
+  [120] 0xA85CB477 def=    2.0634 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=84)
+  [121] 0xAB67AC2A def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [122] 0xABA590EB def=    3.2724 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=160)
+  [123] 0xAC1B7EF9 def=    2.0634 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=155)
+  [124] 0xADB8ABAB def=    2.0634 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=155)
+  [125] 0xADEA3FF8 def=    1.6569 flags=0x26 dOff=0 dSz=0
+  [126] 0xAEEA1BBC def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [127] 0xB116BD29 def=    6.7804 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=80)
+  [128] 0xB19FF6F0 def=    1.3954 flags=0x0A dOff=0 dSz=0 ANIMATED(keys=80)
+  [129] 0xB262BC36 def=   10.8572 flags=0x0E dOff=0 dSz=1 ANIMATED(keys=126)
+  [130] 0xB2FDA5CF def=    4.0077 flags=0x1A dOff=0 dSz=0 ANIMATED(keys=100)
+  [131] 0xB3435670 def=    0.0000 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=56)
+  [132] 0xB3703D00 def=    2.0634 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=84)
+  [133] 0xB6F232E9 def=    3.3216 flags=0x1A dOff=0 dSz=1 ANIMATED(keys=74)
+  [134] 0xB783A345 def=    8.7407 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=70)
+  [135] 0xBADA3BB3 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [136] 0xBB9503B9 def=    2.6166 flags=0x22 dOff=0 dSz=1 ANIMATED(keys=91)
+  [137] 0xBBC75B9A def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [138] 0xBD0A341C def=    6.8261 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=80)
+  [139] 0xBDCF9F41 def=    2.9693 flags=0x22 dOff=0 dSz=1 ANIMATED(keys=100)
+  [140] 0xBE374BAD def=    1.9505 flags=0x26 dOff=0 dSz=0 ANIMATED(keys=196)
+  [141] 0xBFE84EF0 def=    2.0634 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=30)
+  [142] 0xC3139A76 def=   10.7221 flags=0x0E dOff=0 dSz=0 ANIMATED(keys=56)
+  [143] 0xC5DEAD8B def=    0.0000 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=56)
+  [144] 0xC793B6F0 def=    4.0077 flags=0x1A dOff=0 dSz=0 ANIMATED(keys=100)
+  [145] 0xC876DD3C def=    2.9837 flags=0x22 dOff=0 dSz=1 ANIMATED(keys=73)
+  [146] 0xC8B81905 def=    0.0000 flags=0x00 dOff=0 dSz=0 ANIMATED(keys=56)
+  [147] 0xC927589B def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [148] 0xCA419E91 def=    0.0000 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=56)
+  [149] 0xCA648EDC def=    2.0634 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=30)
+  [150] 0xCC17A886 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [151] 0xCC6577B8 def=    1.5155 flags=0x0A dOff=0 dSz=0 ANIMATED(keys=80)
+  [152] 0xCE0AAE83 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [153] 0xCE92359A def=    2.9492 flags=0x22 dOff=0 dSz=1
+  [154] 0xD108A227 def=    0.0000 flags=0x00 dOff=0 dSz=0 ANIMATED(keys=56)
+  [155] 0xD26DCED3 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [156] 0xD2C7527B def=    3.0824 flags=0x16 dOff=0 dSz=1 ANIMATED(keys=130)
+  [157] 0xD5AA9662 def=    0.0000 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=30)
+  [158] 0xD665663E def=    4.8996 flags=0x06 dOff=0 dSz=0 ANIMATED(keys=39)
+  [159] 0xD6E164C7 def=    1.6373 flags=0x0E dOff=0 dSz=0 ANIMATED(keys=100)
+  [160] 0xDA34BE97 def=    1.6373 flags=0x0E dOff=0 dSz=1 ANIMATED(keys=150)
+  [161] 0xDB22831D def=    7.3152 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=30)
+  [162] 0xDE14A893 def=    2.0634 flags=0x12 dOff=0 dSz=0 ANIMATED(keys=30)
+  [163] 0xDE94DF64 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [164] 0xE015DBC5 def=    2.6166 flags=0x22 dOff=0 dSz=1 ANIMATED(keys=91)
+  [165] 0xE27B7513 def=    1.3954 flags=0x0A dOff=0 dSz=1 ANIMATED(keys=80)
+  [166] 0xE3449E27 def=    2.1762 flags=0x22 dOff=0 dSz=1 ANIMATED(keys=96)
+  [167] 0xE4E82718 def=    0.0000 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=91)
+  [168] 0xE5729CE4 def=    0.0000 flags=0x00 dOff=0 dSz=0 ANIMATED(keys=56)
+  [169] 0xE57E1441 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [170] 0xE5F5BC9B def=   10.7221 flags=0x0E dOff=0 dSz=1 ANIMATED(keys=56)
+  [171] 0xE6324C70 def=    9.7012 flags=0x0E dOff=0 dSz=1 ANIMATED(keys=56)
+  [172] 0xE73E7201 def=    2.6165 flags=0x22 dOff=0 dSz=1 ANIMATED(keys=91)
+  [173] 0xEB399B98 def=    3.3578 flags=0x1E dOff=0 dSz=0 ANIMATED(keys=69)
+  [174] 0xEB54F8FE def=    0.0000 flags=0x00 dOff=0 dSz=1 ANIMATED(keys=56)
+  [175] 0xEE137D29 def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [176] 0xEE1BCC98 def=    3.0824 flags=0x16 dOff=0 dSz=1 ANIMATED(keys=130)
+  [177] 0xF15BA74E def=    3.0422 flags=0x16 dOff=0 dSz=1 ANIMATED(keys=130)
+  [178] 0xF1FB311E def=   10.7074 flags=0x0E dOff=0 dSz=0 ANIMATED(keys=56)
+  [179] 0xF271D018 def=   10.7221 flags=0x0E dOff=0 dSz=0 ANIMATED(keys=56)
+  [180] 0xF38DF316 def=   10.8571 flags=0x0E dOff=0 dSz=1 ANIMATED(keys=206)
+  [181] 0xF6232A02 def=    6.8261 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=80)
+  [182] 0xF72EA2C7 def=    3.0627 flags=0x1E dOff=0 dSz=0 ANIMATED(keys=69)
+  [183] 0xF835FAD3 def=    1.6373 flags=0x0E dOff=0 dSz=1 ANIMATED(keys=100)
+  [184] 0xF882DBDE def=    1.3954 flags=0x0A dOff=0 dSz=1 ANIMATED(keys=80)
+  [185] 0xF900472D def=    5.4519 flags=0x1A dOff=0 dSz=0 ANIMATED(keys=164)
+  [186] 0xF98CF6F6 def=    0.0000 flags=0x00 dOff=0 dSz=0
+  [187] 0xFCDD6E4A def=    0.0000 flags=0x00 dOff=0 dSz=1
+  [188] 0xFE3CCFC2 def=    2.0634 flags=0x12 dOff=0 dSz=1 ANIMATED(keys=126)
+  [189] 0xFF9E2AE6 def=   10.8572 flags=0x0E dOff=0 dSz=1 ANIMATED(keys=126)

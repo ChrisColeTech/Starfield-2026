@@ -1,0 +1,52 @@
+BCA to DAE Animation Converter (R&D)
+====================================
+
+========== BCL ENTRY MAPPER ==========
+
+BCL: 88648 bytes, 137 entries
+VBN: 85 bones
+BCA: 190 tracks, 190 unique hashes
+
+Found 123 BCA hash occurrences in BCL
+Average entry size (after 0x34 header): 646.7 bytes
+
+--- Hash groups by proximity ---
+Found 24 groups (potential bone entries)
+
+  Group[  0] (BASE                  ) offset=0x021C0 hashes=1: [53:0x0E]
+  Group[  1] (CENTER_RT             ) offset=0x0437C hashes=2: [103:0x00] [189:0x0E]
+  Group[  2] (THROW_NULL            ) offset=0x06954 hashes=4: [171:0x0E] [146:0x00] [148:0x00] [51:0x0E]
+  Group[  3] (EXTRA0                ) offset=0x07A24 hashes=1: [55:0x0E]
+  Group[  4] (EXTRA1                ) offset=0x08620 hashes=6: [24:0x00] [134:0x00] [100:0x12] [161:0x00] [89:0x00] [10:0x12]
+  Group[  5] (EXTRA2                ) offset=0x08CC4 hashes=7: [112:0x12] [39:0x06] [36:0x12] [54:0x22] [167:0x00] [88:0x00] [98:0x22]
+  Group[  6] (EXTRA3                ) offset=0x09548 hashes=8: [166:0x22] [91:0x22] [95:0x1A] [102:0x1A] [19:0x1A] [114:0x1E] [119:0x22] [178:0x0E]
+  Group[  7] (EXTRA4                ) offset=0x0A5A8 hashes=16: [72:0x00] [79:0x00] [38:0x22] [138:0x12] [5:0x1A] [42:0x1E] [164:0x22] [4:0x12] [26:0x06] [106:0x00] [73:0x00] [86:0x00] [6:0x00] [150:0x00] [76:0x06] [69:0x0E]
+  Group[  8] (Spine1                ) offset=0x0BEE8 hashes=25: [154:0x00] [172:0x22] [127:0x12] [173:0x1E] [136:0x22] [181:0x12] [116:0x06] [135:0x00] [158:0x06] [142:0x0E] [168:0x00] [75:0x06] [27:0x1E] [175:0x00] [20:0x06] [83:0x1A] [92:0x00] [185:0x1A] [133:0x1A] [93:0x00] [128:0x0A] [176:0x16] [188:0x12] [25:0x12] [120:0x12]
+  Group[  9] (Spine2                ) offset=0x0D500 hashes=2: [46:0x12] [87:0x12]
+  Group[ 10] (Hip                   ) offset=0x0D9D8 hashes=1: [15:0x12]
+  Group[ 11] (Neck1                 ) offset=0x0DD34 hashes=1: [123:0x12]
+  Group[ 12] (Neck2                 ) offset=0x0E270 hashes=1: [124:0x12]
+  Group[ 13] (Neck3                 ) offset=0x0E68C hashes=10: [78:0x12] [125:0x26] [34:0x26] [35:0x1E] [139:0x22] [0:0x22] [144:0x1A] [104:0x1A] [97:0x1A] [77:0x1A]
+  Group[ 14] (Head                  ) offset=0x0F1A4 hashes=3: [43:0x12] [48:0x12] [84:0x16]
+  Group[ 15] (R_Shoulder            ) offset=0x0FA38 hashes=1: [149:0x12]
+  Group[ 16] (R_Arm                 ) offset=0x0FD94 hashes=1: [14:0x12]
+  Group[ 17] (R_ForeArm             ) offset=0x100F0 hashes=1: [56:0x16]
+  Group[ 18] (R_Hand                ) offset=0x10ECC hashes=1: [115:0x1A]
+  Group[ 19] (L_Shoulder            ) offset=0x11408 hashes=1: [81:0x16]
+  Group[ 20] (L_Arm                 ) offset=0x12B44 hashes=1: [177:0x16]
+  Group[ 21] (L_ForeArm             ) offset=0x13AA0 hashes=1: [130:0x1A]
+  Group[ 22] (L_Hand                ) offset=0x13FDC hashes=1: [140:0x26]
+  Group[ 23] (R_UpLeg               ) offset=0x144B8 hashes=27: [122:0x12] [16:0x1E] [13:0x0E] [82:0x12] [80:0x0A] [49:0x16] [66:0x12] [52:0x1E] [162:0x12] [137:0x00] [62:0x12] [182:0x1E] [33:0x16] [12:0x16] [64:0x16] [165:0x0A] [101:0x00] [151:0x0A] [132:0x12] [65:0x00] [105:0x1E] [70:0x16] [156:0x16] [47:0x0A] [184:0x0A] [121:0x00] [157:0x00]
+
+--- Flag pattern analysis ---
+  Flag low 2 bits meaning (guess):
+  Flags low nibble: 0x02=rotX? 0x06=rotY? 0x0A=rotZ? 0x0E=posX? 0x12=posY? 0x16=posZ? 0x1A=sclX? 0x1E=sclY? 0x22=sclZ?
+
+  Group[0] (BASE): flags=0x0E(keys=126) 
+  Group[1] (CENTER_RT): flags=0x00(keys=100) flags=0x0E(keys=126) 
+  Group[2] (THROW_NULL): flags=0x0E(keys=56) flags=0x00(keys=56) flags=0x00(keys=56) flags=0x0E(keys=206) 
+  Group[3] (EXTRA0): flags=0x0E(keys=126) 
+  Group[4] (EXTRA1): flags=0x00(keys=30) flags=0x00(keys=70) flags=0x12(keys=118) flags=0x00(keys=30) flags=0x00(keys=70) flags=0x12(keys=118) 
+  Group[8] (Spine1): flags=0x00(keys=56) flags=0x22(keys=91) flags=0x12(keys=80) flags=0x1E(keys=69) flags=0x22(keys=91) flags=0x12(keys=80) flags=0x06(keys=64) flags=0x00(keys=0) flags=0x06(keys=39) flags=0x0E(keys=56) flags=0x00(keys=56) flags=0x06(keys=64) flags=0x1E(keys=69) flags=0x00(keys=0) flags=0x06(keys=39) flags=0x1A(keys=74) flags=0x00(keys=150) flags=0x1A(keys=164) flags=0x1A(keys=74) flags=0x00(keys=68) flags=0x0A(keys=80) flags=0x16(keys=130) flags=0x12(keys=126) flags=0x12(keys=154) flags=0x12(keys=84) 
+  Group[10] (Hip): flags=0x12(keys=84) 
+  Group[14] (Head): flags=0x12(keys=188) flags=0x12(keys=111) flags=0x16(keys=138) 

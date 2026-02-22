@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "bodyType": "female",
+  "selections": [
+    {
+      "itemId": "body",
+      "variant": "olive"
+    },
+    {
+      "itemId": "heads_human_female",
+      "variant": "olive"
+    },
+    {
+      "itemId": "face_neutral",
+      "variant": "olive"
+    },
+    {
+      "itemId": "hair_plain",
+      "variant": "raven"
+    },
+    {
+      "itemId": "torso_clothes_tshirt",
+      "variant": "purple"
+    },
+    {
+      "itemId": "legs_shorts",
+      "variant": "navy"
+    },
+    {
+      "itemId": "feet_shoes_basic",
+      "variant": "black"
+    },
+    {
+      "itemId": "shadow"
+    }
+  ]
+}

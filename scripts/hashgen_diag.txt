@@ -1,0 +1,63 @@
+Loading hash cache...
+  408004 entries loaded.
+Opening archive: D:\Projects\Starfield-2026\src\Starfield2026.Tests\scarlet-dump\arc
+  273862 files in descriptor, 16112 packs.
+
+Generating hash list from archive structure...
+  DIAG: Pack 'arc/ai_behaviorblackboardaction_template_1_blackboardaction_template_1_blackboard.trabb.trpak' ΓåÆ dir 'arc/ai_behaviorblackboardaction_template_1_blackboardaction_template_1_blackboard.trabb.trpak/' | 533 files | 0 identified
+  DIAG: Pack 'arc/ai_influence00_00.imap.trpak' ΓåÆ dir 'arc/ai_influence00_00.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence00_01.imap.trpak' ΓåÆ dir 'arc/ai_influence00_01.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence00_02.imap.trpak' ΓåÆ dir 'arc/ai_influence00_02.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence00_03.imap.trpak' ΓåÆ dir 'arc/ai_influence00_03.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence00_04.imap.trpak' ΓåÆ dir 'arc/ai_influence00_04.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence00_05.imap.trpak' ΓåÆ dir 'arc/ai_influence00_05.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence00_06.imap.trpak' ΓåÆ dir 'arc/ai_influence00_06.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence00_07.imap.trpak' ΓåÆ dir 'arc/ai_influence00_07.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence00_08.imap.trpak' ΓåÆ dir 'arc/ai_influence00_08.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence00_09.imap.trpak' ΓåÆ dir 'arc/ai_influence00_09.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence01_00.imap.trpak' ΓåÆ dir 'arc/ai_influence01_00.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence01_01.imap.trpak' ΓåÆ dir 'arc/ai_influence01_01.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence01_02.imap.trpak' ΓåÆ dir 'arc/ai_influence01_02.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence01_03.imap.trpak' ΓåÆ dir 'arc/ai_influence01_03.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence01_04.imap.trpak' ΓåÆ dir 'arc/ai_influence01_04.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence01_05.imap.trpak' ΓåÆ dir 'arc/ai_influence01_05.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence01_06.imap.trpak' ΓåÆ dir 'arc/ai_influence01_06.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence01_07.imap.trpak' ΓåÆ dir 'arc/ai_influence01_07.imap.trpak/' | 1 files | 0 identified
+  DIAG: Pack 'arc/ai_influence01_08.imap.trpak' ΓåÆ dir 'arc/ai_influence01_08.imap.trpak/' | 1 files | 0 identified
+
+  [3.1%] Pack 500/16112 | 0 paths resolved | arc/applidatastatusstatus_poke_skill_01_spa.arc.trpak                    
+  [6.2%] Pack 1000/16112 | 0 paths resolved | arc/charamodel_uqtr0210_insecttr0210_00_loc.trskl.trpak                    
+  [9.3%] Pack 1500/16112 | 0 paths resolved | arc/charasharecm_uni_tops02_00_00_albcm_uni_tops02_00_00_alb.bntx.trpak                    
+  [12.4%] Pack 2000/16112 | 0 paths resolved | arc/demoeeee_wait09ee_wait09.trtml.trpak                    
+  [15.5%] Pack 2500/16112 | 0 paths resolved | arc/effectbattle_ejej_headpartsej_headparts04.ptcl.trpak                    
+  [18.6%] Pack 3000/16112 | 0 paths resolved | arc/effectbattle_ejej_transform_end00ej_transform_end00_core.ptcl.trpak                    
+  [21.7%] Pack 3500/16112 | 0 paths resolved | arc/effectbattle_ewew0281ew0281_0.trsot.trpak                    
+  [24.8%] Pack 4000/16112 | 0 paths resolved | arc/effectmaterialsjewel_m02jewel_m02.trmtr.trpak                    
+  [27.9%] Pack 4500/16112 | 0 paths resolved | arc/field_graphiccommon_modelpi_jalapeno01pi_jalapeno01.tranm.trpak                    
+  [31.0%] Pack 5000/16112 | 0 paths resolved | arc/field_graphicterrainterrain_02_05ter_02_05_plants_me_tree_oak03_X0Z0_d0.trins.trpak                    
+  [34.1%] Pack 5500/16112 | 0 paths resolved | arc/field_graphicterrain_modelground_un_region04_cliff21ground_un_region04_cliff21.trmdl.trpak                    
+  [37.2%] Pack 6000/16112 | 0 paths resolved | arc/field_graphicterrain_modelobjects_un_plan_ruin01_floor09objects_un_plan_ruin01_floor09.trmdl.trpak                    
+  [40.3%] Pack 6500/16112 | 0 paths resolved | arc/field_graphicterrain_modelobjects_un_woodenfence01objects_un_woodenfence01.trmdl.trpak                    
+  [43.4%] Pack 7000/16112 | 0 paths resolved | arc/field_graphictr_share_texobjects_c03_spotlight01_walllight01_aoobjects_c03_spotlight01_walllight01_ao.bntx.trpak                    
+  [46.5%] Pack 7500/16112 | 0 paths resolved | arc/messagedatEnglishcommonstatus.tbl.trpak                    
+  [49.7%] Pack 8000/16112 | 0 paths resolved | arc/messagedatEnglishscriptsub_031.tbl.trpak                    
+  [52.8%] Pack 8500/16112 | 0 paths resolved | arc/messagedatFrenchscriptgym_mushi_020.tbl.trpak                    
+  [55.9%] Pack 9000/16112 | 0 paths resolved | arc/messagedatGermanscriptcommon_0043.tbl.trpak                    
+  [59.0%] Pack 9500/16112 | 0 paths resolved | arc/messagedatItalianscripta_t06_g01.tbl.trpak                    
+  [62.1%] Pack 10000/16112 | 0 paths resolved | arc/messagedatJPNcommonbtlspot.tbl.trpak                    
+  [65.2%] Pack 10500/16112 | 0 paths resolved | arc/messagedatJPNscriptlegend_0040.tbl.trpak                    
+  [68.3%] Pack 11000/16112 | 0 paths resolved | arc/messagedatJPN_KANJIscriptcommon_1190.tbl.trpak                    
+  [71.4%] Pack 11500/16112 | 0 paths resolved | arc/messagedatKoreanscriptchamp_0230.tbl.trpak                    
+  [74.5%] Pack 12000/16112 | 0 paths resolved | arc/messagedatSimp_Chinesecommonpokepicnic_main.tbl.trpak                    
+  [77.6%] Pack 12500/16112 | 0 paths resolved | arc/messagedatSimp_Chinesescriptsub_016.tbl.trpak                    
+  [80.7%] Pack 13000/16112 | 0 paths resolved | arc/messagedatSpanishscriptgym_ghost_040.tbl.trpak                    
+  [83.8%] Pack 13500/16112 | 0 paths resolved | arc/messagedatTrad_Chinesescriptclass_g_07.tbl.trpak                    
+  [86.9%] Pack 14000/16112 | 0 paths resolved | arc/pokemondatapm0052pm0052_00_11pm0052_00_11_00500_damage01.traef.trpak                    
+  [90.0%] Pack 14500/16112 | 0 paths resolved | arc/pokemondatapm0973pm0973_12_00pm0973_12_00.trpokecfg.trpak                    
+  [93.1%] Pack 15000/16112 | 0 paths resolved | arc/worlddatapokemonpartnerpartner_movement_data0120_00_00.bin.trpak                    
+  [96.2%] Pack 15500/16112 | 0 paths resolved | arc/worlddatapokemonpartnerpartner_movement_data0612_00_00.bin.trpak                    
+  [99.3%] Pack 16000/16112 | 0 paths resolved | arc/worldscenepartsfieldrooma_com_house_a04_a_com_house_a04_0.trscn.trpak                    
+
+  Generated 0 hash entries.
+  Total entries after merge: 408004
+  Written to: D:\Projects\Starfield-2026\scripts\scarlet_hashes_test\hashes_inside_fd.txt

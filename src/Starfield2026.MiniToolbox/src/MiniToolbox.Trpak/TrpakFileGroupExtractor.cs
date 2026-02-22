@@ -126,8 +126,24 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
 
             if (exportData.Armature != null)
             {
+                // Build animation search directories:
+                // Trainer models (chara/model_tr/trXXXX_name/ or chara/model_uq/trXXXX_name/)
+                // have animations in chara/motion_uq/trXXXX_name/ and chara/motion_cc_base/trXXXX_name/
+                var animDirs = new List<string> { modelDir };
+                if (modelDir.StartsWith("chara/model_tr/", StringComparison.OrdinalIgnoreCase) ||
+                    modelDir.StartsWith("chara/model_uq/", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Extract the folder name (e.g. "tr0930_stafff/")
+                    string trainerFolder = modelDir.Split('/').Where(s => s.StartsWith("tr", StringComparison.OrdinalIgnoreCase)).FirstOrDefault() ?? "";
+                    if (!string.IsNullOrEmpty(trainerFolder))
+                    {
+                        animDirs.Add($"chara/motion_uq/{trainerFolder}/");
+                        animDirs.Add($"chara/motion_cc_base/{trainerFolder}/");
+                    }
+                }
+
                 foreach (var (hash, animName) in _loader.FindFiles(name =>
-                    name.StartsWith(modelDir, StringComparison.OrdinalIgnoreCase) &&
+                    animDirs.Any(dir => name.StartsWith(dir, StringComparison.OrdinalIgnoreCase)) &&
                     name.EndsWith(".tranm", StringComparison.OrdinalIgnoreCase)))
                 {
                     cancellationToken.ThrowIfCancellationRequested();

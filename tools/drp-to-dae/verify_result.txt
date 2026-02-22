@@ -1,0 +1,18 @@
+Checking 5406 animation DAE files...
+FAIL: 9900 unresolved Bone_XXXXXXXX entries found:
+  p006_demo_lose01_cam_anim.dae
+  p006_demo_lose01_cam_anim.dae
+  p006_demo_lose01_cam_anim.dae
+  p006_demo_lose01_cam_anim.dae
+  p006_demo_lose01_cam_anim.dae
+FAIL: 306131 channel targets still use _id suffix:
+  a050mk_attack_01_anim.dae: <channel source="#BASE_id_transform_sampler" target="BASE_id/transform" />
+  a050mk_attack_01_anim.dae: <channel source="#CENTER_RT_id_transform_sampler" target="CENTER_RT_id/transform" />
+  a050mk_attack_01_anim.dae: <channel source="#THROW_NULL_id_transform_sampler" target="THROW_NULL_id/transform" />
+
+Sample targets from a038hi_attack_anim.dae:
+  <channel source="#BASE_id_transform_sampler" target="BASE/transform" />
+  <channel source="#CENTER_RT_id_transform_sampler" target="CENTER_RT/transform" />
+  <channel source="#THROW_NULL_id_transform_sampler" target="THROW_NULL/transform" />
+
+Done.

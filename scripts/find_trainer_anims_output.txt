@@ -1,0 +1,56 @@
+Searching D:\Projects\Starfield-2026\src\Starfield2026.MiniToolbox\lib\hashes_inside_fd.txt for trainer animation files...
+Found 43234 results -> D:\Projects\Starfield-2026\scripts\trainer_anims_found.txt
+
+--- Sample .tranm paths (first 20 with 'tr' in path): ---
+0x0002F6A28C2F9F17 chara/motion_uq/tr1720_bmachine/tr1720_00_00020_turn_r000.tranm
+0x0003C06E142A08DA chara/motion_uq/tr1341_jyouthf/tr1341_00_03025_turn_l180.tranm
+0x000668AA304F7B85 chara/motion_uq/tr1002_bsuits/tr1002_01_08204_face05.tranm
+0x00087CE783E555DC chara/motion_uq/tr0241_electricity/tr0240_00_00343_byebye01_loop.tranm
+0x0019F96442EF8077 chara/motion_uq/tr1001_bkimono/tr1001_00_01351_advent01_loop.tranm
+0x0022EDFAB37D2434 chara/motion_uq/tr1500_villagerm/tr1500_00_00554_angry01_loop.tranm
+0x00294B6F7AC4FEFA chara/demo_vr/tr0780_adultm/d210_tr0780_00_anim_c02.tranm
+0x002AC07F16089F4C chara/motion_uq/tr1502_villagerm/tr1502_00_00022_turn_r180.tranm
+0x002B309FE6705CE2 chara/motion_uq/tr2350_pgrandfather/tr2350_00_01351_advent01_loop.tranm
+0x004445347CC69273 chara/motion_uq/tr1002_bsuits/tr1002_01_00072_rundown01_loop.tranm
+0x004C8D83799490C7 chara/motion_uq/tr0220_water/tr0220_00_01345_order01.tranm
+0x005064E0E50CC238 chara/motion_uq/tr0210_insect/tr0210_00_00032_walkdown01_loop.tranm
+0x00591F20EEF80DF7 chara/demo_vr/tr0630_syouthm/d060_cc_anim_c16_1_c_secondary.tranm
+0x005A399E93CA090A chara/motion_uq/tr1002_bsuits/tr1002_00_00005_defaultwait02_start.tranm
+0x005DBB8F2BB6AA21 chara/demo_cc_base/tr0690_d010_0/d010_cc_anim_K_c004.tranm
+0x0068C3A40326AC1B chara/motion_uq/tr0320_eviil/tr0320_00_08204_face05.tranm
+0x006CE428E40298AA chara/motion_uq/tr1080_bbmr/tr1080_00_00022_turn_r180.tranm
+0x006F1ACD56C287EA chara/motion_uq/tr1380_villagefs/tr1380_00_00006_defaultwait02_loop.tranm
+0x00718B05E17EF5CF chara/motion_cc_base/tr0510_pc/tr0510_00_07000_empty01_loop.tranm
+0x0071D3874A94A4FF chara/motion_uq/tr0300_poison/tr0300_00_00552_glad01_end.tranm
+
+--- Unique directory patterns for .tranm files (first 30): ---
+0x00006288B9907583 pokemon/data/pm0082/pm0082_00_00
+0x0001BBDC7B0129DE chara/motion_pc/p0_hrs0019_cornrowm
+0x0001E4DFAD9C3448 pokemon/data/pm0259/pm0259_00_00
+0x0002F6A28C2F9F17 chara/motion_uq/tr1720_bmachine
+0x00030B69DF183CAB chara/motion_pc/p0_hrs0030_cshort
+0x0003B46211105BCC pokemon/data/pm0024/pm0024_00_00
+0x0003C06E142A08DA chara/motion_uq/tr1341_jyouthf
+0x000640839C78AF97 pokemon/data/pm0158/pm0158_00_00
+0x000668AA304F7B85 chara/motion_uq/tr1002_bsuits
+0x000697A0D6439936 chara/motion_pc/p0_hrs0021_pompadourm
+0x00072949911C08E8 pokemon/data/pm0211/pm0211_00_41
+0x000768FC0AFEFAF8 pokemon/data/pm1057/pm1057_00_00
+0x00084C64C953329F chara/motion_pc/p0_hrs0009_sidepartm
+0x00087CE783E555DC chara/motion_uq/tr0241_electricity
+0x0008CB995A9C2F69 pokemon/data/pm0137/pm0137_00_00
+0x000A044E32D95E82 pokemon/data/pm0059/pm0059_00_41
+0x000B3E77CB39F6FA pokemon/data/pm0708/pm0708_28_00
+0x000C20805978E9F0 chara/motion_cc_base/cc0014_fat_f
+0x000CD7377FA41766 pokemon/data/pm0183/pm0183_00_00
+0x000E2E0B95447808 pokemon/data/pm0328/pm0328_00_00
+0x000FAC125AE1F547 chara/motion_pc/p0_bag1000_festival
+0x000FF59742322CB1 pokemon/data/pm1038/pm1038_12_00
+0x00100262D49F16CC pokemon/data/pm0170/pm0170_00_00
+0x001035D0B829DA09 chara/motion_pc/p0_bag0004_campus
+0x0010FC05005F7FBE chara/motion_pc/p0_hrs1016_knot
+0x00110B629512BA66 pokemon/data/pm0774/pm0774_12_00
+0x00115AE3BCED9596 chara/motion_pc/p0_hrs1005_sauvage
+0x00132A34763FC891 pokemon/data/pm0865/pm0865_11_00
+0x00134B41D0DF2FC0 pokemon/data/pm0579/pm0579_00_00
+0x001437198199CFD0 pokemon/data/pm0503/pm0503_00_00

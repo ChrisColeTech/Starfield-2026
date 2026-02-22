@@ -1,0 +1,133 @@
+BCA to DAE Animation Converter (R&D)
+====================================
+
+========== BCL STRUCTURE FINDER ==========
+
+Found 123 BCA hashes in BCL
+
+--- BCA Hashes sorted by BCL offset ---
+  BCL_off=0x021C0 BCA[ 53] hash=0x5191FE68 keys=126 flags=0x0E
+  BCL_off=0x0437C BCA[103] hash=0x91650F00 keys=100 flags=0x00
+  BCL_off=0x04438 BCA[189] hash=0xFF9E2AE6 keys=126 flags=0x0E
+  BCL_off=0x06954 BCA[171] hash=0xE6324C70 keys= 56 flags=0x0E
+  BCL_off=0x06AD0 BCA[146] hash=0xC8B81905 keys= 56 flags=0x00
+  BCL_off=0x06C4C BCA[148] hash=0xCA419E91 keys= 56 flags=0x00
+  BCL_off=0x06DC8 BCA[ 51] hash=0x4F9CE793 keys=206 flags=0x0E
+  BCL_off=0x07A24 BCA[ 55] hash=0x5509DF7F keys=126 flags=0x0E
+  BCL_off=0x08620 BCA[ 24] hash=0x28630F20 keys= 30 flags=0x00
+  BCL_off=0x086DC BCA[134] hash=0xB783A345 keys= 70 flags=0x00
+  BCL_off=0x08798 BCA[100] hash=0x900936E9 keys=118 flags=0x12
+  BCL_off=0x08914 BCA[161] hash=0xDB22831D keys= 30 flags=0x00
+  BCL_off=0x089D0 BCA[ 89] hash=0x7E6ED3B7 keys= 70 flags=0x00
+  BCL_off=0x08A8C BCA[ 10] hash=0x10E52743 keys=118 flags=0x12
+  BCL_off=0x08CC4 BCA[112] hash=0x99D48982 keys=103 flags=0x12
+  BCL_off=0x08E40 BCA[ 39] hash=0x3F99D338 keys= 39 flags=0x06
+  BCL_off=0x08EFC BCA[ 36] hash=0x39CF5776 keys=103 flags=0x12
+  BCL_off=0x08FB8 BCA[ 54] hash=0x51D1A41D keys= 91 flags=0x22
+  BCL_off=0x09074 BCA[167] hash=0xE4E82718 keys= 91 flags=0x00
+  BCL_off=0x09130 BCA[ 88] hash=0x7C775DEE keys=  0 flags=0x00
+  BCL_off=0x091EC BCA[ 98] hash=0x8B58830E keys=104 flags=0x22
+  BCL_off=0x09548 BCA[166] hash=0xE3449E27 keys= 96 flags=0x22
+  BCL_off=0x09604 BCA[ 91] hash=0x7F900DB5 keys= 96 flags=0x22
+  BCL_off=0x096C0 BCA[ 95] hash=0x8AAC9F6B keys=100 flags=0x1A
+  BCL_off=0x0977C BCA[102] hash=0x9164A869 keys=  0 flags=0x1A
+  BCL_off=0x09838 BCA[ 19] hash=0x20F04EE2 keys=100 flags=0x1A
+  BCL_off=0x098F4 BCA[114] hash=0x9D354C79 keys= 69 flags=0x1E
+  BCL_off=0x099B0 BCA[119] hash=0xA7D029D9 keys=100 flags=0x22
+  BCL_off=0x09A6C BCA[178] hash=0xF1FB311E keys= 56 flags=0x0E
+  BCL_off=0x0A5A8 BCA[ 72] hash=0x631B5FB9 keys= 56 flags=0x00
+
+--- Gaps between consecutive hash locations ---
+
+  Gap size histogram (top 20):
+       188 bytes (0xBC): 77 occurrences
+       380 bytes (0x17C): 13 occurrences
+       284 bytes (0x11C): 6 occurrences
+       860 bytes (0x35C): 5 occurrences
+      1340 bytes (0x53C): 4 occurrences
+      2876 bytes (0xB3C): 2 occurrences
+       476 bytes (0x1DC): 2 occurrences
+      8636 bytes (0x21BC): 1 occurrences
+      9500 bytes (0x251C): 1 occurrences
+      3164 bytes (0xC5C): 1 occurrences
+      3068 bytes (0xBFC): 1 occurrences
+       568 bytes (0x238): 1 occurrences
+       376 bytes (0x178): 1 occurrences
+       572 bytes (0x23C): 1 occurrences
+      1052 bytes (0x41C): 1 occurrences
+       764 bytes (0x2FC): 1 occurrences
+      3548 bytes (0xDDC): 1 occurrences
+      5948 bytes (0x173C): 1 occurrences
+      3932 bytes (0xF5C): 1 occurrences
+      1244 bytes (0x4DC): 1 occurrences
+
+--- Context around first few hash locations ---
+
+  BCA[53] hash=0x5191FE68 at BCL offset 0x21C0:
+    0021B0: 03 00 00 00 0A 00 00 00  0A 00 00 00 0A 00 00 00  |................|
+    0021C0: 68 FE 91 51 00 00 00 00  00 00 00 00 00 00 00 00  |h..Q............|
+    0021D0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0021E0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  Surrounding uint32 values:
+    0x021B0: 0x00000003 (           3) float=      0.0000
+    0x021B4: 0x0000000A (          10) float=      0.0000
+    0x021B8: 0x0000000A (          10) float=      0.0000
+    0x021BC: 0x0000000A (          10) float=      0.0000
+    0x021C0: 0x5191FE68 (  1368522344) float=78379810816.0000 <-- HASH
+
+  BCA[103] hash=0x91650F00 at BCL offset 0x437C:
+    00436C: 0A 00 00 00 0A 00 00 00  0A 00 00 00 0A 00 00 00  |................|
+    00437C: 00 0F 65 91 00 00 00 00  00 00 00 00 00 00 00 00  |..e.............|
+    00438C: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    00439C: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  Surrounding uint32 values:
+    0x0436C: 0x0000000A (          10) float=      0.0000
+    0x04370: 0x0000000A (          10) float=      0.0000
+    0x04374: 0x0000000A (          10) float=      0.0000
+    0x04378: 0x0000000A (          10) float=      0.0000
+    0x0437C: 0x91650F00 (  2439319296) float=     -0.0000 <-- HASH
+
+  BCA[189] hash=0xFF9E2AE6 at BCL offset 0x4438:
+    004428: 05 00 00 00 14 00 00 00  14 00 00 00 14 00 00 00  |................|
+    004438: E6 2A 9E FF 00 00 00 00  00 00 00 00 00 00 00 00  |.*..............|
+    004448: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    004458: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  Surrounding uint32 values:
+    0x04428: 0x00000005 (           5) float=      0.0000
+    0x0442C: 0x00000014 (          20) float=      0.0000
+    0x04430: 0x00000014 (          20) float=      0.0000
+    0x04434: 0x00000014 (          20) float=      0.0000
+    0x04438: 0xFF9E2AE6 (  4288555750) float=         NaN <-- HASH
+
+  BCA[171] hash=0xE6324C70 at BCL offset 0x6954:
+    006944: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    006954: 70 4C 32 E6 00 00 00 00  00 00 00 00 00 00 00 00  |pL2.............|
+    006964: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    006974: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  Surrounding uint32 values:
+    0x06954: 0xE6324C70 (  3862056048) float=-210497814237732755472384.0000 <-- HASH
+
+  BCA[146] hash=0xC8B81905 at BCL offset 0x6AD0:
+    006AC0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    006AD0: 05 19 B8 C8 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    006AE0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    006AF0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+  Surrounding uint32 values:
+    0x06AD0: 0xC8B81905 (  3367508229) float=-377032.1562 <-- HASH
+
+--- Values at fixed offsets relative to hash ---
+  Testing: what's at hash-4, hash-8, hash+4, hash+8 for each hash
+  hash-16: unique=7 top: 0x5(47), 0xA(35), 0x0(19), 0x3(15), 0x1(4)
+  hash-12: unique=8 top: 0xA(44), 0x5(33), 0x0(21), 0x3(14), 0xF(7)
+  hash-8: unique=9 top: 0xA(43), 0x0(40), 0x5(16), 0x14(8), 0xF(7)
+  hash-4: unique=9 top: 0x0(44), 0xA(32), 0x5(22), 0xF(8), 0x14(7)
+  hash+0: unique=123 top: 0x5191FE68(1), 0x91650F00(1), 0xFF9E2AE6(1), 0xE6324C70(1), 0xC8B81905(1)
+  hash+4: unique=1 top: 0x0(123)
+  hash+8: unique=2 top: 0x0(117), 0x1(6)
+  hash+12: unique=1 top: 0x0(123)
+  hash+16: unique=1 top: 0x0(123)
+
+--- VBN has 85 bones, BCL has 137 entries ---
+  137 - 85 = 52 extra entries (could be IK targets, constraints, etc.)
+  190 BCA tracks / 137 BCL entries = 1.39 tracks per entry
+  190 BCA tracks / 85 VBN bones = 2.24 tracks per bone

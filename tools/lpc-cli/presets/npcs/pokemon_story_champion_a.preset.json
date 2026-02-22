@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "bodyType": "male",
+  "selections": [
+    {
+      "itemId": "body",
+      "variant": "olive"
+    },
+    {
+      "itemId": "heads_human_male",
+      "variant": "olive"
+    },
+    {
+      "itemId": "face_neutral",
+      "variant": "olive"
+    },
+    {
+      "itemId": "hair_plain",
+      "variant": "ash"
+    },
+    {
+      "itemId": "torso_clothes_tshirt",
+      "variant": "navy"
+    },
+    {
+      "itemId": "legs_shorts",
+      "variant": "white"
+    },
+    {
+      "itemId": "feet_shoes_basic",
+      "variant": "black"
+    },
+    {
+      "itemId": "shadow"
+    }
+  ]
+}

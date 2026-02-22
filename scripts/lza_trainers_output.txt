@@ -1,0 +1,25 @@
+Total extracted TRPAK dirs: 10
+
+=== First 20 directory names ===
+  ai_influenceba_battle_area_0003_01_00_00.imap.trpak
+  ai_influenceba_battle_area_0009_01_00_00.imap.trpak
+  ai_influenceba_battle_area_0015_01_00_00.imap.trpak
+  ai_influenceba_battle_area_0071_01_00_00.imap.trpak
+  ai_influenceba_battle_area_0080_01_00_00.imap.trpak
+  ai_influenceba_battle_area_0121_01_00_00.imap.trpak
+  ai_influenceba_battle_area_0149_01_00_00.imap.trpak
+  ai_influenceba_battle_area_0181_01_00_00.imap.trpak
+  ai_influenceba_battle_area_0248_01_00_00.imap.trpak
+  ai_influenceba_battle_area_0303_01_00_00.imap.trpak
+
+=== Directories matching chara/model/trainer/rival/npc ===
+Found: 0
+
+=== Directories with tr0-9 pattern ===
+Found: 0
+
+=== Directories with trmdl in name ===
+Found: 0
+
+=== Top 30 name prefixes ===
+  ai_influenceba  (10 dirs)

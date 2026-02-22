@@ -1,0 +1,6 @@
+Listing models from LZA archive...
+Model list saved to D:\Projects\Starfield-2026\scripts\lza_model_list.txt
+
+=== Chara categories ===
+
+=== All chara model entries ===

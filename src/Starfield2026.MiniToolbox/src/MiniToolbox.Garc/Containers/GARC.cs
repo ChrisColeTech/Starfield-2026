@@ -3,7 +3,7 @@ using System.IO;
 
 namespace MiniToolbox.Garc.Containers
 {
-    class GARC
+    public class GARC
     {
         /// <summary>
         ///     Reads a GARC archive.

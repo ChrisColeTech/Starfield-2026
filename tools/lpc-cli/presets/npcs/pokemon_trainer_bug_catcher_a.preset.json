@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "bodyType": "teen",
+  "selections": [
+    {
+      "itemId": "body",
+      "variant": "taupe"
+    },
+    {
+      "itemId": "heads_human_male",
+      "variant": "taupe"
+    },
+    {
+      "itemId": "face_neutral",
+      "variant": "taupe"
+    },
+    {
+      "itemId": "hair_plain",
+      "variant": "black"
+    },
+    {
+      "itemId": "torso_clothes_tshirt",
+      "variant": "forest"
+    },
+    {
+      "itemId": "legs_shorts",
+      "variant": "brown"
+    },
+    {
+      "itemId": "feet_shoes_basic",
+      "variant": "charcoal"
+    },
+    {
+      "itemId": "shadow"
+    }
+  ]
+}

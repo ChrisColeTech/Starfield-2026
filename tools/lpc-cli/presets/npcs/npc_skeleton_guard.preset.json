@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "bodyType": "male",
+  "selections": [
+    {
+      "itemId": "body_skeleton"
+    },
+    {
+      "itemId": "heads_skeleton"
+    },
+    {
+      "itemId": "shadow"
+    }
+  ]
+}

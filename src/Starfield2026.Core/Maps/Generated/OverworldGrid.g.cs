@@ -4,7 +4,7 @@ using Starfield2026.Core.Maps;
 namespace Starfield2026.Core.Maps.Generated;
 
 /// <summary>
-/// The original overworld grid — a large 80x80 open area rendered as the cyan wireframe
+/// The overworld grid — a large 500x500 open area rendered as the cyan wireframe
 /// floor by GridRenderer. No walls, no boundaries visible — the classic sci-fi holodeck look.
 /// Contains a warp door to Home Base Center near the center.
 /// </summary>
@@ -23,7 +23,7 @@ public sealed class OverworldGrid : MapDefinition
 
     private static int[] BuildGrid()
     {
-        const int W = 80, H = 80;
+        const int W = 500, H = 500;
         int[] data = new int[W * H];
 
         // Fill everything with TechFloor (walkable, transparent — GridRenderer draws the visuals)
@@ -31,25 +31,25 @@ public sealed class OverworldGrid : MapDefinition
             data[i] = 5;
 
         // Player spawn one tile north of center
-        data[39 * W + 40] = 116;
+        data[249 * W + 250] = 116;
 
         // Building entrance (door) at dead center — warps to Home Base Center
-        data[40 * W + 40] = 32;
+        data[250 * W + 250] = 32;
 
-        // Encounter zones (NebulaZone) — scattered 4x4 areas
+        // Encounter zones (NebulaZone) — scattered 8x8 areas
         // Northeast
-        for (int y = 15; y < 19; y++)
-            for (int x = 55; x < 59; x++)
+        for (int y = 100; y < 108; y++)
+            for (int x = 350; x < 358; x++)
                 data[y * W + x] = 72;
         // Southwest
-        for (int y = 60; y < 64; y++)
-            for (int x = 20; x < 24; x++)
+        for (int y = 375; y < 383; y++)
+            for (int x = 125; x < 133; x++)
                 data[y * W + x] = 72;
 
         return data;
     }
 
-    private static readonly int?[] OverlayTileData = new int?[80 * 80];
+    private static readonly int?[] OverlayTileData = new int?[500 * 500];
 
     // Everything is walkable on the grid — no walls
     private static readonly int[] WalkableTileIds = [5, 32, 33, 72, 116];
@@ -69,9 +69,9 @@ public sealed class OverworldGrid : MapDefinition
 
     private OverworldGrid()
         : base("home_base", "overworld_grid", "Overworld Grid",
-               80, 80, 1,
+               500, 500, 1,
                BaseTileData, OverlayTileData, WalkableTileIds,
-               warps: [new WarpConnection(40, 40, "home_base_center", 8, 1, WarpTrigger.Step)],
+               warps: [new WarpConnection(250, 250, "home_base_center", 8, 1, WarpTrigger.Step)],
                connections: null,
                worldX: 0, worldY: 0,
                encounterGroups: _encounterGroupsData,

@@ -1,0 +1,47 @@
+BCA to DAE Animation Converter (R&D)
+====================================
+
+========== HASH BRUTE FORCE ==========
+
+BCA has 190 unique hashes, VBN has 85 bones
+
+--- Testing CRC32(boneName + suffix) ---
+
+--- Testing DRP-CRC(boneName + suffix) ---
+
+--- Testing CRC32(boneName + \0 + suffix) ---
+
+Total matches: 0
+
+--- Testing CRC32(boneName.ToLower()) ---
+Lower-case matches: 0 / 85
+
+--- VBN boneId analysis ---
+  [0] "BASE" id=0x4F101F52 CRC32=0xF62113D5 CRC32_lower=0xC0B4FE61
+  [1] "CENTER_RT" id=0x7024616A CRC32=0x913C7086 CRC32_lower=0xEDB32889
+  [2] "THROW_NULL" id=0xF9253621 CRC32=0x0AADB0C2 CRC32_lower=0xC0F382F9
+  [3] "EXTRA0" id=0x6602A695 CRC32=0x02D892B5 CRC32_lower=0xC94E75FB
+  [4] "EXTRA1" id=0x6602A696 CRC32=0x75DFA223 CRC32_lower=0xBE49456D
+  [5] "EXTRA2" id=0x6602A697 CRC32=0xECD6F399 CRC32_lower=0x274014D7
+  [6] "EXTRA3" id=0x6602A698 CRC32=0x9BD1C30F CRC32_lower=0x50472441
+  [7] "EXTRA4" id=0x6602A699 CRC32=0x05B556AC CRC32_lower=0xCE23B1E2
+  [8] "Spine1" id=0x93136EBA CRC32=0x8F39FA4E CRC32_lower=0x8895FF78
+  [9] "Spine2" id=0x93136EB9 CRC32=0x1630ABF4 CRC32_lower=0x119CAEC2
+
+--- VBN boneId patterns ---
+  Range: 0x0057AC07 - 0xFB51F942
+  Are sequential? False
+  First 10 deltas:
+    [0]->[1]: delta=554975768 (0x21144218)
+    [1]->[2]: delta=2298533047 (0x8900D4B7)
+    [2]->[3]: delta=-2468515724 (0xFFFFFFFF6CDD7074)
+    [3]->[4]: delta=1 (0x1)
+    [4]->[5]: delta=1 (0x1)
+    [5]->[6]: delta=1 (0x1)
+    [6]->[7]: delta=1 (0x1)
+    [7]->[8]: delta=756074529 (0x2D10C821)
+    [8]->[9]: delta=-1 (0xFFFFFFFFFFFFFFFF)
+
+--- BCA hash transforms vs VBN IDs ---
+  Trying: byte-swap, bit-invert, XOR with constants...
+  BCA hashes matching VBN IDs with byte-swap/invert: 0 / 190

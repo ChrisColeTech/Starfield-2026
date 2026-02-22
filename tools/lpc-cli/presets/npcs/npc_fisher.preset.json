@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "bodyType": "male",
+  "selections": [
+    {
+      "itemId": "body",
+      "variant": "light"
+    },
+    {
+      "itemId": "tool_rod"
+    },
+    {
+      "itemId": "shadow"
+    }
+  ]
+}

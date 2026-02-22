@@ -1,0 +1,27 @@
+{
+  "name": "lpc-cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Slim LPC spritesheet CLI (Phase 2)",
+  "type": "commonjs",
+  "bin": {
+    "lpc-cli": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "tsx --test test/**/*.test.ts"
+  },
+  "dependencies": {
+    "@types/yazl": "^3.3.0",
+    "commander": "^13.1.0",
+    "sharp": "^0.34.5",
+    "yazl": "^3.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}

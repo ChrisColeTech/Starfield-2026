@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Starfield Map Editor</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+
+        h1 {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .sidebar {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .palette {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+        }
+
+        .tile-btn {
+            padding: 10px;
+            border: 2px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .tile-btn.active {
+            border-color: #fff;
+        }
+
+        .tile-btn:hover {
+            opacity: 0.8;
+        }
+
+        .canvas-container {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 10px;
+            overflow: visible;
+            flex: 1;
+        }
+
+        #grid {
+            display: grid;
+            gap: 1px;
+            background: #0f0f23;
+            padding: 1px;
+            position: relative;
+            width: fit-content;
+        }
+
+        .vision-overlay {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .cell {
+            cursor: crosshair;
+            border-radius: 2px;
+        }
+
+        .cell:hover {
+            opacity: 0.7;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 5px;
+        }
+
+        .controls-row button {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+        }
+
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            background: #4a4e69;
+            color: #fff;
+        }
+
+        button:hover {
+            background: #5a5e79;
+        }
+
+        button.primary {
+            background: #3a86ff;
+        }
+
+        button.primary:hover {
+            background: #4a96ff;
+        }
+
+        button.danger {
+            background: #e63946;
+        }
+
+        label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        input[type="number"],
+        input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background: #222;
+            color: #fff;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .row>* {
+            flex: 1;
+        }
+
+        #output {
+            width: 100%;
+            height: 200px;
+            font-family: monospace;
+            font-size: 11px;
+            background: #111;
+            color: #0f0;
+            border: 1px solid #333;
+            padding: 10px;
+            resize: vertical;
+        }
+
+        .section {
+            margin-top: 20px;
+        }
+
+        .section h3 {
+            font-size: 14px;
+            margin: 0 0 10px 0;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Map Editor</h1>
+    <div class="container">
+        <div class="sidebar">
+            <div class="palette" id="palette"></div>
+            <div class="controls">
+                <div class="row">
+                    <label>Width</label>
+                    <label>Height</label>
+                    <label>Cell Size</label>
+                </div>
+                <div class="row">
+                    <input type="number" id="mapWidth" value="25" min="5" max="100">
+                    <input type="number" id="mapHeight" value="18" min="5" max="100">
+                    <input type="number" id="cellSize" value="24" min="8" max="48">
+                </div>
+                <button onclick="resizeGrid()">Resize</button>
+                <button onclick="clearGrid()">Clear All</button>
+                <button onclick="if(confirm('Clear saved data?')){clearStorage();location.reload();}">Reset
+                    Saved</button>
+                <div class="controls-row">
+                    <button onclick="rotateBuilding(-1)" id="rotateLeftBtn" disabled>↺ Left</button>
+                    <button onclick="rotateBuilding(1)" id="rotateRightBtn" disabled>↻ Right</button>
+                </div>
+            </div>
+            <div class="section">
+                <h3>Import/Export</h3>
+                <button onclick="exportJson()">Export JSON</button>
+                <button onclick="exportCSharp()">Export C# Array</button>
+                <button onclick="document.getElementById('importFile').click()">Import JSON</button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJson(event)">
+            </div>
+        </div>
+        <div class="canvas-container">
+            <div id="grid"></div>
+        </div>
+    </div>
+    <div class="section">
+        <h3>Output</h3>
+        <textarea id="output" readonly></textarea>
+    </div>
+    <div class="section">
+        <h3>Entities Found</h3>
+        <div id="entityList" style="font-size: 12px; color: #888;"></div>
+    </div>
+    <div class="section" style="font-size:11px;color:#666;">
+        <b>Tips:</b><br>
+        • Click same tile to toggle off<br>
+        • Right-click = grass (eraser)<br>
+        • Drag to paint multiple tiles<br>
+        • Select building + rotate, then click to place
+    </div>
+    <div id="buildingInfo" style="font-size:11px;color:#888;margin-top:10px;display:none;">
+        <b>Building:</b> <span id="buildingName"></span><br>
+        <span id="buildingSize"></span>
+    </div>
+
+    <script>
+        const TILES = [
+            { id: 0, name: 'Water', color: '#1a4a7a', walkable: false, category: 'terrain' },
+            { id: 1, name: 'Grass', color: '#2d5a27', walkable: true, category: 'terrain' },
+            { id: 2, name: 'Path', color: '#c9a86c', walkable: true, category: 'terrain' },
+            { id: 3, name: 'Tree', color: '#1a4a1a', walkable: false, category: 'terrain' },
+            { id: 4, name: 'Door', color: '#8b4513', walkable: true, category: 'interactive' },
+            { id: 5, name: 'Bridge', color: '#6b4423', walkable: true, category: 'terrain' },
+            { id: 6, name: 'Wall', color: '#555555', walkable: false, category: 'terrain' },
+            { id: 7, name: 'Tall Grass', color: '#1a8a1a', walkable: true, category: 'encounter', encounter: 'wild' },
+            { id: 8, name: 'Rock', color: '#696969', walkable: false, category: 'terrain' },
+            { id: 9, name: 'Sign', color: '#8b7355', walkable: false, category: 'interactive' },
+            { id: 10, name: 'NPC', color: '#ff6b6b', walkable: false, category: 'entity' },
+            { id: 11, name: 'Shop', color: '#ffd93d', walkable: false, category: 'entity' },
+            { id: 12, name: 'Heal', color: '#6bcb77', walkable: false, category: 'entity' },
+            { id: 13, name: 'Item', color: '#9d4edd', walkable: true, category: 'entity' },
+            { id: 14, name: 'Key Item', color: '#e040fb', walkable: true, category: 'entity' },
+            { id: 15, name: 'Cave', color: '#2c2c2c', walkable: true, category: 'encounter', encounter: 'wild_cave' },
+            { id: 16, name: 'Warp', color: '#00cec9', walkable: true, category: 'interactive' },
+            { id: 17, name: 'Water Edge', color: '#2980b9', walkable: false, category: 'terrain' },
+            { id: 18, name: 'Fence', color: '#795548', walkable: false, category: 'terrain' },
+            { id: 19, name: 'Flower', color: '#e84393', walkable: true, category: 'terrain' },
+            { id: 20, name: 'Trainer ▲', color: '#ff922b', walkable: false, category: 'trainer', direction: 'up' },
+            { id: 21, name: 'Trainer ▼', color: '#ff922b', walkable: false, category: 'trainer', direction: 'down' },
+            { id: 22, name: 'Trainer ◀', color: '#ff922b', walkable: false, category: 'trainer', direction: 'left' },
+            { id: 23, name: 'Trainer ▶', color: '#ff922b', walkable: false, category: 'trainer', direction: 'right' },
+            { id: 24, name: 'Gym Leader', color: '#ff1744', walkable: false, category: 'trainer', direction: 'down' },
+            { id: 25, name: 'Surf Water', color: '#1e90ff', walkable: false, category: 'encounter', encounter: 'surf', requires: 'surf' },
+            { id: 26, name: 'Strength Rock', color: '#8d6e63', walkable: false, category: 'interactive', requires: 'strength' },
+            { id: 27, name: 'Cut Tree', color: '#4caf50', walkable: false, category: 'interactive', requires: 'cut' },
+            { id: 28, name: 'Rare Grass', color: '#ffd700', walkable: true, category: 'encounter', encounter: 'rare_wild' },
+            { id: 29, name: 'Legendary', color: '#ff00ff', walkable: true, category: 'encounter', encounter: 'legendary' },
+            { id: 30, name: 'Villain Boss', color: '#800080', walkable: false, category: 'trainer', direction: 'down', villain: true },
+            { id: 31, name: 'Villain ▲', color: '#4a0080', walkable: false, category: 'trainer', direction: 'up', villain: true },
+            { id: 32, name: 'Villain ▼', color: '#4a0080', walkable: false, category: 'trainer', direction: 'down', villain: true },
+            { id: 33, name: 'Villain ◀', color: '#4a0080', walkable: false, category: 'trainer', direction: 'left', villain: true },
+            { id: 34, name: 'Villain ▶', color: '#4a0080', walkable: false, category: 'trainer', direction: 'right', villain: true },
+            { id: 35, name: 'Minion ▲', color: '#6a0dad', walkable: false, category: 'trainer', direction: 'up', minion: true },
+            { id: 36, name: 'Minion ▼', color: '#6a0dad', walkable: false, category: 'trainer', direction: 'down', minion: true },
+            { id: 37, name: 'Minion ◀', color: '#6a0dad', walkable: false, category: 'trainer', direction: 'left', minion: true },
+            { id: 38, name: 'Minion ▶', color: '#6a0dad', walkable: false, category: 'trainer', direction: 'right', minion: true },
+            { id: 39, name: 'Rival', color: '#dc143c', walkable: false, category: 'trainer', direction: 'down', rival: true },
+            { id: 40, name: 'Hidden Item', color: '#4682b4', walkable: true, category: 'entity', hidden: true },
+            { id: 41, name: 'PC', color: '#a9a9a9', walkable: false, category: 'interactive' },
+            { id: 42, name: 'Pokeball', color: '#ff0000', walkable: true, category: 'entity' },
+            { id: 43, name: 'Elite 4', color: '#c0c0c0', walkable: false, category: 'trainer', direction: 'down', elite: true },
+            { id: 44, name: 'Champion', color: '#ffd700', walkable: false, category: 'trainer', direction: 'down', champion: true },
+            { id: 45, name: 'Champion Alt', color: '#ffd700', walkable: false, category: 'trainer', direction: 'down', champion: true, alt: true },
+            { id: 46, name: 'Rival Final', color: '#dc143c', walkable: false, category: 'trainer', direction: 'down', rival: true, final: true },
+            { id: 47, name: 'Prof Oak', color: '#8b4513', walkable: false, category: 'entity' },
+            { id: 48, name: 'Mom', color: '#dda0dd', walkable: false, category: 'entity' },
+            { id: 49, name: 'Statue', color: '#d4af37', walkable: false, category: 'interactive' },
+            { id: 50, name: 'Badge', color: '#00ced1', walkable: true, category: 'entity' },
+        ];
+
+        const BUILDINGS = [
+            {
+                name: 'Pokécenter',
+                width: 4,
+                height: 4,
+                tiles: [
+                    [3, 3, 3, 3],
+                    [3, 4, 4, 3],
+                    [3, 4, 4, 3],
+                    [6, 4, 4, 6],
+                ]
+            },
+            {
+                name: 'Pokémart',
+                width: 4,
+                height: 4,
+                tiles: [
+                    [3, 3, 3, 3],
+                    [3, 6, 6, 3],
+                    [3, 11, 6, 3],
+                    [6, 4, 4, 6],
+                ]
+            },
+            {
+                name: 'Gym',
+                width: 5,
+                height: 5,
+                tiles: [
+                    [3, 3, 3, 3, 3],
+                    [3, 6, 6, 6, 3],
+                    [3, 6, 12, 6, 3],
+                    [3, 6, 4, 6, 3],
+                    [6, 6, 4, 6, 6],
+                ]
+            },
+            {
+                name: 'House Small',
+                width: 3,
+                height: 3,
+                tiles: [
+                    [3, 3, 3],
+                    [3, 4, 3],
+                    [6, 4, 6],
+                ]
+            },
+            {
+                name: 'House Large',
+                width: 4,
+                height: 4,
+                tiles: [
+                    [3, 3, 3, 3],
+                    [3, 6, 6, 3],
+                    [3, 4, 6, 3],
+                    [6, 4, 6, 6],
+                ]
+            },
+            {
+                name: 'Lab',
+                width: 5,
+                height: 4,
+                tiles: [
+                    [3, 3, 3, 3, 3],
+                    [3, 6, 6, 6, 3],
+                    [3, 4, 41, 4, 3],
+                    [6, 4, 4, 4, 6],
+                ]
+            },
+            {
+                name: 'Cave Entrance',
+                width: 3,
+                height: 2,
+                tiles: [
+                    [3, 3, 3],
+                    [15, 15, 15],
+                ]
+            },
+            {
+                name: 'Gate',
+                width: 4,
+                height: 3,
+                tiles: [
+                    [6, 6, 6, 6],
+                    [6, 16, 16, 6],
+                    [6, 6, 6, 6],
+                ]
+            },
+            {
+                name: 'Pond',
+                width: 4,
+                height: 3,
+                tiles: [
+                    [17, 0, 0, 17],
+                    [0, 0, 0, 0],
+                    [17, 0, 0, 17],
+                ]
+            },
+            {
+                name: 'Fence H',
+                width: 4,
+                height: 1,
+                tiles: [[18, 18, 18, 18]]
+            },
+            {
+                name: 'Fence V',
+                width: 1,
+                height: 4,
+                tiles: [[18], [18], [18], [18]]
+            },
+        ];
+
+        let currentTile = TILES[1];
+        let currentBuilding = null;
+        let buildingRotation = 0; // 0, 90, 180, 270 degrees
+        let mapData = [];
+        let isDrawing = false;
+        let lastPaintedTile = null;
+
+        function init() {
+            loadFromStorage();
+            renderPalette();
+            renderGrid();
+            updateEntityList();
+
+            document.getElementById('cellSize').addEventListener('input', () => {
+                renderGrid();
+                saveToStorage();
+            });
+        }
+
+        function renderPalette() {
+            const palette = document.getElementById('palette');
+            palette.innerHTML = '';
+
+            const categories = {
+                terrain: 'Terrain',
+                encounter: 'Encounters',
+                interactive: 'Interactive',
+                entity: 'Entities',
+                trainer: 'Trainers',
+                buildings: 'Buildings'
+            };
+
+            Object.entries(categories).forEach(([cat, label]) => {
+                if (cat === 'buildings') {
+                    const header = document.createElement('div');
+                    header.style.cssText = 'grid-column: span 2; font-size: 11px; color: #666; margin-top: 10px;';
+                    header.textContent = label;
+                    palette.appendChild(header);
+
+                    BUILDINGS.forEach((building, idx) => {
+                        const btn = document.createElement('div');
+                        btn.className = 'tile-btn' + (currentBuilding === idx ? ' active' : '');
+                        btn.style.background = '#2a4a3a';
+                        btn.style.border = currentBuilding === idx ? '2px solid #fff' : '2px solid transparent';
+                        btn.style.fontSize = '10px';
+                        btn.textContent = `${building.name}\n${building.width}x${building.height}`;
+                        btn.style.whiteSpace = 'pre';
+                        btn.onclick = () => selectBuilding(idx);
+                        palette.appendChild(btn);
+                    });
+                    return;
+                }
+
+                const tiles = TILES.filter(t => t.category === cat);
+                if (tiles.length === 0) return;
+
+                const header = document.createElement('div');
+                header.style.cssText = 'grid-column: span 2; font-size: 11px; color: #666; margin-top: 10px;';
+                header.textContent = label;
+                palette.appendChild(header);
+
+                tiles.forEach(tile => {
+                    const btn = document.createElement('div');
+                    btn.className = 'tile-btn' + (tile.id === currentTile.id && currentBuilding === null ? ' active' : '');
+                    btn.style.background = tile.color;
+                    btn.textContent = tile.name;
+                    btn.onclick = () => selectTile(tile);
+                    palette.appendChild(btn);
+                });
+            });
+        }
+
+        function selectBuilding(idx) {
+            if (currentBuilding === idx) {
+                currentBuilding = null;
+                buildingRotation = 0;
+                document.getElementById('buildingInfo').style.display = 'none';
+                document.getElementById('rotateLeftBtn').disabled = true;
+                document.getElementById('rotateRightBtn').disabled = true;
+            } else {
+                currentBuilding = idx;
+                buildingRotation = 0;
+                const building = BUILDINGS[idx];
+                document.getElementById('buildingInfo').style.display = 'block';
+                document.getElementById('buildingName').textContent = building.name;
+                document.getElementById('buildingSize').textContent = `Size: ${building.width}x${building.height} - Click to place`;
+                document.getElementById('rotateLeftBtn').disabled = false;
+                document.getElementById('rotateRightBtn').disabled = false;
+            }
+            currentTile = TILES[1];
+            renderPalette();
+        }
+
+        function rotateBuilding(direction) {
+            if (currentBuilding === null) return;
+
+            buildingRotation = (buildingRotation + direction + 4) % 4;
+
+            const rotated = getRotatedBuilding(BUILDINGS[currentBuilding]);
+            document.getElementById('buildingSize').textContent = `Size: ${rotated.width}x${rotated.height} (${buildingRotation * 90}°) - Click to place`;
+
+            clearBuildingPreview();
+        }
+
+        function getRotatedBuilding(building) {
+            let tiles = building.tiles.map(row => [...row]);
+            let width = building.width;
+            let height = building.height;
+
+            for (let r = 0; r < buildingRotation; r++) {
+                const newTiles = [];
+                const newHeight = width;
+                const newWidth = height;
+
+                for (let y = 0; y < newHeight; y++) {
+                    newTiles[y] = [];
+                    for (let x = 0; x < newWidth; x++) {
+                        newTiles[y][x] = tiles[height - 1 - x][y];
+                    }
+                }
+
+                tiles = newTiles;
+                width = newWidth;
+                height = newHeight;
+            }
+
+            return { tiles, width, height };
+        }
+
+        function selectTile(tile) {
+            currentTile = tile;
+            currentBuilding = null;
+            buildingRotation = 0;
+            document.getElementById('buildingInfo').style.display = 'none';
+            document.getElementById('rotateLeftBtn').disabled = true;
+            document.getElementById('rotateRightBtn').disabled = true;
+            renderPalette();
+        }
+
+        function selectTile(tile) {
+            currentTile = tile;
+            renderPalette();
+        }
+
+        function resizeGrid() {
+            const width = parseInt(document.getElementById('mapWidth').value);
+            const height = parseInt(document.getElementById('mapHeight').value);
+
+            const newMap = [];
+            for (let y = 0; y < height; y++) {
+                newMap[y] = [];
+                for (let x = 0; x < width; x++) {
+                    newMap[y][x] = mapData[y]?.[x] ?? 1;
+                }
+            }
+            mapData = newMap;
+            renderGrid();
+            updateEntityList();
+            saveToStorage();
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('grid');
+            const cellSize = parseInt(document.getElementById('cellSize').value) || 24;
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = `repeat(${mapData[0].length}, ${cellSize}px)`;
+
+            mapData.forEach((row, y) => {
+                row.forEach((tileId, x) => {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.style.width = cellSize + 'px';
+                    cell.style.height = cellSize + 'px';
+                    const tile = TILES[tileId];
+                    cell.style.background = tile.color;
+
+                    if (tile.encounter) {
+                        cell.innerHTML = '<span style="font-size:10px">!</span>';
+                        cell.style.display = 'flex';
+                        cell.style.alignItems = 'center';
+                        cell.style.justifyContent = 'center';
+                    }
+
+                    if (tile.category === 'trainer') {
+                        const arrows = { up: '▲', down: '▼', left: '◀', right: '▶' };
+                        cell.innerHTML = `<span style="font-size:10px">${arrows[tile.direction]}</span>`;
+                        cell.style.display = 'flex';
+                        cell.style.alignItems = 'center';
+                        cell.style.justifyContent = 'center';
+                    }
+
+                    cell.dataset.x = x;
+                    cell.dataset.y = y;
+
+                    cell.onmousedown = (e) => {
+                        isDrawing = true;
+                        if (currentBuilding !== null) {
+                            placeBuilding(x, y);
+                        } else {
+                            paint(x, y);
+                        }
+                    };
+                    cell.onmouseenter = () => {
+                        if (isDrawing && currentBuilding === null) {
+                            paint(x, y);
+                        }
+                        if (currentBuilding !== null) {
+                            showBuildingPreview(x, y);
+                        }
+                    };
+                    cell.onmouseleave = () => {
+                        clearBuildingPreview();
+                    };
+                    cell.oncontextmenu = (e) => {
+                        e.preventDefault();
+                        paint(x, y, 1);
+                    };
+
+                    grid.appendChild(cell);
+                });
+            });
+
+            drawVisionCones();
+        }
+
+        function drawVisionCones() {
+            document.querySelectorAll('.vision-marker').forEach(el => el.remove());
+
+            const cellSize = parseInt(document.getElementById('cellSize').value) || 24;
+            const gap = 1;
+            const cellTotal = cellSize + gap;
+
+            const trainers = [];
+            mapData.forEach((row, y) => {
+                row.forEach((tileId, x) => {
+                    const tile = TILES[tileId];
+                    if (tile.category === 'trainer') {
+                        trainers.push({ x, y, direction: tile.direction, id: tileId });
+                    }
+                });
+            });
+
+            trainers.forEach(trainer => {
+                const visionRange = 4;
+                let dx = 0, dy = 0;
+
+                switch (trainer.direction) {
+                    case 'up': dy = -1; break;
+                    case 'down': dy = 1; break;
+                    case 'left': dx = -1; break;
+                    case 'right': dx = 1; break;
+                }
+
+                for (let i = 1; i <= visionRange; i++) {
+                    const vx = trainer.x + (dx * i);
+                    const vy = trainer.y + (dy * i);
+
+                    if (vx < 0 || vx >= mapData[0].length || vy < 0 || vy >= mapData.length) break;
+
+                    const visionTile = TILES[mapData[vy][vx]];
+                    if (!visionTile.walkable && visionTile.category !== 'trainer') break;
+
+                    const cell = document.querySelector(`[data-x="${vx}"][data-y="${vy}"]`);
+                    if (cell) {
+                        const marker = document.createElement('div');
+                        marker.className = 'vision-marker';
+                        marker.style.cssText = `
+                            position: absolute;
+                            width: ${cellSize}px;
+                            height: ${cellSize}px;
+                            background: rgba(255, 100, 100, 0.3);
+                            border: 1px solid rgba(255, 100, 100, 0.5);
+                            left: ${vx * cellTotal + 1}px;
+                            top: ${vy * cellTotal + 1}px;
+                            pointer-events: none;
+                            z-index: 5;
+                        `;
+                        cell.parentElement.appendChild(marker);
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('mouseup', () => {
+            isDrawing = false;
+            clearBuildingPreview();
+        });
+
+        function saveToStorage() {
+            const data = {
+                width: mapData[0]?.length || 25,
+                height: mapData.length || 18,
+                cellSize: parseInt(document.getElementById('cellSize').value) || 24,
+                tiles: mapData
+            };
+            localStorage.setItem('starfieldMap', JSON.stringify(data));
+        }
+
+        function loadFromStorage() {
+            const stored = localStorage.getItem('starfieldMap');
+            if (stored) {
+                try {
+                    const data = JSON.parse(stored);
+                    document.getElementById('mapWidth').value = data.width;
+                    document.getElementById('mapHeight').value = data.height;
+                    if (data.cellSize) {
+                        document.getElementById('cellSize').value = data.cellSize;
+                    }
+                    mapData = data.tiles;
+                } catch (e) {
+                    resizeGrid();
+                }
+            } else {
+                resizeGrid();
+            }
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('starfieldMap');
+        }
+
+        function paint(x, y, tileId = null) {
+            const id = tileId !== null ? tileId : currentTile.id;
+            const existingId = mapData[y][x];
+
+            // Toggle off if clicking same tile type
+            if (existingId === id && tileId === null) {
+                mapData[y][x] = 1; // Reset to grass
+            } else {
+                mapData[y][x] = id;
+            }
+
+            const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+            if (cell) {
+                const tile = TILES[mapData[y][x]];
+                cell.style.background = tile.color;
+                cell.innerHTML = '';
+
+                if (tile.encounter) {
+                    cell.innerHTML = '<span style="font-size:10px">!</span>';
+                    cell.style.display = 'flex';
+                    cell.style.alignItems = 'center';
+                    cell.style.justifyContent = 'center';
+                }
+
+                if (tile.category === 'trainer') {
+                    const arrows = { up: '▲', down: '▼', left: '◀', right: '▶' };
+                    cell.innerHTML = `<span style="font-size:10px">${arrows[tile.direction]}</span>`;
+                    cell.style.display = 'flex';
+                    cell.style.alignItems = 'center';
+                    cell.style.justifyContent = 'center';
+                }
+            }
+            drawVisionCones();
+            updateEntityList();
+            saveToStorage();
+        }
+
+        function placeBuilding(startX, startY) {
+            if (currentBuilding === null) return;
+
+            const building = BUILDINGS[currentBuilding];
+            const rotated = getRotatedBuilding(building);
+
+            for (let by = 0; by < rotated.height; by++) {
+                for (let bx = 0; bx < rotated.width; bx++) {
+                    const tx = startX + bx;
+                    const ty = startY + by;
+
+                    if (ty < mapData.length && tx < mapData[0].length) {
+                        mapData[ty][tx] = rotated.tiles[by][bx];
+                    }
+                }
+            }
+
+            renderGrid();
+            updateEntityList();
+            saveToStorage();
+        }
+
+        function showBuildingPreview(startX, startY) {
+            clearBuildingPreview();
+            if (currentBuilding === null) return;
+
+            const building = BUILDINGS[currentBuilding];
+            const rotated = getRotatedBuilding(building);
+            const cellSize = parseInt(document.getElementById('cellSize').value) || 24;
+
+            const grid = document.getElementById('grid');
+
+            for (let by = 0; by < rotated.height; by++) {
+                for (let bx = 0; bx < rotated.width; bx++) {
+                    const tx = startX + bx;
+                    const ty = startY + by;
+
+                    if (ty < mapData.length && tx < mapData[0].length) {
+                        const cell = document.querySelector(`[data-x="${tx}"][data-y="${ty}"]`);
+                        if (cell) {
+                            const preview = document.createElement('div');
+                            preview.className = 'building-preview';
+                            preview.style.cssText = `
+                                position: absolute;
+                                width: ${cellSize}px;
+                                height: ${cellSize}px;
+                                background: ${TILES[rotated.tiles[by][bx]].color};
+                                opacity: 0.6;
+                                border: 2px dashed #fff;
+                                left: ${tx * (cellSize + 1) + 1}px;
+                                top: ${ty * (cellSize + 1) + 1}px;
+                                pointer-events: none;
+                                z-index: 10;
+                            `;
+                            grid.appendChild(preview);
+                        }
+                    }
+                }
+            }
+
+            document.getElementById('buildingInfo').style.display = 'block';
+            document.getElementById('buildingName').textContent = building.name;
+            document.getElementById('buildingSize').textContent = `Size: ${rotated.width}x${rotated.height} (${buildingRotation * 90}°) - Click to place`;
+        }
+                }
+            }
+
+        renderGrid();
+        updateEntityList();
+        saveToStorage();
+        }
+
+        function showBuildingPreview(startX, startY) {
+            clearBuildingPreview();
+            if (currentBuilding === null) return;
+
+            const building = BUILDINGS[currentBuilding];
+            const cellSize = parseInt(document.getElementById('cellSize').value) || 24;
+
+            const grid = document.getElementById('grid');
+
+            for (let by = 0; by < building.height; by++) {
+                for (let bx = 0; bx < building.width; bx++) {
+                    const tx = startX + bx;
+                    const ty = startY + by;
+
+                    if (ty < mapData.length && tx < mapData[0].length) {
+                        const cell = document.querySelector(`[data-x="${tx}"][data-y="${ty}"]`);
+                        if (cell) {
+                            const preview = document.createElement('div');
+                            preview.className = 'building-preview';
+                            preview.style.cssText = `
+                                position: absolute;
+                                width: ${cellSize}px;
+                                height: ${cellSize}px;
+                                background: ${TILES[building.tiles[by][bx]].color};
+                                opacity: 0.6;
+                                border: 2px dashed #fff;
+                                left: ${tx * (cellSize + 1) + 1}px;
+                                top: ${ty * (cellSize + 1) + 1}px;
+                                pointer-events: none;
+                                z-index: 10;
+                            `;
+                            grid.appendChild(preview);
+                        }
+                    }
+                }
+            }
+
+            document.getElementById('buildingInfo').style.display = 'block';
+            document.getElementById('buildingName').textContent = building.name;
+            document.getElementById('buildingSize').textContent = `Size: ${building.width}x${building.height}`;
+        }
+
+        function clearBuildingPreview() {
+            document.querySelectorAll('.building-preview').forEach(el => el.remove());
+        }
+
+        function updateEntityList() {
+            const entities = [];
+            const specialTrainers = [];
+            const trainers = [];
+            const villains = [];
+            const minions = [];
+            const encounters = [];
+
+            mapData.forEach((row, y) => {
+                row.forEach((tileId, x) => {
+                    const tile = TILES[tileId];
+                    if (tile.minion) {
+                        minions.push({ x, y, name: tile.name, id: tileId, direction: tile.direction });
+                    } else if (tile.villain) {
+                        villains.push({ x, y, name: tile.name, id: tileId, direction: tile.direction });
+                    } else if (tile.champion || tile.elite || tile.final) {
+                        specialTrainers.push({ x, y, name: tile.name, id: tileId, direction: tile.direction, type: tile.champion ? 'Champion' : tile.elite ? 'Elite 4' : 'Final Rival' });
+                    } else if (tile.rival) {
+                        specialTrainers.push({ x, y, name: tile.name, id: tileId, direction: tile.direction, type: 'Rival' });
+                    } else if (tile.category === 'trainer') {
+                        trainers.push({ x, y, name: tile.name, id: tileId, direction: tile.direction });
+                    } else if (tile.category === 'entity' || tile.category === 'interactive') {
+                        entities.push({ x, y, name: tile.name, id: tileId });
+                    } else if (tile.encounter) {
+                        encounters.push({ x, y, name: tile.name, id: tileId, type: tile.encounter });
+                    }
+                });
+            });
+
+            let html = '';
+
+            if (specialTrainers.length > 0) {
+                html += '<b style="color:#ffd700">Special:</b><br>';
+                specialTrainers.forEach(e => {
+                    html += `<span style="color:${TILES[e.id].color}">${e.name}</span> (${e.type}) at (${e.x}, ${e.y})<br>`;
+                });
+                html += '<br>';
+            }
+
+            if (villains.length > 0) {
+                html += '<b style="color:#800080">Villains:</b><br>';
+                villains.forEach(e => {
+                    html += `<span style="color:${TILES[e.id].color}">${e.name}</span> at (${e.x}, ${e.y})<br>`;
+                });
+                html += '<br>';
+            }
+
+            if (minions.length > 0) {
+                html += '<b style="color:#6a0dad">Minions:</b><br>';
+                minions.forEach(e => {
+                    html += `<span style="color:${TILES[e.id].color}">${e.name}</span> at (${e.x}, ${e.y}) facing ${e.direction}<br>`;
+                });
+                html += '<br>';
+            }
+
+            if (trainers.length > 0) {
+                html += '<b style="color:#ff922b">Trainers:</b><br>';
+                trainers.forEach(e => {
+                    html += `<span style="color:${TILES[e.id].color}">${e.name}</span> at (${e.x}, ${e.y}) facing ${e.direction}<br>`;
+                });
+                html += '<br>';
+            }
+
+            if (entities.length > 0) {
+                html += '<b style="color:#ff6b6b">Entities:</b><br>';
+                entities.slice(0, 15).forEach(e => {
+                    html += `<span style="color:${TILES[e.id].color}">${e.name}</span> at (${e.x}, ${e.y})<br>`;
+                });
+                if (entities.length > 15) html += `&nbsp;&nbsp;...and ${entities.length - 15} more<br>`;
+                html += '<br>';
+            }
+
+            if (encounters.length > 0) {
+                html += `<b style="color:#ffd700">Encounters:</b> ${encounters.length} tiles<br>`;
+                const types = [...new Set(encounters.map(e => e.type))];
+                types.forEach(t => {
+                    const count = encounters.filter(e => e.type === t).length;
+                    const color = t.includes('legendary') ? '#ff00ff' : t.includes('rare') ? '#ffd700' : '#1a8a1a';
+                    html += `&nbsp;&nbsp;<span style="color:${color}">${t}</span>: ${count} tiles<br>`;
+                });
+            }
+
+            const list = document.getElementById('entityList');
+            list.innerHTML = html || '<i>No entities placed</i>';
+        }
+
+        function clearGrid() {
+            const width = mapData[0].length;
+            const height = mapData.length;
+            mapData = Array(height).fill(null).map(() => Array(width).fill(1));
+            renderGrid();
+            saveToStorage();
+        }
+
+        function exportJson() {
+            const data = {
+                width: mapData[0].length,
+                height: mapData.length,
+                tiles: mapData,
+                tileTypes: TILES.reduce((acc, t) => {
+                    acc[t.id] = { name: t.name, walkable: t.walkable };
+                    return acc;
+                }, {})
+            };
+            downloadFile('map.json', JSON.stringify(data, null, 2));
+            document.getElementById('output').value = JSON.stringify(data, null, 2);
+        }
+
+        function exportCSharp() {
+            let cs = 'int[,] mapData = {\n';
+            mapData.forEach((row, y) => {
+                cs += '    { ' + row.join(', ') + ' }' + (y < mapData.length - 1 ? ',' : '') + '\n';
+            });
+            cs += '};\n\n// Tile Types:\n';
+            TILES.forEach(t => {
+                let props = `${t.category}, walkable: ${t.walkable}`;
+                if (t.encounter) props += `, encounter: ${t.encounter}`;
+                if (t.direction) props += `, direction: ${t.direction}`;
+                cs += `// ${t.id} = ${t.name} (${props})\n`;
+            });
+
+            cs += '\n// Trainers (position, direction, vision range):\n';
+            cs += 'var trainers = new List<Trainer>();\n';
+            mapData.forEach((row, y) => {
+                row.forEach((tileId, x) => {
+                    const tile = TILES[tileId];
+                    if (tile.category === 'trainer') {
+                        cs += `trainers.Add(new Trainer(${x}, ${y}, "${tile.direction}", visionRange: 4));\n`;
+                    }
+                });
+            });
+
+            cs += '\n// Encounter Zones:\n';
+            const encounters = [];
+            mapData.forEach((row, y) => {
+                row.forEach((tileId, x) => {
+                    const tile = TILES[tileId];
+                    if (tile.encounter) {
+                        encounters.push({ x, y, type: tile.encounter });
+                    }
+                });
+            });
+            cs += `// ${encounters.length} encounter tiles found\n`;
+            encounters.slice(0, 10).forEach(e => {
+                cs += `// (${e.x}, ${e.y}) - ${e.type}\n`;
+            });
+
+            downloadFile('MapData.cs', cs);
+            document.getElementById('output').value = cs;
+        }
+
+        function importJson(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    mapData = data.tiles;
+                    document.getElementById('mapWidth').value = data.width;
+                    document.getElementById('mapHeight').value = data.height;
+                    renderGrid();
+                } catch (err) {
+                    alert('Invalid JSON file');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function downloadFile(filename, content) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

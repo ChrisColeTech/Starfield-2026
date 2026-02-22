@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "bodyType": "male",
+  "selections": [
+    {
+      "itemId": "body",
+      "variant": "amber"
+    },
+    {
+      "itemId": "heads_human_male",
+      "variant": "amber"
+    },
+    {
+      "itemId": "face_neutral",
+      "variant": "amber"
+    },
+    {
+      "itemId": "hair_plain",
+      "variant": "light brown"
+    },
+    {
+      "itemId": "torso_clothes_tshirt",
+      "variant": "green"
+    },
+    {
+      "itemId": "legs_shorts",
+      "variant": "tan"
+    },
+    {
+      "itemId": "feet_shoes_basic",
+      "variant": "forest"
+    },
+    {
+      "itemId": "shadow"
+    }
+  ]
+}

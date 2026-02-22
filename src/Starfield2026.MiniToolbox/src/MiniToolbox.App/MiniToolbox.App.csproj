@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>MiniToolbox.App</RootNamespace>
@@ -12,6 +12,8 @@
     <ProjectReference Include="..\MiniToolbox.Core\MiniToolbox.Core.csproj" />
     <ProjectReference Include="..\MiniToolbox.Trpak\MiniToolbox.Trpak.csproj" />
     <ProjectReference Include="..\MiniToolbox.Gdb1\MiniToolbox.Gdb1.csproj" />
+    <ProjectReference Include="..\MiniToolbox.Hashes\MiniToolbox.Hashes.csproj" />
+    <ProjectReference Include="..\MiniToolbox.Garc\MiniToolbox.Garc.csproj" />
   </ItemGroup>
 
 </Project>

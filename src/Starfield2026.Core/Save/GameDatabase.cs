@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Data.Sqlite;
 using Microsoft.Xna.Framework;
 
@@ -35,19 +36,25 @@ public class GameDatabase : IDisposable
                 red_ammo INTEGER NOT NULL DEFAULT 0,
                 boost_count INTEGER NOT NULL DEFAULT 0
             );
+
+            CREATE TABLE IF NOT EXISTS characters (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                category TEXT NOT NULL DEFAULT 'Default',
+                manifest_path TEXT NOT NULL UNIQUE
+            );
         ";
         cmd.ExecuteNonQuery();
 
-        // Migration: Add ammo columns if they don't exist
+        // Migration: Add columns if they don't exist
         using var migrateCmd = _connection.CreateCommand();
-        migrateCmd.CommandText = @"
-            PRAGMA table_info(player_profile);
-        ";
+        migrateCmd.CommandText = "PRAGMA table_info(player_profile);";
         using var reader = migrateCmd.ExecuteReader();
         bool hasGoldAmmo = false;
         bool hasRedAmmo = false;
         bool hasCurrentMapId = false;
         bool hasBoostCount = false;
+        bool hasCharacterId = false;
         while (reader.Read())
         {
             string colName = reader.GetString(1);
@@ -55,6 +62,7 @@ public class GameDatabase : IDisposable
             if (colName == "red_ammo") hasRedAmmo = true;
             if (colName == "current_map_id") hasCurrentMapId = true;
             if (colName == "boost_count") hasBoostCount = true;
+            if (colName == "character_id") hasCharacterId = true;
         }
 
         if (!hasGoldAmmo)
@@ -81,7 +89,76 @@ public class GameDatabase : IDisposable
             addCmd.CommandText = "ALTER TABLE player_profile ADD COLUMN boost_count INTEGER NOT NULL DEFAULT 0;";
             addCmd.ExecuteNonQuery();
         }
+        if (!hasCharacterId)
+        {
+            using var addCmd = _connection.CreateCommand();
+            addCmd.CommandText = "ALTER TABLE player_profile ADD COLUMN character_id INTEGER;";
+            addCmd.ExecuteNonQuery();
+        }
     }
+
+    // ─── Characters ─────────────────────────────────────────────────
+
+    public int GetCharacterCount()
+    {
+        using var cmd = _connection.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM characters;";
+        return Convert.ToInt32(cmd.ExecuteScalar());
+    }
+
+    public void RebuildCharacters(List<(string name, string category, string manifestPath)> entries)
+    {
+        using var tx = _connection.BeginTransaction();
+
+        using var del = _connection.CreateCommand();
+        del.CommandText = "DELETE FROM characters;";
+        del.ExecuteNonQuery();
+
+        foreach (var (name, category, manifestPath) in entries)
+        {
+            using var ins = _connection.CreateCommand();
+            ins.CommandText = "INSERT INTO characters (name, category, manifest_path) VALUES (@name, @cat, @path);";
+            ins.Parameters.AddWithValue("@name", name);
+            ins.Parameters.AddWithValue("@cat", category);
+            ins.Parameters.AddWithValue("@path", manifestPath);
+            ins.ExecuteNonQuery();
+        }
+
+        tx.Commit();
+    }
+
+    public List<CharacterRecord> GetAllCharacters()
+    {
+        var results = new List<CharacterRecord>();
+        using var cmd = _connection.CreateCommand();
+        cmd.CommandText = "SELECT id, name, category, manifest_path FROM characters ORDER BY category, name;";
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            results.Add(new CharacterRecord(
+                reader.GetInt32(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                reader.GetString(3)));
+        }
+        return results;
+    }
+
+    public CharacterRecord? GetCharacter(int id)
+    {
+        using var cmd = _connection.CreateCommand();
+        cmd.CommandText = "SELECT id, name, category, manifest_path FROM characters WHERE id = @id;";
+        cmd.Parameters.AddWithValue("@id", id);
+        using var reader = cmd.ExecuteReader();
+        if (!reader.Read()) return null;
+        return new CharacterRecord(
+            reader.GetInt32(0),
+            reader.GetString(1),
+            reader.GetString(2),
+            reader.GetString(3));
+    }
+
+    // ─── Profile ────────────────────────────────────────────────────
 
     public void SaveProfile(PlayerProfile profile)
     {
@@ -89,8 +166,8 @@ public class GameDatabase : IDisposable
 
         using var cmd = _connection.CreateCommand();
         cmd.CommandText = @"
-            INSERT INTO player_profile (id, coin_count, position_x, position_y, position_z, current_screen, current_map_id, last_saved, gold_ammo, red_ammo, boost_count)
-            VALUES (1, @coins, @px, @py, @pz, @screen, @mapId, @saved, @gold, @red, @boosts)
+            INSERT INTO player_profile (id, coin_count, position_x, position_y, position_z, current_screen, current_map_id, last_saved, gold_ammo, red_ammo, boost_count, character_id)
+            VALUES (1, @coins, @px, @py, @pz, @screen, @mapId, @saved, @gold, @red, @boosts, @charId)
             ON CONFLICT(id) DO UPDATE SET
                 coin_count = @coins,
                 position_x = @px,
@@ -101,7 +178,8 @@ public class GameDatabase : IDisposable
                 last_saved = @saved,
                 gold_ammo = @gold,
                 red_ammo = @red,
-                boost_count = @boosts;
+                boost_count = @boosts,
+                character_id = @charId;
         ";
         cmd.Parameters.AddWithValue("@coins", profile.CoinCount);
         cmd.Parameters.AddWithValue("@px", profile.Position.X);
@@ -113,6 +191,7 @@ public class GameDatabase : IDisposable
         cmd.Parameters.AddWithValue("@gold", profile.GoldAmmo);
         cmd.Parameters.AddWithValue("@red", profile.RedAmmo);
         cmd.Parameters.AddWithValue("@boosts", profile.BoostCount);
+        cmd.Parameters.AddWithValue("@charId", profile.CharacterId.HasValue ? profile.CharacterId.Value : DBNull.Value);
         cmd.ExecuteNonQuery();
     }
 
@@ -121,7 +200,7 @@ public class GameDatabase : IDisposable
         if (_connection == null) return null;
 
         using var cmd = _connection.CreateCommand();
-        cmd.CommandText = "SELECT coin_count, position_x, position_y, position_z, current_screen, current_map_id, last_saved, gold_ammo, red_ammo, boost_count FROM player_profile WHERE id = 1;";
+        cmd.CommandText = "SELECT coin_count, position_x, position_y, position_z, current_screen, current_map_id, last_saved, gold_ammo, red_ammo, boost_count, character_id FROM player_profile WHERE id = 1;";
 
         using var reader = cmd.ExecuteReader();
         if (!reader.Read()) return null;
@@ -136,6 +215,7 @@ public class GameDatabase : IDisposable
             GoldAmmo = reader.GetInt32(7),
             RedAmmo = reader.GetInt32(8),
             BoostCount = reader.GetInt32(9),
+            CharacterId = reader.IsDBNull(10) ? null : reader.GetInt32(10),
         };
     }
 
@@ -185,3 +265,5 @@ public class GameDatabase : IDisposable
         }
     }
 }
+
+public record CharacterRecord(int Id, string Name, string Category, string ManifestPath);

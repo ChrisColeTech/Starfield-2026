@@ -1,4 +1,6 @@
 using MiniToolbox.Garc.Containers;
+using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace MiniToolbox.Garc.Models.PocketMonsters
@@ -17,11 +19,21 @@ namespace MiniToolbox.Garc.Models.PocketMonsters
             OContainer container = PkmnContainer.load(data);
             models = GfModel.load(new MemoryStream(container.content[0].data));
 
-            //List<RenderBase.OSkeletalAnimation> anms = GfMotion.load(new MemoryStream(container.content[1].data));
-            //foreach (RenderBase.OSkeletalAnimation anm in anms)
-            //{
-            //    models.skeletalAnimation.list.Add(anm);
-            //}
+            if (container.content.Count > 1 && container.content[1].data != null && container.content[1].data.Length > 4)
+            {
+                try
+                {
+                    List<RenderBase.OSkeletalAnimation> anms = GfMotion.load(new MemoryStream(container.content[1].data));
+                    foreach (RenderBase.OSkeletalAnimation anm in anms)
+                    {
+                        models.skeletalAnimation.list.Add(anm);
+                    }
+                }
+                catch (Exception)
+                {
+                    // Animation data may be malformed for some entries
+                }
+            }
 
             return models;
         }

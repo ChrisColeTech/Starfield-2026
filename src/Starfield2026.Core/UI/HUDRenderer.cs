@@ -19,7 +19,7 @@ public class HUDRenderer
         _font = new PixelFont(spriteBatch, pixel);
     }
 
-    public void Draw(GraphicsDevice device, GameState state, AmmoSystem? ammo, BoostSystem? boosts, string? activeScreenType, float? speed = null, int overworldBoosts = 0)
+    public void Draw(GraphicsDevice device, GameState state, AmmoSystem? ammo, BoostSystem? boosts, string? activeScreenType, float? speed = null, int overworldBoosts = 0, Vector3? playerWorldPos = null, float playerYaw = 0f)
     {
         int screenW = device.Viewport.Width;
         int screenH = device.Viewport.Height;
@@ -42,7 +42,7 @@ public class HUDRenderer
         int barH = Math.Max(8, 10 * (screenW / 800));
         if (barW < 80) barW = 80;
 
-        bool showCoins = activeScreenType == "overworld";
+        bool showCoins = activeScreenType == "overworld" || activeScreenType == "freeroam";
         int rightRows = 2;
         if (showCoins) rightRows = 3;
 
@@ -83,8 +83,9 @@ public class HUDRenderer
         // ═══════════════════════════════════════════════
         //  LEFT PANEL — Ammo / Boosts
         // ═══════════════════════════════════════════════
-        bool hasAmmo = ammo != null && activeScreenType != "overworld";
-        bool hasBoosts = (boosts != null && activeScreenType != "overworld") || (activeScreenType == "overworld" && overworldBoosts > 0);
+        bool noAmmoScreen = activeScreenType == "overworld" || activeScreenType == "freeroam";
+        bool hasAmmo = ammo != null && !noAmmoScreen;
+        bool hasBoosts = (boosts != null && !noAmmoScreen) || (activeScreenType == "overworld" && overworldBoosts > 0);
         bool hasSpeed = (activeScreenType == "driving" || activeScreenType == "space") && speed.HasValue;
 
         int leftLineCount = 0;
@@ -140,6 +141,166 @@ public class HUDRenderer
                 UITheme.SlatePanelBg, shadowOff, Color.Black * 0.3f);
             UIDraw.ShadowedText(_spriteBatch, _font, speedText,
                 new Vector2(speedPanelX + pad, speedPanelY + pad), UITheme.TextPrimary, UITheme.TextShadow);
+        }
+
+        // ═══════════════════════════════════════════════
+        //  MINIMAP — bottom-left circle (freeroam & overworld)
+        //  Rotates with player yaw, north indicator
+        // ═══════════════════════════════════════════════
+        if ((activeScreenType == "freeroam" || activeScreenType == "overworld") && playerWorldPos.HasValue)
+        {
+            int mapDiameter = Math.Max(80, 120 * screenW / 800);
+            int mapRadius = mapDiameter / 2;
+            int mapPad = 4 * scale;
+
+            // Center of the minimap circle on screen
+            int cx = margin + mapPad + mapRadius;
+            int cy = screenH - margin - mapPad - mapRadius;
+
+            // Shadow circle
+            DrawFilledCircle(_spriteBatch, _pixel, cx + shadowOff, cy + shadowOff, mapRadius + mapPad, Color.Black * 0.3f);
+            // Background circle
+            DrawFilledCircle(_spriteBatch, _pixel, cx, cy, mapRadius + mapPad, UITheme.SlatePanelBg);
+
+            // Draw quadrant fills rotated by player yaw
+            // For each pixel in the circle, rotate by -yaw to get world direction,
+            // then color by which quadrant that world position falls in
+            float worldHalf = 500f;
+            // Player forward = (Sin(yaw), 0, Cos(yaw)), +Z = south, -Z = north
+            // We want minimap "up" = player forward, so rotate screen coords by yaw
+            float sinYaw = (float)Math.Sin(playerYaw);
+            float cosYaw = (float)Math.Cos(playerYaw);
+
+            // Player normalized position (0..1 range)
+            float pnx = (playerWorldPos.Value.X + worldHalf) / (worldHalf * 2f);
+            float pnz = (playerWorldPos.Value.Z + worldHalf) / (worldHalf * 2f);
+
+            bool isFreeroam = activeScreenType == "freeroam";
+            var nwColor = isFreeroam ? new Color(40, 200, 80, 150) : new Color(0, 180, 220, 150);
+            var neColor = isFreeroam ? new Color(60, 140, 220, 150) : new Color(0, 180, 220, 150);
+            var swColor = isFreeroam ? new Color(220, 180, 40, 150) : new Color(0, 180, 220, 150);
+            var seColor = isFreeroam ? new Color(160, 60, 200, 150) : new Color(0, 180, 220, 150);
+
+            for (int row = -mapRadius; row <= mapRadius; row++)
+            {
+                // Find horizontal extent of circle at this row
+                int dx = (int)Math.Sqrt(mapRadius * mapRadius - row * row);
+                if (dx <= 0) continue;
+
+                int y = cy + row;
+                int xStart = cx - dx;
+                int xEnd = cx + dx;
+
+                // Batch consecutive pixels of the same color into spans
+                Color? spanColor = null;
+                int spanStart = xStart;
+
+                for (int x = xStart; x <= xEnd; x++)
+                {
+                    // Pixel offset from center, normalized to -1..1
+                    float lx = (float)(x - cx) / mapRadius;
+                    float ly = (float)(y - cy) / mapRadius;
+
+                    // Rotate screen pixel into world space
+                    // Screen up (ly<0) → player forward (Sin(yaw), Cos(yaw))
+                    // Screen right (lx>0) → player right (-Cos(yaw), Sin(yaw))
+                    float wx = -(lx * cosYaw + ly * sinYaw);
+                    float wy = lx * sinYaw - ly * cosYaw;
+
+                    // Map from minimap-space to world-space normalized coords
+                    // minimap center = player position in world
+                    float worldNx = pnx + wx * 0.5f;
+                    float worldNz = pnz + wy * 0.5f;
+
+                    Color c;
+                    if (worldNx < 0 || worldNx > 1 || worldNz < 0 || worldNz > 1)
+                        c = UITheme.SlatePanelBg;
+                    else if (worldNx < 0.5f)
+                        c = worldNz < 0.5f ? nwColor : swColor;
+                    else
+                        c = worldNz < 0.5f ? neColor : seColor;
+
+                    if (c != spanColor)
+                    {
+                        if (spanColor.HasValue && x > spanStart)
+                            _spriteBatch.Draw(_pixel, new Rectangle(spanStart, y, x - spanStart, 1), spanColor.Value);
+                        spanColor = c;
+                        spanStart = x;
+                    }
+                }
+                // Flush last span
+                if (spanColor.HasValue && xEnd >= spanStart)
+                    _spriteBatch.Draw(_pixel, new Rectangle(spanStart, y, xEnd - spanStart + 1, 1), spanColor.Value);
+            }
+
+            // Quadrant divider lines — world X=0 and Z=0 axes, rotated by yaw
+            // Inverse transform (world→screen): lx = -wx*cos + wy*sin, ly = -wx*sin - wy*cos
+            var lineColor = UITheme.TextSecondary * 0.5f;
+            // World center offset from player in minimap-normalized space
+            float centerOffX = (0.5f - pnx) / 0.5f;
+            float centerOffZ = (0.5f - pnz) / 0.5f;
+            float scx = -centerOffX * cosYaw + centerOffZ * sinYaw;
+            float scy = -centerOffX * sinYaw - centerOffZ * cosYaw;
+            int worldCx = cx + (int)(scx * mapRadius);
+            int worldCy = cy + (int)(scy * mapRadius);
+            // World X axis on screen: direction = (-cos, -sin)
+            // World Z axis on screen: direction = (sin, -cos)
+            for (int i = -mapRadius; i <= mapRadius; i++)
+            {
+                // World X axis line
+                int px = worldCx + (int)(-cosYaw * i);
+                int py = worldCy + (int)(-sinYaw * i);
+                int distSq = (px - cx) * (px - cx) + (py - cy) * (py - cy);
+                if (distSq < mapRadius * mapRadius)
+                    _spriteBatch.Draw(_pixel, new Rectangle(px, py, 1, 1), lineColor);
+                // World Z axis line
+                px = worldCx + (int)(sinYaw * i);
+                py = worldCy + (int)(-cosYaw * i);
+                distSq = (px - cx) * (px - cx) + (py - cy) * (py - cy);
+                if (distSq < mapRadius * mapRadius)
+                    _spriteBatch.Draw(_pixel, new Rectangle(px, py, 1, 1), lineColor);
+            }
+
+            // Circle border
+            DrawCircleOutline(_spriteBatch, _pixel, cx, cy, mapRadius, UITheme.TextSecondary * 0.6f);
+
+            // Player dot at center
+            int dotSize = Math.Max(3, 2 * scale);
+            _spriteBatch.Draw(_pixel, new Rectangle(cx - dotSize / 2, cy - dotSize / 2, dotSize, dotSize), Color.White);
+
+            // North indicator — north = world (0, -1) in XZ
+            // Using inverse transform: screenX = -0*cos + (-1)*sin = -sin, screenY = -0*sin - (-1)*cos = cos
+            float nDirX = -sinYaw;
+            float nDirY = cosYaw;
+            int nLen = mapRadius - 4 * scale;
+            int nx = cx + (int)(nDirX * nLen);
+            int ny = cy + (int)(nDirY * nLen);
+            int nSize = Math.Max(3, 2 * scale);
+            _spriteBatch.Draw(_pixel, new Rectangle(nx - nSize / 2, ny - nSize / 2, nSize, nSize), new Color(255, 60, 60));
+        }
+    }
+
+    private static void DrawFilledCircle(SpriteBatch sb, Texture2D pixel, int cx, int cy, int r, Color color)
+    {
+        for (int row = -r; row <= r; row++)
+        {
+            int dx = (int)Math.Sqrt(r * r - row * row);
+            if (dx <= 0) continue;
+            sb.Draw(pixel, new Rectangle(cx - dx, cy + row, dx * 2, 1), color);
+        }
+    }
+
+    private static void DrawCircleOutline(SpriteBatch sb, Texture2D pixel, int cx, int cy, int r, Color color)
+    {
+        // Midpoint circle scan — draw 1px border
+        for (int row = -r; row <= r; row++)
+        {
+            int dx = (int)Math.Sqrt(r * r - row * row);
+            int dxInner = (int)Math.Sqrt(Math.Max(0, (r - 1) * (r - 1) - row * row));
+            int width = dx - dxInner;
+            if (width <= 0) width = 1;
+            sb.Draw(pixel, new Rectangle(cx - dx, cy + row, width, 1), color);
+            sb.Draw(pixel, new Rectangle(cx + dx - width, cy + row, width, 1), color);
         }
     }
 

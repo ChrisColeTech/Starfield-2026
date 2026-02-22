@@ -1,0 +1,48 @@
+Searching for all chara/ categories...
+=== Chara categories ===
+  chara/model_cc_base  (1 models)
+  chara/model_ob  (87 models)
+  chara/model_pc  (100 models)
+  chara/model_pc_base  (1 models)
+  chara/model_tr  (30 models)
+  chara/model_uq  (33 models)
+  chara/model_vr  (210 models)
+
+=== model_uq entries (gym leaders, elite four, etc) ===
+chara/model_uq/tr0250_ice/tr0250_00.trmdl
+chara/model_uq/tr0140_tecology/tr0140_00.trmdl
+chara/model_uq/tr0040_friend/tr0040_00.trmdl
+chara/model_uq/tr0180_steel/tr0180_00.trmdl
+chara/model_uq/tr0150_tlanguage/tr0150_00.trmdl
+chara/model_uq/tr0160_dragon/tr0160_00.trmdl
+chara/model_uq/tr0270_ghost/tr0270_00.trmdl
+chara/model_uq/tr0241_electricity/tr0241_00.trmdl
+chara/model_uq/tr0100_tmath/tr0100_00.trmdl
+chara/model_uq/tr0290_battle/tr0290_00.trmdl
+chara/model_uq/tr0190_league/tr0190_00.trmdl
+chara/model_uq/tr0130_thome/tr0130_00.trmdl
+chara/model_uq/tr0220_water/tr0220_00.trmdl
+chara/model_uq/tr0110_thistory/tr0110_00.trmdl
+chara/model_uq/tr0230_grass/tr0230_00.trmdl
+chara/model_uq/tr0081_principal/tr0081_00.trmdl
+chara/model_uq/tr0320_eviil/tr0320_00.trmdl
+chara/model_uq/tr0300_poison/tr0300_00.trmdl
+chara/model_uq/tr0260_esper/tr0260_00.trmdl
+chara/model_uq/tr0200_normal/tr0200_00.trmdl
+chara/model_uq/tr9999_heroine/tr9999_00_00.trmdl
+chara/model_uq/tr0080_principal/tr0080_00.trmdl
+chara/model_uq/tr0280_fire/tr0280_00.trmdl
+chara/model_uq/tr0070_senior/tr0070_00.trmdl
+chara/model_uq/tr0000_primitive/tr0000_00.trmdl
+chara/model_uq/tr0090_tbattle/tr0090_00.trmdl
+chara/model_uq/tr0170_ground/tr0170_00.trmdl
+chara/model_uq/tr0210_insect/tr0210_00.trmdl
+chara/model_uq/tr0050_junior/tr0050_00.trmdl
+chara/model_uq/tr0240_electricity/tr0240_00.trmdl
+chara/model_uq/tr0120_tnursing/tr0120_00.trmdl
+chara/model_uq/tr0310_mr/tr0310_00.trmdl
+chara/model_uq/tr0020_future/tr0020_00.trmdl
+
+=== Looking for 'gym|elite|champion|leader|battle' in any chara path ===
+chara/model_uq/tr0290_battle/tr0290_00.trmdl
+chara/model_uq/tr0090_tbattle/tr0090_00.trmdl

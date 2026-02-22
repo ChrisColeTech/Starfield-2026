@@ -21,3 +21,6 @@ build/
 Thumbs.db
 /.venv
 /src/Starfield2026.Assets/Models
+src/Starfield2026.Tests
+tools/lpc-cli/output
+tools/dae-to-gltf/test-output

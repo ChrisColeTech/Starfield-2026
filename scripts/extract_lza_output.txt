@@ -1,0 +1,5 @@
+Building SwitchToolboxCli...
+Switch: D:\Projects\PokemonGreen\src\PokemonGreen.SwitchToolboxCli\src\PokemonGreen.SwitchToolboxCli.App\PokemonGreen.SwitchToolboxCli.App.csproj
+
+Workload updates are available. Run `dotnet workload list` for more information.
+BUILD FAILED

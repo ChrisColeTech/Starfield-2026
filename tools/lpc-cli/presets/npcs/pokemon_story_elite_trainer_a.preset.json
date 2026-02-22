@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "bodyType": "teen",
+  "selections": [
+    {
+      "itemId": "body",
+      "variant": "black"
+    },
+    {
+      "itemId": "heads_human_female",
+      "variant": "black"
+    },
+    {
+      "itemId": "face_neutral",
+      "variant": "black"
+    },
+    {
+      "itemId": "hair_plain",
+      "variant": "platinum"
+    },
+    {
+      "itemId": "torso_clothes_tshirt",
+      "variant": "white"
+    },
+    {
+      "itemId": "legs_shorts",
+      "variant": "slate"
+    },
+    {
+      "itemId": "feet_shoes_basic",
+      "variant": "white"
+    },
+    {
+      "itemId": "shadow"
+    }
+  ]
+}
