@@ -26,7 +26,6 @@ export function PropertiesPanel() {
     for (const cat of registry.categories) {
       groups[cat.id] = []
     }
-    // Collect unknowns separately
     const unknowns: { tile: typeof UNKNOWN_TILE; count: number }[] = []
 
     for (const [tileId, count] of tileCounts) {
@@ -39,7 +38,6 @@ export function PropertiesPanel() {
       groups[tile.category].push({ tile, count })
     }
 
-    // Sort each group by count descending
     for (const cat of Object.keys(groups)) {
       groups[cat].sort((a, b) => b.count - a.count)
     }
@@ -52,9 +50,9 @@ export function PropertiesPanel() {
 
   if (collapsed) {
     return (
-      <div className="w-[36px] bg-[#1e1e1e] border-l border-[#2d2d2d] flex flex-col items-center pt-[6px]">
+      <div className="w-[36px] bg-bg border-l border-border flex flex-col items-center pt-[6px]">
         <button
-          className="w-[28px] h-[28px] border-none rounded-[3px] cursor-pointer text-[#808080] bg-transparent hover:bg-[#2d2d2d] hover:text-[#e0e0e0] flex items-center justify-center"
+          className="w-[28px] h-[28px] border-none rounded-[3px] cursor-pointer text-text-secondary bg-transparent hover:bg-hover hover:text-text flex items-center justify-center"
           onClick={() => setCollapsed(false)}
           title="Expand properties"
         >
@@ -65,36 +63,36 @@ export function PropertiesPanel() {
   }
 
   return (
-    <div className="w-[240px] bg-[#1e1e1e] border-l border-[#2d2d2d] flex flex-col overflow-hidden">
+    <div className="w-[240px] bg-bg border-l border-border flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-[10px] h-[30px] border-b border-[#2d2d2d]">
+      <div className="flex items-center justify-between px-[10px] h-[30px] border-b border-border">
         <button
-          className="w-[22px] h-[22px] border-none rounded-[3px] cursor-pointer text-[#808080] bg-transparent hover:bg-[#2d2d2d] hover:text-[#e0e0e0] flex items-center justify-center"
+          className="w-[22px] h-[22px] border-none rounded-[3px] cursor-pointer text-text-secondary bg-transparent hover:bg-hover hover:text-text flex items-center justify-center"
           onClick={() => setCollapsed(true)}
           title="Collapse properties"
         >
           <PanelRightClose size={14} />
         </button>
-        <span className="text-[11px] text-[#808080] uppercase tracking-wider">Properties</span>
+        <span className="text-[11px] text-text-secondary uppercase tracking-wider">Properties</span>
       </div>
 
       {/* Map summary */}
-      <div className="px-[10px] py-[8px] border-b border-[#2d2d2d] text-[11px] text-[#808080] flex flex-col gap-[2px]">
+      <div className="px-[10px] py-[8px] border-b border-border text-[11px] text-text-secondary flex flex-col gap-[2px]">
         <div className="flex justify-between">
           <span>Size</span>
-          <span className="text-[#e0e0e0]">{mapWidth} x {mapHeight}</span>
+          <span className="text-text">{mapWidth} x {mapHeight}</span>
         </div>
         <div className="flex justify-between">
           <span>Total cells</span>
-          <span className="text-[#e0e0e0]">{totalTiles}</span>
+          <span className="text-text">{totalTiles}</span>
         </div>
         <div className="flex justify-between">
           <span>Unique tiles</span>
-          <span className="text-[#e0e0e0]">{uniqueCount}</span>
+          <span className="text-text">{uniqueCount}</span>
         </div>
       </div>
 
-      {/* Tile inventory — dynamic from registry categories */}
+      {/* Tile inventory */}
       <div className="flex-1 overflow-y-auto p-[10px]">
         {registry.categories.map(cat => {
           const items = groupedTiles.groups[cat.id]
@@ -104,45 +102,45 @@ export function PropertiesPanel() {
 
           return (
             <div key={cat.id}>
-              <div className="text-[11px] text-[#808080] mt-[8px] mb-[4px] flex justify-between">
+              <div className="text-[11px] text-text-secondary mt-[8px] mb-[4px] flex justify-between">
                 <span>{cat.label}</span>
                 <span>{categoryTotal}</span>
               </div>
               {items.map(({ tile, count }) => (
                 <div
                   key={tile.id}
-                  className="flex items-center gap-[6px] py-[2px] px-[4px] rounded-[2px] hover:bg-[#2d2d2d]"
+                  className="flex items-center gap-[6px] py-[2px] px-[4px] rounded-[2px] hover:bg-hover"
                 >
                   <div
-                    className="w-[12px] h-[12px] rounded-[2px] flex-shrink-0"
+                    className="w-[12px] h-[12px] rounded-[2px] shrink-0"
                     style={{ background: tile.color }}
                   />
-                  <span className="text-[12px] text-[#e0e0e0] flex-1 truncate">{tile.name}</span>
-                  <span className="text-[11px] text-[#808080] tabular-nums">{count}</span>
+                  <span className="text-[12px] text-text flex-1 truncate">{tile.name}</span>
+                  <span className="text-[11px] text-text-secondary tabular-nums">{count}</span>
                 </div>
               ))}
             </div>
           )
         })}
 
-        {/* Unknown tiles (not in registry) */}
+        {/* Unknown tiles */}
         {groupedTiles.unknowns.length > 0 && (
           <div>
-            <div className="text-[11px] text-[#808080] mt-[8px] mb-[4px] flex justify-between">
+            <div className="text-[11px] text-text-secondary mt-[8px] mb-[4px] flex justify-between">
               <span>Unknown</span>
               <span>{groupedTiles.unknowns.reduce((s, i) => s + i.count, 0)}</span>
             </div>
             {groupedTiles.unknowns.map(({ tile, count }) => (
               <div
                 key={tile.id}
-                className="flex items-center gap-[6px] py-[2px] px-[4px] rounded-[2px] hover:bg-[#2d2d2d]"
+                className="flex items-center gap-[6px] py-[2px] px-[4px] rounded-[2px] hover:bg-hover"
               >
                 <div
-                  className="w-[12px] h-[12px] rounded-[2px] flex-shrink-0"
+                  className="w-[12px] h-[12px] rounded-[2px] shrink-0"
                   style={{ background: tile.color }}
                 />
-                <span className="text-[12px] text-[#e0e0e0] flex-1 truncate">{tile.name}</span>
-                <span className="text-[11px] text-[#808080] tabular-nums">{count}</span>
+                <span className="text-[12px] text-text flex-1 truncate">{tile.name}</span>
+                <span className="text-[11px] text-text-secondary tabular-nums">{count}</span>
               </div>
             ))}
           </div>

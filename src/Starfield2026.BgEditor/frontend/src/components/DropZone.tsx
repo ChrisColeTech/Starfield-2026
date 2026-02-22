@@ -39,39 +39,21 @@ export default function DropZone() {
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
+      className="absolute inset-0 flex flex-col items-center justify-center gap-[16px] rounded-[12px] m-[40px] transition-colors"
       style={{
-        position: 'absolute',
-        inset: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 16,
-        border: dragging ? '2px dashed #6c8cff' : '2px dashed #444',
-        borderRadius: 12,
-        margin: 40,
-        transition: 'border-color 0.2s',
-        background: dragging ? 'rgba(108, 140, 255, 0.05)' : 'transparent',
+        border: dragging ? '2px dashed var(--color-accent)' : '2px dashed var(--color-border)',
+        background: dragging ? 'rgba(86,156,214,0.05)' : 'transparent',
       }}
     >
       {loading ? (
-        <span style={{ color: '#888', fontSize: 16 }}>Loading...</span>
+        <span className="text-text-secondary text-[16px]">Loading...</span>
       ) : (
         <>
-          <span style={{ color: '#888', fontSize: 16 }}>
+          <span className="text-text-secondary text-[16px]">
             Drop a manifest.json file here
           </span>
-          <span style={{ color: '#555', fontSize: 12 }}>or</span>
-          <label
-            style={{
-              padding: '8px 20px',
-              background: '#2a2a4a',
-              borderRadius: 6,
-              cursor: 'pointer',
-              color: '#aaa',
-              fontSize: 13,
-            }}
-          >
+          <span className="text-text-disabled text-[12px]">or</span>
+          <label className="px-[20px] py-[8px] bg-input border border-border rounded-[6px] cursor-pointer text-text-secondary text-[13px] hover:bg-hover">
             Browse
             <input
               type="file"

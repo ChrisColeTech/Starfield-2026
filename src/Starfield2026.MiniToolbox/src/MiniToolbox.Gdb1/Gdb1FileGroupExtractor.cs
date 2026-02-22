@@ -126,7 +126,7 @@ public class Gdb1FileGroupExtractor : IFileGroupExtractor
                     // Export as PNG
                     string pngPath = Path.Combine(texturesDir, $"{texInfo.Name}.png");
                     TexturePngExporter.Export(texInfo, pngPath);
-                    texInfo.FileName = $"{texInfo.Name}.png";
+                    texInfo.FileName = $"textures/{texInfo.Name}.png";
 
                     textureInfos.Add(texInfo);
                     result.OutputFiles.Add($"textures/{texInfo.Name}.png");

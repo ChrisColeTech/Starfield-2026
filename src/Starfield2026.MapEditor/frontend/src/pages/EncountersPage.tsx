@@ -8,32 +8,6 @@ import {
   type EncounterEntry,
 } from '../types/encounters'
 
-// --- Styles ---
-
-const inputStyle: React.CSSProperties = {
-  padding: '3px 6px',
-  background: '#3c3c3c',
-  border: '1px solid #2d2d2d',
-  borderRadius: 3,
-  color: '#e0e0e0',
-  fontSize: 12,
-  outline: 'none',
-}
-
-const btnStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 4,
-  padding: '4px 8px',
-  background: '#3c3c3c',
-  border: '1px solid #2d2d2d',
-  borderRadius: 3,
-  color: '#e0e0e0',
-  fontSize: 11,
-  cursor: 'pointer',
-}
-
 // --- Species Search Dropdown ---
 
 function SpeciesSearch({
@@ -66,51 +40,29 @@ function SpeciesSearch({
   }, [query, species])
 
   return (
-    <div ref={ref} style={{ position: 'relative', flex: 1, minWidth: 120 }}>
+    <div ref={ref} className="relative flex-1 min-w-[120px]">
       <input
         type="text"
         value={query}
         onChange={e => { setQuery(e.target.value); setOpen(true) }}
         onFocus={() => setOpen(true)}
         placeholder="Search species..."
-        style={{ ...inputStyle, width: '100%' }}
+        className="w-full px-[6px] py-[3px] bg-input border border-border rounded-[3px] text-text text-[12px] outline-none"
       />
       {open && filtered.length > 0 && (
-        <div style={{
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          right: 0,
-          maxHeight: 200,
-          overflowY: 'auto',
-          background: '#1e1e1e',
-          border: '1px solid #2d2d2d',
-          borderRadius: 3,
-          zIndex: 100,
-        }}>
+        <div className="absolute top-full left-0 right-0 max-h-[200px] overflow-y-auto bg-bg border border-border rounded-[3px] z-[100]">
           {filtered.map(s => (
             <button
               key={s.id}
               onClick={() => { onChange(s.name); setQuery(s.name); setOpen(false) }}
+              className="flex items-center gap-[6px] w-full px-[8px] py-[4px] border-none text-text text-[12px] cursor-pointer text-left hover:bg-hover"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                width: '100%',
-                padding: '4px 8px',
-                background: s.name === value ? '#094771' : 'transparent',
-                border: 'none',
-                color: '#e0e0e0',
-                fontSize: 12,
-                cursor: 'pointer',
-                textAlign: 'left',
+                background: s.name === value ? 'var(--color-active)' : 'transparent',
               }}
-              onMouseEnter={e => { if (s.name !== value) (e.target as HTMLElement).style.background = '#2d2d2d' }}
-              onMouseLeave={e => { if (s.name !== value) (e.target as HTMLElement).style.background = 'transparent' }}
             >
-              <span style={{ color: '#808080', fontSize: 10, minWidth: 28 }}>#{s.id}</span>
+              <span className="text-text-secondary text-[10px] min-w-[28px]">#{s.id}</span>
               <span>{s.name}</span>
-              <span style={{ color: '#808080', fontSize: 10, marginLeft: 'auto' }}>
+              <span className="text-text-secondary text-[10px] ml-auto">
                 {s.type1}{s.type2 ? ` / ${s.type2}` : ''}
               </span>
             </button>
@@ -133,8 +85,8 @@ function WeightBar({ entries }: { entries: EncounterEntry[] }) {
   ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: '4px 0' }}>
-      <div style={{ display: 'flex', height: 8, borderRadius: 4, overflow: 'hidden' }}>
+    <div className="flex flex-col gap-[3px] py-[4px]">
+      <div className="flex h-[8px] rounded-[4px] overflow-hidden">
         {entries.map((e, i) => {
           const pct = (e.weight / totalWeight) * 100
           if (pct === 0) return null
@@ -142,21 +94,17 @@ function WeightBar({ entries }: { entries: EncounterEntry[] }) {
             <div
               key={i}
               title={`${e.speciesId || '?'}: ${pct.toFixed(1)}%`}
-              style={{
-                width: `${pct}%`,
-                background: colors[i % colors.length],
-                minWidth: 2,
-              }}
+              style={{ width: `${pct}%`, background: colors[i % colors.length], minWidth: 2 }}
             />
           )
         })}
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 10px', fontSize: 10, color: '#808080' }}>
+      <div className="flex flex-wrap gap-x-[10px] gap-y-[2px] text-[10px] text-text-secondary">
         {entries.map((e, i) => {
           const pct = (e.weight / totalWeight) * 100
           return (
-            <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 2, background: colors[i % colors.length], display: 'inline-block' }} />
+            <span key={i} className="flex items-center gap-[3px]">
+              <span className="inline-block w-[8px] h-[8px] rounded-[2px]" style={{ background: colors[i % colors.length] }} />
               {e.speciesId || '?'} {pct.toFixed(1)}%
             </span>
           )
@@ -186,49 +134,19 @@ function EntryRow({
     updateEntry(groupIndex, entryIndex, partial)
   }, [updateEntry, groupIndex, entryIndex])
 
+  const inputCls = "px-[6px] py-[3px] bg-input border border-border rounded-[3px] text-text text-[12px] outline-none text-center"
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+    <div className="flex items-center gap-[4px]">
       <SpeciesSearch
         value={entry.speciesId}
         species={species}
         onChange={speciesId => handleUpdate({ speciesId })}
       />
-      <input
-        type="number"
-        min={1}
-        max={100}
-        value={entry.minLevel}
-        onChange={e => handleUpdate({ minLevel: +e.target.value })}
-        title="Min Level"
-        style={{ ...inputStyle, width: 44, textAlign: 'center' }}
-      />
-      <input
-        type="number"
-        min={1}
-        max={100}
-        value={entry.maxLevel}
-        onChange={e => handleUpdate({ maxLevel: +e.target.value })}
-        title="Max Level"
-        style={{ ...inputStyle, width: 44, textAlign: 'center' }}
-      />
-      <input
-        type="number"
-        min={1}
-        max={255}
-        value={entry.weight}
-        onChange={e => handleUpdate({ weight: +e.target.value })}
-        title="Weight"
-        style={{ ...inputStyle, width: 44, textAlign: 'center' }}
-      />
-      <input
-        type="number"
-        min={0}
-        max={8}
-        value={entry.requiredBadges ?? 0}
-        onChange={e => handleUpdate({ requiredBadges: +e.target.value || undefined })}
-        title="Required Badges"
-        style={{ ...inputStyle, width: 36, textAlign: 'center' }}
-      />
+      <input type="number" min={1} max={100} value={entry.minLevel} onChange={e => handleUpdate({ minLevel: +e.target.value })} title="Min Level" className={inputCls} style={{ width: 44 }} />
+      <input type="number" min={1} max={100} value={entry.maxLevel} onChange={e => handleUpdate({ maxLevel: +e.target.value })} title="Max Level" className={inputCls} style={{ width: 44 }} />
+      <input type="number" min={1} max={255} value={entry.weight} onChange={e => handleUpdate({ weight: +e.target.value })} title="Weight" className={inputCls} style={{ width: 44 }} />
+      <input type="number" min={0} max={8} value={entry.requiredBadges ?? 0} onChange={e => handleUpdate({ requiredBadges: +e.target.value || undefined })} title="Required Badges" className={inputCls} style={{ width: 36 }} />
       <input
         type="text"
         value={(entry.requiredFlags ?? []).join(', ')}
@@ -238,12 +156,13 @@ function EntryRow({
         }}
         placeholder="flags"
         title="Required Flags (comma-separated)"
-        style={{ ...inputStyle, width: 100 }}
+        className="px-[6px] py-[3px] bg-input border border-border rounded-[3px] text-text text-[12px] outline-none"
+        style={{ width: 100 }}
       />
       <button
         onClick={() => removeEntry(groupIndex, entryIndex)}
         title="Remove entry"
-        style={{ ...btnStyle, padding: '3px 5px', color: '#f48771', background: 'none', border: 'none' }}
+        className="p-[3px] bg-transparent border-none text-danger cursor-pointer hover:text-text"
       >
         <Trash2 size={13} />
       </button>
@@ -268,32 +187,22 @@ function EncounterGroupCard({
 
   const ratePct = ((group.baseEncounterRate / 255) * 100).toFixed(1)
 
+  const inputCls = "px-[6px] py-[3px] bg-input border border-border rounded-[3px] text-text text-[12px] outline-none"
+
   return (
-    <div style={{
-      background: '#1e1e1e',
-      border: '1px solid #2d2d2d',
-      borderRadius: 4,
-      overflow: 'hidden',
-    }}>
+    <div className="bg-bg border border-border rounded-[4px] overflow-hidden">
       {/* Group header */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '6px 10px',
-        background: '#252526',
-        borderBottom: '1px solid #2d2d2d',
-      }}>
+      <div className="flex items-center gap-[8px] px-[10px] py-[6px] bg-surface border-b border-border">
         <select
           value={group.encounterType}
           onChange={e => updateType(groupIndex, e.target.value)}
-          style={{ ...inputStyle, flex: 1 }}
+          className={`${inputCls} flex-1`}
         >
           {ENCOUNTER_TYPES.map(t => (
             <option key={t.id} value={t.id}>{t.label}</option>
           ))}
         </select>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#808080' }}>
+        <div className="flex items-center gap-[4px] text-[11px] text-text-secondary">
           <span>Rate:</span>
           <input
             type="number"
@@ -301,30 +210,23 @@ function EncounterGroupCard({
             max={255}
             value={group.baseEncounterRate}
             onChange={e => updateRate(groupIndex, +e.target.value)}
-            style={{ ...inputStyle, width: 48, textAlign: 'center' }}
+            className={inputCls}
+            style={{ width: 48, textAlign: 'center' }}
           />
-          <span style={{ fontSize: 10 }}>({ratePct}%)</span>
+          <span className="text-[10px]">({ratePct}%)</span>
         </div>
         <button
           onClick={() => removeGroup(groupIndex)}
           title="Delete group"
-          style={{ ...btnStyle, padding: '3px 5px', color: '#f48771', background: 'none', border: 'none' }}
+          className="p-[3px] bg-transparent border-none text-danger cursor-pointer hover:text-text"
         >
           <Trash2 size={14} />
         </button>
       </div>
 
       {/* Column headers */}
-      <div style={{
-        display: 'flex',
-        gap: 4,
-        padding: '4px 10px',
-        fontSize: 10,
-        color: '#808080',
-        textTransform: 'uppercase',
-        borderBottom: '1px solid #2d2d2d',
-      }}>
-        <span style={{ flex: 1, minWidth: 120 }}>Species</span>
+      <div className="flex gap-[4px] px-[10px] py-[4px] text-[10px] text-text-secondary uppercase border-b border-border">
+        <span className="flex-1 min-w-[120px]">Species</span>
         <span style={{ width: 44, textAlign: 'center' }}>Min</span>
         <span style={{ width: 44, textAlign: 'center' }}>Max</span>
         <span style={{ width: 44, textAlign: 'center' }}>Wt</span>
@@ -334,7 +236,7 @@ function EncounterGroupCard({
       </div>
 
       {/* Entries */}
-      <div style={{ padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div className="p-[6px_10px] flex flex-col gap-[4px]">
         {group.entries.map((entry, i) => (
           <EntryRow
             key={i}
@@ -345,13 +247,11 @@ function EncounterGroupCard({
           />
         ))}
 
-        {/* Weight bar */}
         {group.entries.length > 0 && <WeightBar entries={group.entries} />}
 
-        {/* Add entry button */}
         <button
           onClick={() => addEntry(groupIndex)}
-          style={{ ...btnStyle, alignSelf: 'flex-start', marginTop: 2 }}
+          className="flex items-center justify-center gap-[4px] self-start px-[8px] py-[4px] bg-input border border-border rounded-[3px] text-text text-[11px] cursor-pointer hover:bg-hover mt-[2px]"
         >
           <Plus size={12} /> Add Entry
         </button>
@@ -374,64 +274,52 @@ export default function EncountersPage() {
   const mapId = mapName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Top bar */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        padding: '8px 16px',
-        background: '#252526',
-        borderBottom: '1px solid #2d2d2d',
-        flexShrink: 0,
-      }}>
-        <span style={{ fontSize: 12, color: '#808080' }}>
-          Map: <span style={{ color: '#e0e0e0', fontWeight: 600 }}>{mapId || 'untitled'}</span>
+      <div className="flex items-center gap-[12px] px-[16px] py-[8px] bg-surface border-b border-border shrink-0">
+        <span className="text-[12px] text-text-secondary">
+          Map: <span className="text-text font-semibold">{mapId || 'untitled'}</span>
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ fontSize: 11, color: '#808080' }}>Scaling:</span>
+        <div className="flex items-center gap-[4px]">
+          <span className="text-[11px] text-text-secondary">Scaling:</span>
           <select
             value={encounterData.progressMultiplier}
             onChange={e => setProgressMultiplier(+e.target.value)}
-            style={inputStyle}
+            className="px-[6px] py-[3px] bg-input border border-border rounded-[3px] text-text text-[12px] outline-none"
           >
             {PROGRESS_MULTIPLIERS.map(p => (
               <option key={p.value} value={p.value}>{p.label}</option>
             ))}
           </select>
         </div>
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
         {!speciesLoaded && (
-          <button onClick={loadSpecies} style={{ ...btnStyle, background: '#094771' }}>
+          <button
+            onClick={loadSpecies}
+            className="flex items-center gap-[4px] px-[8px] py-[4px] rounded-[3px] text-text text-[11px] cursor-pointer border-none"
+            style={{ background: 'var(--color-active)' }}
+          >
             <Upload size={12} /> Load Species Data
           </button>
         )}
         {speciesLoaded && (
-          <span style={{ fontSize: 10, color: '#808080' }}>{species.length} species loaded</span>
+          <span className="text-[10px] text-text-secondary">{species.length} species loaded</span>
         )}
         <button
           onClick={() => addEncounterGroup()}
-          style={{ ...btnStyle, background: '#094771' }}
+          className="flex items-center gap-[4px] px-[8px] py-[4px] rounded-[3px] text-text text-[11px] cursor-pointer border-none"
+          style={{ background: 'var(--color-active)' }}
         >
           <Plus size={12} /> Add Group
         </button>
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflow: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="flex-1 overflow-auto p-[16px] flex flex-col gap-[12px]">
         {encounterData.encounterGroups.length === 0 ? (
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#808080',
-            fontSize: 13,
-            gap: 8,
-          }}>
+          <div className="flex-1 flex flex-col items-center justify-center text-text-secondary text-[13px] gap-[8px]">
             <span>No encounter groups defined for this map.</span>
-            <span style={{ fontSize: 11 }}>Click "Add Group" to create one.</span>
+            <span className="text-[11px]">Click "Add Group" to create one.</span>
           </div>
         ) : (
           encounterData.encounterGroups.map((_, i) => (

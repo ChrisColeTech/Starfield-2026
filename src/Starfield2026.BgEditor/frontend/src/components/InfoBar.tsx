@@ -13,42 +13,26 @@ export default function InfoBar() {
   }
 
   return (
-    <div style={{
-      height: 40,
-      background: '#12122a',
-      borderBottom: '1px solid #2a2a4a',
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0 16px',
-      gap: 16,
-      flexShrink: 0,
-    }}>
-      <span style={{ fontWeight: 700, fontSize: 14, color: '#8c8cff' }}>
+    <div className="h-[40px] bg-surface border-b border-border flex items-center px-[16px] gap-[16px] shrink-0">
+      <span className="font-bold text-[14px] text-accent">
         BG Editor
       </span>
 
       {sceneName && (
-        <span style={{ color: '#888', fontSize: 12 }}>
+        <span className="text-text-secondary text-[12px]">
           {sceneName} &mdash; {textures.length} textures
         </span>
       )}
 
       {error && (
-        <span style={{ color: '#ff6666', fontSize: 12 }}>
+        <span className="text-danger text-[12px]">
           {error}
         </span>
       )}
 
-      <div style={{ flex: 1 }} />
+      <div className="flex-1" />
 
-      <label style={{
-        padding: '4px 12px',
-        background: '#2a2a4a',
-        borderRadius: 4,
-        cursor: 'pointer',
-        color: '#aaa',
-        fontSize: 12,
-      }}>
+      <label className="px-[12px] py-[4px] bg-input border border-border rounded cursor-pointer text-text-secondary text-[12px] hover:bg-hover">
         Load Manifest
         <input
           type="file"

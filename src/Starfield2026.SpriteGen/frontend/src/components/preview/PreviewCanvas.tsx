@@ -9,13 +9,7 @@ export function PreviewCanvas() {
 
   return (
     <div
-      className="relative flex items-center justify-center rounded-[3px]"
-      style={{
-        width: 320,
-        height: 320,
-        background: '#0f0f23',
-        border: '1px solid #2d2d2d',
-      }}
+      className="relative flex items-center justify-center rounded-[3px] w-[320px] h-[320px] bg-bg border border-border"
     >
       {svgContent ? (
         <>

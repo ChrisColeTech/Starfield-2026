@@ -8,61 +8,6 @@ import { useExtractionStore } from '../store/extractionStore'
 import { scanArchives, type ScannedArchive } from '../services/extractionService'
 
 // ---------------------------------------------------------------------------
-// Shared styles (matching ToolsPage conventions)
-// ---------------------------------------------------------------------------
-
-const inputStyle: React.CSSProperties = {
-  padding: '8px 12px',
-  background: '#2a2a4a',
-  border: '1px solid #3a3a5a',
-  borderRadius: 4,
-  color: '#e0e0e0',
-  fontSize: 13,
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-}
-
-const labelStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: '#888',
-  marginBottom: 4,
-  display: 'block',
-}
-
-const checkboxLabelStyle: React.CSSProperties = {
-  fontSize: 13,
-  color: '#ccc',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  gap: 6,
-}
-
-const browseButtonStyle: React.CSSProperties = {
-  padding: '8px 16px',
-  background: '#2a2a4a',
-  color: '#ccc',
-  border: '1px solid #3a3a5a',
-  borderRadius: 4,
-  cursor: 'pointer',
-  fontSize: 13,
-  whiteSpace: 'nowrap',
-}
-
-const selectStyle: React.CSSProperties = {
-  padding: '8px 12px',
-  background: '#2a2a4a',
-  border: '1px solid #3a3a5a',
-  borderRadius: 4,
-  color: '#e0e0e0',
-  fontSize: 13,
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-}
-
-// ---------------------------------------------------------------------------
 // Phase helpers
 // ---------------------------------------------------------------------------
 
@@ -81,37 +26,37 @@ function phaseLabel(phase: ExtractionPhase): string {
 
 function phaseBarGradient(phase: ExtractionPhase): string {
   switch (phase) {
-    case 'parsing':   return 'linear-gradient(90deg, #4a6cf7, #6b8cff)'
-    case 'grouping':  return 'linear-gradient(90deg, #7c5cf7, #a77cff)'
+    case 'parsing': return 'linear-gradient(90deg, #569cd6, #7ab4e6)'
+    case 'grouping': return 'linear-gradient(90deg, #7c5cf7, #a77cff)'
     case 'exporting': return 'linear-gradient(90deg, #3bb078, #55cc88)'
-    case 'done':      return 'linear-gradient(90deg, #33cc66, #55ee88)'
-    case 'error':     return 'linear-gradient(90deg, #e04040, #ff5555)'
-    case 'stopped':   return 'linear-gradient(90deg, #cc8833, #ffaa44)'
-    default:          return 'linear-gradient(90deg, #4a6cf7, #6b8cff)'
+    case 'done': return 'linear-gradient(90deg, #33cc66, #55ee88)'
+    case 'error': return 'linear-gradient(90deg, #c74e4e, #e06060)'
+    case 'stopped': return 'linear-gradient(90deg, #cc8833, #ffaa44)'
+    default: return 'linear-gradient(90deg, #569cd6, #7ab4e6)'
   }
 }
 
 function phaseGlowColor(phase: ExtractionPhase): string {
   switch (phase) {
-    case 'parsing':   return 'rgba(74, 108, 247, 0.4)'
-    case 'grouping':  return 'rgba(124, 92, 247, 0.4)'
+    case 'parsing': return 'rgba(86, 156, 214, 0.4)'
+    case 'grouping': return 'rgba(124, 92, 247, 0.4)'
     case 'exporting': return 'rgba(59, 176, 120, 0.4)'
-    case 'done':      return 'rgba(51, 204, 102, 0.4)'
-    case 'error':     return 'rgba(224, 64, 64, 0.4)'
-    case 'stopped':   return 'rgba(204, 136, 51, 0.4)'
-    default:          return 'rgba(74, 108, 247, 0.2)'
+    case 'done': return 'rgba(51, 204, 102, 0.4)'
+    case 'error': return 'rgba(199, 78, 78, 0.4)'
+    case 'stopped': return 'rgba(204, 136, 51, 0.4)'
+    default: return 'rgba(86, 156, 214, 0.2)'
   }
 }
 
 function phaseTextColor(phase: ExtractionPhase): string {
   switch (phase) {
-    case 'done': return '#55cc55'
-    case 'error': return '#ff5555'
-    case 'stopped': return '#ffaa33'
-    case 'parsing': return '#6b8cff'
+    case 'done': return 'var(--color-success)'
+    case 'error': return 'var(--color-danger)'
+    case 'stopped': return 'var(--color-warning)'
+    case 'parsing': return 'var(--color-accent)'
     case 'grouping': return '#a77cff'
-    case 'exporting': return '#55cc88'
-    default: return '#888'
+    case 'exporting': return 'var(--color-success)'
+    default: return 'var(--color-text-secondary)'
   }
 }
 
@@ -183,7 +128,6 @@ export default function ExtractionPage() {
       try {
         const result = await scanArchives(garcPath.trim())
         setScannedArchives(result.archives)
-        // Auto-select first archive if none selected
         if (result.archives.length > 0 && !selectedSubpath) {
           setSelectedSubpath(result.archives[0].subpath)
         }
@@ -245,75 +189,51 @@ export default function ExtractionPage() {
   const isActive = isRunning && phase !== 'idle'
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      overflow: 'hidden',
-    }}>
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div style={{
-        padding: '16px 24px',
-        background: '#12122a',
-        borderBottom: '1px solid #2a2a4a',
-      }}>
-        <h1 style={{ margin: 0, fontSize: 18, color: '#e0e0e0' }}>GARC Extraction</h1>
+      <div className="px-[24px] py-[16px] bg-surface border-b border-border">
+        <h1 className="m-0 text-[18px] text-text">GARC Extraction</h1>
       </div>
 
-      <div style={{
-        flex: 1,
-        overflow: 'auto',
-        padding: 24,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 24,
-      }}>
+      <div className="flex-1 overflow-auto p-[24px] flex flex-col gap-[24px]">
         {/* ── Source + Output Card ── */}
-        <div style={{
-          background: '#16162a',
-          border: '1px solid #2a2a4a',
-          borderRadius: 8,
-          padding: 20,
-        }}>
-          <h2 style={{ margin: '0 0 16px', fontSize: 15, color: '#e0e0e0' }}>Extraction Settings</h2>
+        <div className="bg-surface border border-border rounded-[8px] p-[20px]">
+          <h2 className="m-0 mb-[16px] text-[15px] text-text">Extraction Settings</h2>
 
           {/* RomFS base path */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={labelStyle}>RomFS Base Path</label>
-            <div style={{ display: 'flex', gap: 8 }}>
+          <div className="mb-[14px]">
+            <label className="text-[12px] text-text-secondary mb-[4px] block">RomFS Base Path</label>
+            <div className="flex gap-[8px]">
               <input
                 type="text"
                 value={garcPath}
                 onChange={e => setGarcPath(e.target.value)}
                 placeholder="Path to RomFS root (e.g. D:/dump/RomFS)..."
-                style={{ ...inputStyle, flex: 1 }}
+                className="flex-1 px-[12px] py-[8px] bg-input border border-border rounded text-text text-[13px] outline-none"
               />
-              <button onClick={handleBrowseGarc} style={browseButtonStyle}>Browse...</button>
+              <button onClick={handleBrowseGarc} className="px-[16px] py-[8px] bg-input text-text border border-border rounded cursor-pointer text-[13px] whitespace-nowrap hover:bg-hover">Browse...</button>
             </div>
           </div>
 
-          {/* GARC Archive dropdown — dynamically scanned */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={labelStyle}>
+          {/* GARC Archive dropdown */}
+          <div className="mb-[14px]">
+            <label className="text-[12px] text-text-secondary mb-[4px] block">
               GARC Archive
-              {scanning && <span style={{ color: '#6b8cff', marginLeft: 8 }}>Scanning...</span>}
+              {scanning && <span className="text-accent ml-[8px]">Scanning...</span>}
               {!scanning && scannedArchives.length > 0 && (
-                <span style={{ color: '#666', marginLeft: 8 }}>
+                <span className="text-text-disabled ml-[8px]">
                   {scannedArchives.length} archives found
                 </span>
               )}
             </label>
             {scanError && (
-              <div style={{ fontSize: 12, color: '#ff6666', marginBottom: 6 }}>{scanError}</div>
+              <div className="text-[12px] text-danger mb-[6px]">{scanError}</div>
             )}
             <select
               value={selectedSubpath}
               onChange={e => setSelectedSubpath(e.target.value)}
               disabled={scannedArchives.length === 0}
-              style={{
-                ...selectStyle,
-                opacity: scannedArchives.length === 0 ? 0.5 : 1,
-              }}
+              className="w-full px-[12px] py-[8px] bg-input border border-border rounded text-text text-[13px] outline-none disabled:opacity-50"
             >
               {scannedArchives.length === 0 ? (
                 <option value="">
@@ -321,7 +241,7 @@ export default function ExtractionPage() {
                 </option>
               ) : (
                 scannedArchives.map(a => (
-                  <option key={a.subpath} value={a.subpath} style={{ background: '#2a2a4a', color: '#e0e0e0' }}>
+                  <option key={a.subpath} value={a.subpath} style={{ background: 'var(--color-input)', color: 'var(--color-text)' }}>
                     {a.subpath}  ({a.sizeLabel})
                   </option>
                 ))
@@ -331,108 +251,75 @@ export default function ExtractionPage() {
 
           {/* Resolved full path preview */}
           {garcPath && selectedSubpath && (
-            <div style={{
-              fontSize: 12,
-              color: '#555',
-              marginBottom: 16,
-              padding: '6px 10px',
-              background: '#0e0e1e',
-              borderRadius: 4,
-              border: '1px solid #1e1e3a',
-              fontFamily: 'Consolas, "Courier New", monospace',
-            }}>
-              Full path: <span style={{ color: '#8c8cff' }}>{fullGarcPath}</span>
+            <div className="text-[12px] text-text-disabled mb-[16px] px-[10px] py-[6px] bg-bg rounded border border-border font-mono">
+              Full path: <span className="text-accent">{fullGarcPath}</span>
             </div>
           )}
 
           {/* Output Directory */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={labelStyle}>Output Directory</label>
-            <div style={{ display: 'flex', gap: 8 }}>
+          <div className="mb-[14px]">
+            <label className="text-[12px] text-text-secondary mb-[4px] block">Output Directory</label>
+            <div className="flex gap-[8px]">
               <input
                 type="text"
                 value={outputDir}
                 onChange={e => setOutputDir(e.target.value)}
                 placeholder="Directory for extracted files..."
-                style={{ ...inputStyle, flex: 1 }}
+                className="flex-1 px-[12px] py-[8px] bg-input border border-border rounded text-text text-[13px] outline-none"
               />
-              <button onClick={handleBrowseOutput} style={browseButtonStyle}>Browse...</button>
+              <button onClick={handleBrowseOutput} className="px-[16px] py-[8px] bg-input text-text border border-border rounded cursor-pointer text-[13px] whitespace-nowrap hover:bg-hover">Browse...</button>
             </div>
           </div>
 
           {/* Options Row */}
-          <div style={{ display: 'flex', gap: 24, marginBottom: 18, flexWrap: 'wrap' }}>
-            {/* Export mode */}
+          <div className="flex gap-[24px] mb-[18px] flex-wrap">
             <div>
-              <label style={labelStyle}>Export Mode</label>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <label style={checkboxLabelStyle}>
-                  <input
-                    type="radio"
-                    name="exportMode"
-                    checked={exportMode === 'split'}
-                    onChange={() => setExportMode('split')}
-                  />
+              <label className="text-[12px] text-text-secondary mb-[4px] block">Export Mode</label>
+              <div className="flex gap-[12px]">
+                <label className="text-[13px] text-text cursor-pointer flex items-center gap-[6px]">
+                  <input type="radio" name="exportMode" checked={exportMode === 'split'} onChange={() => setExportMode('split')} />
                   Split (mesh DAE + clip DAEs)
                 </label>
-                <label style={checkboxLabelStyle}>
-                  <input
-                    type="radio"
-                    name="exportMode"
-                    checked={exportMode === 'individual'}
-                    onChange={() => setExportMode('individual')}
-                  />
+                <label className="text-[13px] text-text cursor-pointer flex items-center gap-[6px]">
+                  <input type="radio" name="exportMode" checked={exportMode === 'individual'} onChange={() => setExportMode('individual')} />
                   Individual (baked DAEs)
                 </label>
               </div>
               {exportMode === 'split' && (
-                <div style={{ fontSize: 11, color: '#666', marginTop: 4 }}>Recommended. One mesh-only DAE + separate animation clip DAEs per model.</div>
+                <div className="text-[11px] text-text-disabled mt-[4px]">Recommended. One mesh-only DAE + separate animation clip DAEs per model.</div>
               )}
               {exportMode === 'individual' && (
-                <div style={{ fontSize: 11, color: '#666', marginTop: 4 }}>One DAE per model with all animations baked in. No manifest or clip files.</div>
+                <div className="text-[11px] text-text-disabled mt-[4px]">One DAE per model with all animations baked in. No manifest or clip files.</div>
               )}
             </div>
-
-            {/* Entry limit */}
-            <div style={{ width: 130 }}>
-              <label style={labelStyle}>Entry Limit</label>
+            <div className="w-[130px]">
+              <label className="text-[12px] text-text-secondary mb-[4px] block">Entry Limit</label>
               <input
                 type="number"
                 value={entryLimit}
                 onChange={e => setEntryLimit(e.target.value)}
                 placeholder="e.g. 100"
                 min={1}
-                style={inputStyle}
+                className="w-full px-[12px] py-[8px] bg-input border border-border rounded text-text text-[13px] outline-none"
               />
             </div>
-
-            {/* Derive folder names */}
-            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-              <label style={checkboxLabelStyle}>
-                <input
-                  type="checkbox"
-                  checked={deriveFolderNames}
-                  onChange={e => setDeriveFolderNames(e.target.checked)}
-                />
+            <div className="flex items-end">
+              <label className="text-[13px] text-text cursor-pointer flex items-center gap-[6px]">
+                <input type="checkbox" checked={deriveFolderNames} onChange={e => setDeriveFolderNames(e.target.checked)} />
                 Derive folder names from textures
               </label>
             </div>
           </div>
 
           {/* Start / Stop buttons + status */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="flex items-center gap-[12px]">
             <button
               onClick={handleStart}
               disabled={!canStart}
+              className="px-[20px] py-[8px] rounded text-[13px] font-semibold border-none cursor-pointer disabled:cursor-default"
               style={{
-                padding: '8px 20px',
-                background: !canStart ? '#333' : '#8c8cff',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 4,
-                cursor: !canStart ? 'default' : 'pointer',
-                fontSize: 13,
-                fontWeight: 600,
+                background: !canStart ? 'var(--color-input)' : 'var(--color-accent)',
+                color: !canStart ? 'var(--color-text-disabled)' : '#fff',
               }}
             >
               {isRunning ? 'Running...' : 'Start Extraction'}
@@ -440,71 +327,54 @@ export default function ExtractionPage() {
             <button
               onClick={handleStop}
               disabled={!isRunning}
+              className="px-[20px] py-[8px] rounded text-[13px] font-semibold border-none cursor-pointer disabled:cursor-default disabled:opacity-50"
               style={{
-                padding: '8px 20px',
-                background: !isRunning ? '#333' : '#ff5555',
+                background: !isRunning ? 'var(--color-input)' : 'var(--color-danger)',
                 color: '#fff',
-                border: 'none',
-                borderRadius: 4,
-                cursor: !isRunning ? 'default' : 'pointer',
-                fontSize: 13,
-                fontWeight: 600,
               }}
             >
               Stop
             </button>
-
             {isDone && !isRunning && phase === 'done' && (
-              <span style={{ fontSize: 13, color: '#55cc55' }}>
+              <span className="text-[13px] text-success">
                 Extracted {results.length} groups in {elapsedSeconds.toFixed(1)}s
               </span>
             )}
             {isDone && phase === 'error' && (
-              <span style={{ fontSize: 13, color: '#ff6666' }}>Extraction failed</span>
+              <span className="text-[13px] text-danger">Extraction failed</span>
             )}
             {isDone && phase === 'stopped' && (
-              <span style={{ fontSize: 13, color: '#ffaa33' }}>Stopped by user</span>
+              <span className="text-[13px] text-warning">Stopped by user</span>
             )}
           </div>
         </div>
 
         {/* ── Progress Card ── */}
         {(isRunning || isDone) && (
-          <div style={{
-            background: '#16162a',
-            border: '1px solid #2a2a4a',
-            borderRadius: 8,
-            padding: 20,
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h2 style={{ margin: 0, fontSize: 15, color: '#e0e0e0' }}>Progress</h2>
-              <span style={{ fontSize: 12, color: '#888' }}>
+          <div className="bg-surface border border-border rounded-[8px] p-[20px]">
+            <div className="flex justify-between items-center mb-[14px]">
+              <h2 className="m-0 text-[15px] text-text">Progress</h2>
+              <span className="text-[12px] text-text-secondary">
                 {stats.totalEntries > 0
                   ? `${stats.processedEntries.toLocaleString()} / ${stats.totalEntries.toLocaleString()} entries`
                   : '\u2014'}
                 {elapsedSeconds > 0 && (
-                  <span style={{ marginLeft: 12 }}>{elapsedSeconds.toFixed(1)}s</span>
+                  <span className="ml-[12px]">{elapsedSeconds.toFixed(1)}s</span>
                 )}
               </span>
             </div>
 
-            {/* Modern progress bar */}
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                <span style={{ fontSize: 13, color: phaseTextColor(phase), fontWeight: 500 }}>
+            {/* Progress bar */}
+            <div className="mb-[14px]">
+              <div className="flex justify-between items-baseline mb-[6px]">
+                <span className="text-[13px] font-medium" style={{ color: phaseTextColor(phase) }}>
                   {phaseLabel(phase)}
                 </span>
-                <span style={{ fontSize: 13, color: '#e0e0e0', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                <span className="text-[13px] text-text font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
                   {progressPercent}%
                 </span>
               </div>
-              <div style={{
-                height: 10,
-                background: '#1a1a2e',
-                borderRadius: 5,
-                overflow: 'hidden',
-                position: 'relative',
-              }}>
+              <div className="h-[10px] bg-bg rounded-[5px] overflow-hidden relative">
                 <div style={{
                   height: '100%',
                   width: `${progressPercent}%`,
@@ -529,12 +399,7 @@ export default function ExtractionPage() {
             </div>
 
             {/* Stats grid */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-              gap: 8,
-              marginBottom: 14,
-            }}>
+            <div className="grid gap-[8px] mb-[14px]" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}>
               {[
                 { label: 'Groups Found', value: stats.groupsFound },
                 { label: 'Models Exported', value: stats.modelsExported },
@@ -543,17 +408,11 @@ export default function ExtractionPage() {
                 { label: 'Parse Errors', value: stats.parseErrors, warn: true },
                 { label: 'Export Errors', value: stats.exportErrors, warn: true },
               ].map(stat => (
-                <div key={stat.label} style={{
-                  background: '#1e1e3a',
-                  borderRadius: 4,
-                  padding: '8px 12px',
-                }}>
-                  <div style={{ fontSize: 11, color: '#666', marginBottom: 2 }}>{stat.label}</div>
-                  <div style={{
-                    fontSize: 16,
-                    fontWeight: 600,
-                    color: stat.warn && stat.value > 0 ? '#ff8855' : '#e0e0e0',
-                  }}>
+                <div key={stat.label} className="bg-bg rounded p-[8px_12px]">
+                  <div className="text-[11px] text-text-disabled mb-[2px]">{stat.label}</div>
+                  <div className="text-[16px] font-semibold"
+                    style={{ color: stat.warn && stat.value > 0 ? 'var(--color-warning)' : 'var(--color-text)' }}
+                  >
                     {stat.value.toLocaleString()}
                   </div>
                 </div>
@@ -561,28 +420,17 @@ export default function ExtractionPage() {
             </div>
 
             {/* Log area */}
-            <div style={{
-              background: '#0e0e1e',
-              border: '1px solid #2a2a4a',
-              borderRadius: 4,
-              padding: 12,
-              maxHeight: 200,
-              overflowY: 'auto',
-              fontFamily: 'Consolas, "Courier New", monospace',
-              fontSize: 11,
-              lineHeight: 1.6,
-              color: '#aaa',
-            }}>
+            <div className="bg-bg border border-border rounded p-[12px] max-h-[200px] overflow-y-auto font-mono text-[11px] leading-[1.6] text-text-secondary">
               {logLines.length === 0 ? (
-                <div style={{ color: '#555' }}>Waiting to start...</div>
+                <div className="text-text-disabled">Waiting to start...</div>
               ) : (
                 logLines.map((line, i) => (
                   <div key={i} style={{
-                    color: line.startsWith('===') ? '#55cc55'
-                      : line.startsWith('  Error') || line.includes('failed') ? '#ff6666'
-                      : line.startsWith('---') ? '#ffaa33'
-                      : line.startsWith('Phase') ? '#8c8cff'
-                      : '#aaa',
+                    color: line.startsWith('===') ? 'var(--color-success)'
+                      : line.startsWith('  Error') || line.includes('failed') ? 'var(--color-danger)'
+                        : line.startsWith('---') ? 'var(--color-warning)'
+                          : line.startsWith('Phase') ? 'var(--color-accent)'
+                            : 'var(--color-text-secondary)',
                     whiteSpace: 'pre-wrap',
                     minHeight: line === '' ? 8 : undefined,
                   }}>
@@ -597,37 +445,28 @@ export default function ExtractionPage() {
 
         {/* ── Results Card ── */}
         {(isDone || results.length > 0) && (
-          <div style={{
-            background: '#16162a',
-            border: '1px solid #2a2a4a',
-            borderRadius: 8,
-            padding: 20,
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h2 style={{ margin: 0, fontSize: 15, color: '#e0e0e0' }}>
-                Results {results.length > 0 && <span style={{ color: '#666', fontWeight: 400 }}>({results.length} groups)</span>}
+          <div className="bg-surface border border-border rounded-[8px] p-[20px] flex-1 flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center mb-[12px]">
+              <h2 className="m-0 text-[15px] text-text">
+                Results {results.length > 0 && <span className="text-text-disabled font-normal">({results.length} groups)</span>}
               </h2>
             </div>
 
             {results.length === 0 ? (
-              <div style={{ color: '#666', fontSize: 13, padding: 20, textAlign: 'center' }}>
+              <div className="text-text-disabled text-[13px] p-[20px] text-center">
                 No results yet.
               </div>
             ) : (
-              <div style={{ flex: 1, overflow: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <div className="flex-1 overflow-auto">
+                <table className="w-full border-collapse text-[13px]">
                   <thead>
-                    <tr style={{ color: '#888', textAlign: 'left', borderBottom: '1px solid #2a2a4a' }}>
-                      <th style={{ padding: '8px 12px', fontWeight: 500, width: 24 }}></th>
-                      <th style={{ padding: '8px 12px', fontWeight: 500 }}>Folder</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 500 }}>Models</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 500 }}>Textures</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 500 }}>Clips</th>
-                      <th style={{ padding: '8px 12px', fontWeight: 500 }}></th>
+                    <tr className="text-text-secondary text-left border-b border-border">
+                      <th className="p-[8px_12px] font-medium w-[24px]"></th>
+                      <th className="p-[8px_12px] font-medium">Folder</th>
+                      <th className="p-[8px_12px] font-medium">Models</th>
+                      <th className="p-[8px_12px] font-medium">Textures</th>
+                      <th className="p-[8px_12px] font-medium">Clips</th>
+                      <th className="p-[8px_12px] font-medium"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -666,32 +505,22 @@ function ResultRow({
   return (
     <>
       <tr
-        style={{ borderBottom: '1px solid #1e1e3a', cursor: 'pointer' }}
+        className="border-b border-border cursor-pointer hover:bg-hover"
         onClick={onToggle}
-        onMouseEnter={e => (e.currentTarget.style.background = '#1e1e3a')}
-        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
       >
-        <td style={{ padding: '8px 12px', color: '#666', fontSize: 11 }}>
+        <td className="p-[8px_12px] text-text-disabled text-[11px]">
           {group.expanded ? '\u25BC' : '\u25B6'}
         </td>
-        <td style={{ padding: '8px 12px', color: '#e0e0e0', fontFamily: 'Consolas, monospace' }}>
+        <td className="p-[8px_12px] text-text font-mono">
           {group.folderName}
         </td>
-        <td style={{ padding: '8px 12px', color: '#888' }}>{group.modelCount}</td>
-        <td style={{ padding: '8px 12px', color: '#888' }}>{group.textureCount}</td>
-        <td style={{ padding: '8px 12px', color: '#888' }}>{group.clipCount}</td>
-        <td style={{ padding: '8px 12px' }}>
+        <td className="p-[8px_12px] text-text-secondary">{group.modelCount}</td>
+        <td className="p-[8px_12px] text-text-secondary">{group.textureCount}</td>
+        <td className="p-[8px_12px] text-text-secondary">{group.clipCount}</td>
+        <td className="p-[8px_12px]">
           <button
             onClick={e => { e.stopPropagation(); onOpenExplorer() }}
-            style={{
-              padding: '3px 10px',
-              background: '#2a2a4a',
-              color: '#aaa',
-              border: '1px solid #3a3a5a',
-              borderRadius: 3,
-              cursor: 'pointer',
-              fontSize: 11,
-            }}
+            className="px-[10px] py-[3px] bg-input text-text-secondary border border-border rounded-[3px] cursor-pointer text-[11px] hover:bg-hover"
           >
             Open in Explorer
           </button>
@@ -699,20 +528,15 @@ function ResultRow({
       </tr>
       {group.expanded && (
         <tr>
-          <td colSpan={6} style={{ padding: '0 12px 12px 40px', background: '#12122a' }}>
-            <div style={{
-              fontFamily: 'Consolas, "Courier New", monospace',
-              fontSize: 11,
-              lineHeight: 1.8,
-              color: '#888',
-              padding: '8px 0',
-            }}>
+          <td colSpan={6} className="p-[0_12px_12px_40px] bg-bg">
+            <div className="font-mono text-[11px] leading-[1.8] text-text-secondary py-[8px]">
               {group.files.map(f => (
                 <div key={f} style={{
-                  color: f.endsWith('.dae') ? '#8c8cff'
-                    : f.endsWith('.png') ? '#55cc88'
-                    : f.endsWith('.json') ? '#ccaa55'
-                    : '#888',
+                  color: f.endsWith('.dae') ? 'var(--color-accent)'
+                    : f.endsWith('.png') ? 'var(--color-success)'
+                      : f.endsWith('.json') ? 'var(--color-warning)'
+                        : 'var(--color-text-secondary)',
+                  whiteSpace: 'pre-wrap',
                 }}>
                   {f}
                 </div>

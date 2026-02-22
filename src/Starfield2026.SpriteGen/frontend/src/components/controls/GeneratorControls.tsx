@@ -28,31 +28,6 @@ const VARIANT_MAP: Record<string, { value: string; label: string; color: string 
   ],
 };
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '3px 6px',
-  background: '#3c3c3c',
-  border: '1px solid #2d2d2d',
-  borderRadius: 3,
-  color: '#e0e0e0',
-  fontSize: 12,
-  outline: 'none',
-};
-
-const btnStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 4,
-  padding: '4px 6px',
-  background: '#3c3c3c',
-  border: '1px solid #2d2d2d',
-  borderRadius: 3,
-  color: '#e0e0e0',
-  fontSize: 11,
-  cursor: 'pointer',
-};
-
 export function GeneratorControls() {
   const [expanded, setExpanded] = useState(true);
 
@@ -112,7 +87,7 @@ export function GeneratorControls() {
           <select
             value={selectedType}
             onChange={(e) => setType(e.target.value as GeneratorType)}
-            style={inputStyle}
+            className="w-full px-[6px] py-[3px] bg-input border border-border rounded-[3px] text-text text-[12px] outline-none"
           >
             {GENERATOR_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -129,13 +104,10 @@ export function GeneratorControls() {
                     key={v.value}
                     onClick={() => setVariant(v.value)}
                     title={v.label}
-                    className="cursor-pointer"
+                    className="cursor-pointer w-full aspect-square rounded-[3px]"
                     style={{
-                      width: '100%',
-                      aspectRatio: '1',
-                      borderRadius: 3,
                       background: v.color,
-                      border: selectedVariant === v.value ? '2px solid #fff' : '2px solid #2d2d2d',
+                      border: selectedVariant === v.value ? '2px solid #fff' : '2px solid var(--color-border)',
                       opacity: selectedVariant === v.value ? 1 : 0.7,
                     }}
                   />
@@ -151,9 +123,13 @@ export function GeneratorControls() {
               type="number"
               value={seed}
               onChange={(e) => setSeed(Number(e.target.value))}
-              style={{ ...inputStyle, fontVariantNumeric: 'tabular-nums' }}
+              className="w-full px-[6px] py-[3px] bg-input border border-border rounded-[3px] text-text text-[12px] outline-none tabular-nums"
             />
-            <button onClick={randomizeSeed} style={btnStyle} title="Randomize seed">
+            <button
+              onClick={randomizeSeed}
+              title="Randomize seed"
+              className="flex items-center justify-center gap-[4px] px-[6px] py-[4px] bg-input border border-border rounded-[3px] text-text text-[11px] cursor-pointer hover:bg-hover"
+            >
               <Dices size={13} />
             </button>
           </div>
@@ -168,9 +144,9 @@ export function GeneratorControls() {
               value={frameCount}
               onChange={(e) => setFrameCount(Number(e.target.value))}
               className="flex-1"
-              style={{ accentColor: '#094771' }}
+              style={{ accentColor: 'var(--color-accent)' }}
             />
-            <span className="text-[11px] text-text tabular-nums" style={{ minWidth: 18, textAlign: 'right' }}>
+            <span className="text-[11px] text-text tabular-nums min-w-[18px] text-right">
               {frameCount}
             </span>
           </div>
@@ -186,9 +162,9 @@ export function GeneratorControls() {
               value={playbackSpeed}
               onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
               className="flex-1"
-              style={{ accentColor: '#094771' }}
+              style={{ accentColor: 'var(--color-accent)' }}
             />
-            <span className="text-[11px] text-text tabular-nums" style={{ minWidth: 36, textAlign: 'right' }}>
+            <span className="text-[11px] text-text tabular-nums min-w-[36px] text-right">
               {playbackSpeed}ms
             </span>
           </div>
@@ -198,26 +174,24 @@ export function GeneratorControls() {
             <button
               disabled={isLoading}
               onClick={handleGenerate}
-              style={{
-                ...btnStyle,
-                background: '#094771',
-                border: '1px solid #094771',
-                width: '100%',
-                padding: '6px',
-                fontSize: 12,
-                fontWeight: 600,
-                opacity: isLoading ? 0.6 : 1,
-              }}
+              className="flex items-center justify-center gap-[4px] w-full py-[6px] rounded-[3px] text-[12px] font-semibold cursor-pointer border-none disabled:opacity-60 disabled:cursor-default"
+              style={{ background: 'var(--color-active)', color: 'var(--color-text)' }}
             >
               <Play size={13} />
               {isLoading ? 'Generating...' : 'Generate Preview'}
             </button>
             <div className="flex gap-[4px]">
-              <button onClick={handleSave} style={{ ...btnStyle, flex: 1 }}>
+              <button
+                onClick={handleSave}
+                className="flex-1 flex items-center justify-center gap-[4px] px-[6px] py-[4px] bg-input border border-border rounded-[3px] text-text text-[11px] cursor-pointer hover:bg-hover"
+              >
                 <Save size={12} />
                 Save
               </button>
-              <button disabled style={{ ...btnStyle, flex: 1, opacity: 0.4 }}>
+              <button
+                disabled
+                className="flex-1 flex items-center justify-center gap-[4px] px-[6px] py-[4px] bg-input border border-border rounded-[3px] text-text text-[11px] cursor-pointer opacity-40"
+              >
                 <Download size={12} />
                 Export
               </button>

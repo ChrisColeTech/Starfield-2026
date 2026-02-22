@@ -14,22 +14,13 @@ export function FrameStrip() {
           <button
             key={i}
             onClick={() => setCurrentFrame(i)}
-            className="cursor-pointer"
+            className="shrink-0 w-[48px] h-[48px] flex items-center justify-center rounded-[3px] bg-bg cursor-pointer"
             style={{
-              flexShrink: 0,
-              width: 48,
-              height: 48,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: 3,
-              background: '#0f0f23',
-              border: i === currentFrame ? '2px solid #094771' : '1px solid #2d2d2d',
+              border: i === currentFrame ? '2px solid var(--color-active)' : '1px solid var(--color-border)',
             }}
           >
             <div
-              className="sprite-render"
-              style={{ width: 32, height: 32 }}
+              className="sprite-render w-[32px] h-[32px]"
               dangerouslySetInnerHTML={{ __html: svg }}
             />
           </button>

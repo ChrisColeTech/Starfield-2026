@@ -206,9 +206,14 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
             }
 
             // Phase 7: Write manifest immediately
+            string manifestModelFormat = Path.GetExtension(modelOut).TrimStart('.');
             var manifest = new ExportManifest
             {
-                Format = Path.GetExtension(modelOut).TrimStart('.'),
+                Name = job.Name,
+                Dir = job.OutputPath.Replace('\\', '/'),
+                AssetsPath = job.Name,
+                Format = manifestModelFormat,
+                ModelFormat = manifestModelFormat,
                 ModelFile = Path.GetFileName(modelOut),
                 AnimationMode = _splitMode ? "split" : "baked",
                 Textures = exportedTextures,
@@ -252,7 +257,15 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
             if (!extracted.Add(relPath)) continue;
 
             var bytes = _loader.ExtractFile(relPath);
-            if (bytes == null) continue;
+            if (bytes == null)
+            {
+                // Fallback: search archive by filename (handles shared textures like cm_eye_lens00_alb.bntx)
+                bytes = TryExtractByFilename(relPath, out string? foundPath);
+                if (bytes != null && foundPath != null)
+                    relPath = foundPath;
+                else
+                    continue;
+            }
 
             // Write to temp immediately
             await WriteExtractedFileAsync(tempRoot, relPath, bytes, ct);
@@ -386,10 +399,46 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
             relativePath = relativePath["trpfs://".Length..];
         relativePath = relativePath.TrimStart('/');
 
-        if (!relativePath.Contains('/') || !relativePath.StartsWith("pokemon", StringComparison.OrdinalIgnoreCase))
+        // If the path already looks absolute (contains a directory and starts with a known root),
+        // keep it as-is. Otherwise prepend the model's base directory.
+        bool isAbsolute = relativePath.Contains('/') && IsKnownRootPath(relativePath);
+        if (!isAbsolute)
             relativePath = baseDir + relativePath;
 
         queue.Enqueue(relativePath);
+    }
+
+    private byte[]? TryExtractByFilename(string failedPath, out string? foundPath)
+    {
+        foundPath = null;
+        string fileName = Path.GetFileName(failedPath);
+        if (string.IsNullOrWhiteSpace(fileName)) return null;
+
+        // Search the archive for a file with this exact filename
+        var match = _loader.FindFiles(name =>
+            name.EndsWith("/" + fileName, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(Path.GetFileName(name), fileName, StringComparison.OrdinalIgnoreCase))
+            .FirstOrDefault();
+
+        if (match.hash == 0) return null;
+
+        var bytes = _loader.ExtractFile(match.hash);
+        if (bytes != null)
+            foundPath = NormalizePath(match.name);
+        return bytes;
+    }
+
+    private static bool IsKnownRootPath(string path)
+    {
+        // Known top-level directories in Scarlet/Violet and Legends: Arceus archives
+        string[] roots = { "pokemon/", "chara/", "field/", "battle/", "ui/", "audio/", "effect/",
+                           "data/", "scene/", "world/", "common/", "bin/", "gfx/", "arc/" };
+        foreach (var root in roots)
+        {
+            if (path.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
     }
 
     private static async Task WriteExtractedFileAsync(string tempRoot, string relPath, byte[] data, CancellationToken ct)

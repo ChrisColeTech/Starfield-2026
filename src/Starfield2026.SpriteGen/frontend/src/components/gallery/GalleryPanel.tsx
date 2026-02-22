@@ -39,21 +39,21 @@ export function GalleryPanel() {
     >
       {/* Collapse toggle */}
       <div className="flex items-center justify-between h-[22px] px-[6px] bg-surface border-b border-border">
+        <button onClick={toggle} className="text-text-secondary hover:text-text cursor-pointer">
+          {collapsed ? <PanelRightOpen size={14} /> : <PanelRightClose size={14} />}
+        </button>
         {!collapsed && (
-          <span className="text-[11px] font-bold uppercase tracking-[0.5px] text-text-secondary">
+          <span className="text-[11px] font-bold uppercase tracking-[0.5px] text-text-secondary mr-[4px]">
             Gallery
           </span>
         )}
-        <button onClick={toggle} className="text-text-secondary hover:text-text cursor-pointer ml-auto">
-          {collapsed ? <PanelRightOpen size={14} /> : <PanelRightClose size={14} />}
-        </button>
       </div>
 
       {!collapsed && (
         <>
           {/* Search */}
           <div className="p-[6px] border-b border-border">
-            <div className="flex items-center gap-[4px] px-[6px] py-[3px] rounded-[3px]" style={{ background: '#3c3c3c', border: '1px solid #2d2d2d' }}>
+            <div className="flex items-center gap-[4px] px-[6px] py-[3px] rounded-[3px] bg-input border border-border">
               <Search size={12} className="text-text-disabled" />
               <input
                 type="text"
@@ -79,8 +79,7 @@ export function GalleryPanel() {
                   {items.map((item) => (
                     <div
                       key={item.filename}
-                      className="aspect-square flex items-center justify-center rounded-[2px] cursor-pointer hover:bg-hover"
-                      style={{ background: '#0f0f23', border: '1px solid #2d2d2d' }}
+                      className="aspect-square flex items-center justify-center rounded-[2px] cursor-pointer bg-bg border border-border hover:bg-hover"
                       title={item.filename}
                       onClick={() => handleItemClick(item.filename)}
                     >

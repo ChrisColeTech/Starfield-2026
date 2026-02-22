@@ -1,0 +1,20 @@
+// BinaryData barrel export — 1:1 matching C# Bntx.BinaryData namespace
+export { BinaryBooleanFormat } from './BinaryBooleanFormat.js';
+export { BinaryConverterCache } from './BinaryConverterCache.js';
+export { BinaryDataReader } from './BinaryDataReader.js';
+export { BinaryDataWriter } from './BinaryDataWriter.js';
+export { BinaryDateTimeFormat } from './BinaryDateTimeFormat.js';
+export { BinaryMemberAttribute } from './BinaryMemberAttribute.js';
+export { BinaryObjectAttribute } from './BinaryObjectAttribute.js';
+export { BinaryStringFormat } from './BinaryStringFormat.js';
+export { ByteOrder } from './ByteOrder.js';
+export { ByteOrderHelper } from './ByteOrderHelper.js';
+export { getStringFromBytes } from './EncodingExtensions.js';
+export { EnumExtensions } from './EnumExtensions.js';
+export type { IBinaryConverter } from './IBinaryConverter.js';
+export { MemberData } from './MemberData.js';
+export { Offset } from './Offset.js';
+export { OffsetOrigin } from './OffsetOrigin.js';
+export { SeekTask } from './SeekTask.js';
+export { TypeData } from './TypeData.js';
+export { TypeExtensions } from './TypeExtensions.js';

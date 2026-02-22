@@ -9,68 +9,39 @@ export default function TexturePanel() {
   if (textures.length === 0) return null
 
   return (
-    <div style={{
-      width: '100%',
-      background: '#16162a',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-    }}>
+    <div className="w-full bg-surface flex flex-col overflow-hidden">
       {/* Header */}
-      <div style={{
-        padding: '12px 14px',
-        borderBottom: '1px solid #2a2a4a',
-        fontSize: 12,
-        color: '#888',
-      }}>
-        <div style={{ fontWeight: 600, color: '#ccc', marginBottom: 4 }}>
+      <div className="p-[12px_14px] border-b border-border text-[12px] text-text-secondary">
+        <div className="font-semibold text-text mb-[4px]">
           {sceneName}
         </div>
         {textures.length} texture{textures.length !== 1 ? 's' : ''} found
       </div>
 
       {/* Texture list */}
-      <div style={{ flex: 1, overflow: 'auto', padding: 8 }}>
+      <div className="flex-1 overflow-auto p-[8px]">
         {textures.map((tex, i) => (
           <div
             key={tex.name + i}
             onClick={() => selectTexture(i)}
+            className="flex items-center gap-[10px] p-[8px_10px] mb-[4px] rounded-[6px] cursor-pointer"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '8px 10px',
-              marginBottom: 4,
-              borderRadius: 6,
-              cursor: 'pointer',
-              background: i === selectedIndex ? '#2a2a5a' : 'transparent',
-              border: i === selectedIndex ? '1px solid #4a4a8a' : '1px solid transparent',
+              background: i === selectedIndex ? 'var(--color-active)' : 'transparent',
+              border: i === selectedIndex ? '1px solid var(--color-accent)' : '1px solid transparent',
             }}
           >
             {/* Thumbnail */}
             <img
               src={tex.modifiedDataUrl}
               alt={tex.name}
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 4,
-                border: '1px solid #333',
-                imageRendering: 'pixelated',
-                background: '#000',
-              }}
+              className="w-[40px] h-[40px] rounded border border-border"
+              style={{ imageRendering: 'pixelated', background: '#000' }}
             />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{
-                fontSize: 12,
-                color: '#ddd',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}>
+            <div className="flex-1 min-w-0">
+              <div className="text-[12px] text-text whitespace-nowrap overflow-hidden text-ellipsis">
                 {tex.name}
               </div>
-              <div style={{ fontSize: 10, color: '#666' }}>
+              <div className="text-[10px] text-text-disabled">
                 {tex.originalImage.naturalWidth}x{tex.originalImage.naturalHeight}
               </div>
             </div>

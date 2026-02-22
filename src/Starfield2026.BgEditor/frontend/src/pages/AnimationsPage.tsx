@@ -38,32 +38,16 @@ export default function AnimationsPage() {
   const selectedClip = activeClipIndex >= 0 ? clips[activeClipIndex] : null
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      overflow: 'hidden',
-    }}>
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div style={{
-        padding: '12px 20px',
-        background: '#12122a',
-        borderBottom: '1px solid #2a2a4a',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexShrink: 0,
-      }}>
-        <h1 style={{ margin: 0, fontSize: 16, color: '#e0e0e0' }}>Animation Editor</h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div className="px-[20px] py-[12px] bg-surface border-b border-border flex justify-between items-center shrink-0">
+        <h1 className="m-0 text-[16px] text-text">Animation Editor</h1>
+        <div className="flex items-center gap-[8px]">
           {dirty && (
-            <span style={{
-              width: 8, height: 8, borderRadius: '50%',
-              background: '#ff8844', display: 'inline-block',
-            }} title="Unsaved changes" />
+            <span className="w-[8px] h-[8px] rounded-full bg-warning inline-block" title="Unsaved changes" />
           )}
           {model && (
-            <span style={{ fontSize: 12, color: '#888' }}>
+            <span className="text-[12px] text-text-secondary">
               {model.name} — {clips.length} clips
             </span>
           )}
@@ -71,115 +55,73 @@ export default function AnimationsPage() {
       </div>
 
       {/* Main area */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div className="flex-1 flex overflow-hidden">
         {/* Viewport */}
-        <div style={{ flex: 1, position: 'relative' }}>
+        <div className="flex-1 relative">
           {scene ? (
             <Viewport />
           ) : (
-            <div style={{
-              display: 'flex', flexDirection: 'column', height: '100%',
-              alignItems: 'center', justifyContent: 'center',
-              color: '#666', fontSize: 14, gap: 8,
-            }}>
+            <div className="flex flex-col h-full items-center justify-center text-text-disabled text-[14px] gap-[8px]">
               <Film size={32} strokeWidth={1.5} />
               <span>Load a model folder to begin</span>
             </div>
           )}
           {clipLoading && (
-            <div style={{
-              position: 'absolute', top: 8, left: 8,
-              background: 'rgba(0,0,0,0.7)', color: '#aaa',
-              padding: '4px 10px', borderRadius: 4, fontSize: 11,
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}>
+            <div className="absolute top-[8px] left-[8px] bg-black/70 text-text-secondary px-[10px] py-[4px] rounded text-[11px] flex items-center gap-[6px]">
               <Loader size={12} className="spin" /> Loading clip...
             </div>
           )}
         </div>
 
         {/* Right panel */}
-        <div style={{
-          width: 360,
-          display: 'flex',
-          flexDirection: 'column',
-          background: '#16162a',
-          borderLeft: '1px solid #2a2a4a',
-          overflow: 'hidden',
-        }}>
+        <div className="w-[360px] flex flex-col bg-surface border-l border-border overflow-hidden">
           {/* Folder loader */}
-          <div style={{
-            padding: '12px 16px',
-            borderBottom: '1px solid #2a2a4a',
-            flexShrink: 0,
-          }}>
-            <div style={{ display: 'flex', gap: 6 }}>
+          <div className="p-[12px_16px] border-b border-border shrink-0">
+            <div className="flex gap-[6px]">
               <input
                 type="text"
                 value={pathInput}
                 onChange={e => setPathInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleLoad()}
                 placeholder="Path to model folder..."
-                style={{
-                  flex: 1, padding: '6px 10px', fontSize: 12,
-                  background: '#0c0c1a', border: '1px solid #2a2a4a',
-                  borderRadius: 4, color: '#ccc', outline: 'none',
-                  fontFamily: 'monospace',
-                }}
+                className="flex-1 px-[10px] py-[6px] text-[12px] bg-bg border border-border rounded text-text outline-none font-mono"
               />
               <button
                 onClick={handleLoad}
                 disabled={loading || !pathInput.trim()}
-                style={{
-                  padding: '6px 12px', fontSize: 12,
-                  background: '#2a3a4a', border: '1px solid #3a3a6a',
-                  borderRadius: 4, color: '#ccc', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 4,
-                  opacity: loading || !pathInput.trim() ? 0.5 : 1,
-                }}
+                className="px-[12px] py-[6px] text-[12px] bg-input border border-border rounded text-text cursor-pointer flex items-center gap-[4px] hover:bg-hover disabled:opacity-50 disabled:cursor-default"
               >
                 <FolderOpen size={12} />
                 {loading ? 'Loading...' : 'Load'}
               </button>
             </div>
             {error && (
-              <div style={{ marginTop: 6, fontSize: 11, color: '#ff6666' }}>{error}</div>
+              <div className="mt-[6px] text-[11px] text-danger">{error}</div>
             )}
           </div>
 
           {/* Playback controls */}
           {model && (
-            <div style={{
-              padding: '8px 16px',
-              borderBottom: '1px solid #2a2a4a',
-              display: 'flex', alignItems: 'center', gap: 10,
-              flexShrink: 0,
-            }}>
+            <div className="px-[16px] py-[8px] border-b border-border flex items-center gap-[10px] shrink-0">
               <button
                 onClick={() => setAnimationPlaying(!animationPlaying)}
                 disabled={activeClipIndex < 0}
-                style={{
-                  padding: '5px 14px', fontSize: 12,
-                  background: animationPlaying ? '#3a2a4a' : '#2a3a4a',
-                  border: '1px solid #3a3a6a', borderRadius: 4,
-                  color: '#ccc', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 5,
-                }}
+                className="px-[14px] py-[5px] text-[12px] bg-input border border-border rounded text-text cursor-pointer flex items-center gap-[5px] hover:bg-hover disabled:opacity-50 disabled:cursor-default"
               >
                 {animationPlaying
                   ? <><Pause size={11} /> Pause</>
                   : <><Play size={11} /> Play</>}
               </button>
-              <span style={{ fontSize: 11, color: '#888' }}>
+              <span className="text-[11px] text-text-secondary">
                 {activeClipIndex >= 0 ? `${activeClipIndex + 1} / ${clips.length}` : 'Select a clip'}
               </span>
             </div>
           )}
 
           {/* Clip list */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
+          <div className="flex-1 overflow-y-auto py-[4px]">
             {clips.length === 0 && model && (
-              <div style={{ padding: '20px 16px', color: '#666', fontSize: 12, textAlign: 'center' }}>
+              <div className="p-[20px_16px] text-text-disabled text-[12px] text-center">
                 No clips in manifest
               </div>
             )}
@@ -205,35 +147,23 @@ export default function AnimationsPage() {
 
           {/* Action bar */}
           {model && (
-            <div style={{
-              padding: '10px 16px',
-              borderTop: '1px solid #2a2a4a',
-              display: 'flex', gap: 8,
-              flexShrink: 0,
-            }}>
+            <div className="px-[16px] py-[10px] border-t border-border flex gap-[8px] shrink-0">
               <button
                 onClick={autoTag}
-                style={{
-                  flex: 1, padding: '7px 0', fontSize: 12,
-                  background: '#2a2a3a', border: '1px solid #3a3a6a',
-                  borderRadius: 4, color: '#ccc', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                }}
+                className="flex-1 py-[7px] text-[12px] bg-input border border-border rounded text-text cursor-pointer flex items-center justify-center gap-[5px] hover:bg-hover"
               >
                 <Wand2 size={12} /> Auto-tag
               </button>
               <button
                 onClick={save}
                 disabled={!dirty || saving}
+                className="flex-1 py-[7px] text-[12px] border rounded flex items-center justify-center gap-[5px] disabled:opacity-60 disabled:cursor-default"
                 style={{
-                  flex: 1, padding: '7px 0', fontSize: 12,
-                  background: dirty ? '#2a4a3a' : '#2a2a3a',
-                  border: `1px solid ${dirty ? '#3a6a4a' : '#3a3a6a'}`,
-                  borderRadius: 4,
-                  color: dirty ? '#8fdf8f' : '#888',
+                  background: dirty ? 'var(--color-success)' : 'var(--color-input)',
+                  borderColor: dirty ? 'var(--color-success)' : 'var(--color-border)',
+                  color: dirty ? '#1e1e1e' : 'var(--color-text-secondary)',
                   cursor: dirty ? 'pointer' : 'default',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                  opacity: !dirty || saving ? 0.6 : 1,
+                  fontWeight: dirty ? 600 : 400,
                 }}
               >
                 <Save size={12} /> {saving ? 'Saving...' : 'Save'}
@@ -256,36 +186,30 @@ function ClipRow({ clip, index, active, onClick }: {
   return (
     <div
       onClick={onClick}
+      className="flex items-center px-[16px] py-[7px] cursor-pointer transition-colors"
       style={{
-        display: 'flex', alignItems: 'center',
-        padding: '7px 16px', cursor: 'pointer',
-        background: active ? '#2a2a5a' : 'transparent',
-        borderLeft: active ? '3px solid #8c8cff' : '3px solid transparent',
-        transition: 'background 0.1s',
+        background: active ? 'var(--color-active)' : 'transparent',
+        borderLeft: active ? '3px solid var(--color-accent)' : '3px solid transparent',
       }}
-      onMouseEnter={e => { if (!active) e.currentTarget.style.background = '#1e1e3a' }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--color-hover)' }}
       onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
     >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{
-            fontSize: 12,
-            color: active ? '#e0e0e0' : '#aaa',
-            fontFamily: 'monospace',
-          }}>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-[6px]">
+          <span className="text-[12px] font-mono"
+            style={{ color: active ? '#e0e0e0' : '#aaa' }}
+          >
             {clip.id}
           </span>
           {tagged && (
-            <span style={{
-              fontSize: 10, padding: '1px 6px',
-              background: '#1a3a2a', color: '#6fbf6f',
-              borderRadius: 3, fontWeight: 500,
-            }}>
+            <span className="text-[10px] px-[6px] py-[1px] rounded-[3px] font-medium"
+              style={{ background: 'rgba(74, 222, 128, 0.15)', color: 'var(--color-success)' }}
+            >
               {clip.semanticName}
             </span>
           )}
         </div>
-        <div style={{ fontSize: 10, color: '#555', marginTop: 2 }}>
+        <div className="text-[10px] text-text-disabled mt-[2px]">
           {clip.frameCount} frames &middot; {clip.sourceName}
         </div>
       </div>
@@ -321,38 +245,24 @@ function TagEditor({ clip, clipIndex, onTag }: {
   }
 
   return (
-    <div style={{
-      padding: '10px 16px',
-      borderTop: '1px solid #2a2a4a',
-      flexShrink: 0,
-    }}>
-      <div style={{
-        fontSize: 11, color: '#888', marginBottom: 6,
-        display: 'flex', alignItems: 'center', gap: 4,
-      }}>
+    <div className="p-[10px_16px] border-t border-border shrink-0">
+      <div className="text-[11px] text-text-secondary mb-[6px] flex items-center gap-[4px]">
         <Tag size={11} /> Tag: {clip.id}
       </div>
       {customMode ? (
-        <div style={{ display: 'flex', gap: 4 }}>
+        <div className="flex gap-[4px]">
           <input
             autoFocus
             value={customValue}
             onChange={e => setCustomValue(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleCustomSubmit()}
             placeholder="Custom tag name..."
-            style={{
-              flex: 1, padding: '5px 8px', fontSize: 12,
-              background: '#0c0c1a', border: '1px solid #3a3a6a',
-              borderRadius: 4, color: '#ccc', outline: 'none',
-            }}
+            className="flex-1 px-[8px] py-[5px] text-[12px] bg-bg border border-border rounded text-text outline-none"
           />
           <button
             onClick={handleCustomSubmit}
-            style={{
-              padding: '5px 10px', fontSize: 11,
-              background: '#2a4a3a', border: '1px solid #3a6a4a',
-              borderRadius: 4, color: '#8fdf8f', cursor: 'pointer',
-            }}
+            className="px-[10px] py-[5px] text-[11px] rounded cursor-pointer"
+            style={{ background: 'rgba(74,222,128,0.2)', border: '1px solid var(--color-success)', color: 'var(--color-success)' }}
           >
             Set
           </button>
@@ -361,11 +271,7 @@ function TagEditor({ clip, clipIndex, onTag }: {
         <select
           value={clip.semanticName ?? ''}
           onChange={e => handleSelect(e.target.value)}
-          style={{
-            width: '100%', padding: '5px 8px', fontSize: 12,
-            background: '#0c0c1a', border: '1px solid #3a3a6a',
-            borderRadius: 4, color: '#ccc', outline: 'none',
-          }}
+          className="w-full px-[8px] py-[5px] text-[12px] bg-bg border border-border rounded text-text outline-none"
         >
           <option value="">— No tag —</option>
           {SEMANTIC_TAGS.map(tag => (
@@ -376,7 +282,7 @@ function TagEditor({ clip, clipIndex, onTag }: {
         </select>
       )}
       {clip.semanticSource && (
-        <div style={{ fontSize: 10, color: '#555', marginTop: 4 }}>
+        <div className="text-[10px] text-text-disabled mt-[4px]">
           Source: {clip.semanticSource}
         </div>
       )}

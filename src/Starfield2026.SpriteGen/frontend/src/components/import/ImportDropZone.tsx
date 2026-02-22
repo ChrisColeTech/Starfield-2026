@@ -4,31 +4,6 @@ import { useStore } from '../../store';
 import { SectionHeader } from '../common/SectionHeader';
 import { api } from '../../services/apiClient';
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '3px 6px',
-  background: '#3c3c3c',
-  border: '1px solid #2d2d2d',
-  borderRadius: 3,
-  color: '#e0e0e0',
-  fontSize: 12,
-  outline: 'none',
-};
-
-const btnStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 4,
-  padding: '4px 6px',
-  background: '#3c3c3c',
-  border: '1px solid #2d2d2d',
-  borderRadius: 3,
-  color: '#e0e0e0',
-  fontSize: 11,
-  cursor: 'pointer',
-};
-
 export function ImportDropZone() {
   const [expanded, setExpanded] = useState(true);
   const [dragOver, setDragOver] = useState(false);
@@ -112,11 +87,10 @@ export function ImportDropZone() {
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
             onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center gap-[4px] py-[12px] rounded-[3px] cursor-pointer"
+            className="flex flex-col items-center gap-[4px] py-[12px] rounded-[3px] cursor-pointer transition-colors"
             style={{
-              border: dragOver ? '1px dashed #094771' : '1px dashed #2d2d2d',
-              background: dragOver ? 'rgba(9,71,113,0.1)' : 'transparent',
-              transition: 'border-color 150ms, background 150ms',
+              border: dragOver ? '1px dashed var(--color-accent)' : '1px dashed var(--color-border)',
+              background: dragOver ? 'rgba(86,156,214,0.08)' : 'transparent',
             }}
           >
             <Upload size={16} className="text-text-disabled" />
@@ -137,13 +111,13 @@ export function ImportDropZone() {
                 value={importBaseName}
                 onChange={(e) => setImportBaseName(e.target.value)}
                 placeholder="tile_flower_yellow"
-                style={inputStyle}
+                className="w-full px-[6px] py-[3px] bg-input border border-border rounded-[3px] text-text text-[12px] outline-none"
               />
 
               {/* Add more */}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                style={{ ...btnStyle, width: '100%' }}
+                className="flex items-center justify-center gap-[4px] w-full px-[6px] py-[4px] bg-input border border-border rounded-[3px] text-text text-[11px] cursor-pointer hover:bg-hover"
               >
                 <Upload size={12} />
                 Add Files...
@@ -159,8 +133,8 @@ export function ImportDropZone() {
                     <img
                       src={f.preview}
                       alt=""
-                      className="sprite-render"
-                      style={{ width: 18, height: 18, borderRadius: 2, background: '#0f0f23' }}
+                      className="sprite-render w-[18px] h-[18px] rounded-[2px]"
+                      style={{ background: '#0f0f23' }}
                     />
                     <span className="flex-1 text-[10px] text-text truncate">
                       {importBaseName}_{i}.svg
@@ -180,19 +154,17 @@ export function ImportDropZone() {
                 <button
                   disabled={isLoading}
                   onClick={handleSaveFrames}
-                  style={{
-                    ...btnStyle,
-                    flex: 1,
-                    background: '#094771',
-                    border: '1px solid #094771',
-                    fontWeight: 600,
-                    opacity: isLoading ? 0.6 : 1,
-                  }}
+                  className="flex-1 flex items-center justify-center gap-[4px] px-[6px] py-[4px] rounded-[3px] text-text text-[11px] font-semibold cursor-pointer border-none disabled:opacity-60 disabled:cursor-default"
+                  style={{ background: 'var(--color-active)' }}
                 >
                   <Save size={12} />
                   Save Frames
                 </button>
-                <button onClick={clearImportFiles} style={{ ...btnStyle, color: '#c74e4e' }} title="Clear all">
+                <button
+                  onClick={clearImportFiles}
+                  title="Clear all"
+                  className="flex items-center justify-center gap-[4px] px-[6px] py-[4px] bg-input border border-border rounded-[3px] text-danger text-[11px] cursor-pointer hover:bg-hover"
+                >
                   <Trash2 size={12} />
                 </button>
               </div>

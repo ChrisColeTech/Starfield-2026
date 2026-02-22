@@ -13,45 +13,6 @@ interface ManifestEntry {
   textures: string[]
 }
 
-const inputStyle: React.CSSProperties = {
-  padding: '8px 12px',
-  background: '#2a2a4a',
-  border: '1px solid #3a3a5a',
-  borderRadius: 4,
-  color: '#e0e0e0',
-  fontSize: 13,
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-}
-
-const labelStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: '#888',
-  marginBottom: 4,
-  display: 'block',
-}
-
-const checkboxLabelStyle: React.CSSProperties = {
-  fontSize: 13,
-  color: '#ccc',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  gap: 6,
-}
-
-const browseButtonStyle: React.CSSProperties = {
-  padding: '8px 16px',
-  background: '#2a2a4a',
-  color: '#ccc',
-  border: '1px solid #3a3a5a',
-  borderRadius: 4,
-  cursor: 'pointer',
-  fontSize: 13,
-  whiteSpace: 'nowrap',
-}
-
 export default function ToolsPage() {
   const [manifests, setManifests] = useState<ManifestEntry[]>([])
   const [generating, setGenerating] = useState(false)
@@ -87,30 +48,11 @@ export default function ToolsPage() {
   }, [])
 
   // Persist settings on change (skip until initial load completes)
-  useEffect(() => {
-    if (!settingsLoaded) return
-    window.electronAPI.storeSet('manifestInputDir', inputDir)
-  }, [inputDir, settingsLoaded])
-
-  useEffect(() => {
-    if (!settingsLoaded) return
-    window.electronAPI.storeSet('manifestOutputDir', outputDir)
-  }, [outputDir, settingsLoaded])
-
-  useEffect(() => {
-    if (!settingsLoaded) return
-    window.electronAPI.storeSet('manifestSameAsInput', sameAsInput)
-  }, [sameAsInput, settingsLoaded])
-
-  useEffect(() => {
-    if (!settingsLoaded) return
-    window.electronAPI.storeSet('manifestOverwrite', overwrite)
-  }, [overwrite, settingsLoaded])
-
-  useEffect(() => {
-    if (!settingsLoaded) return
-    window.electronAPI.storeSet('manifestFormats', formats)
-  }, [formats, settingsLoaded])
+  useEffect(() => { if (!settingsLoaded) return; window.electronAPI.storeSet('manifestInputDir', inputDir) }, [inputDir, settingsLoaded])
+  useEffect(() => { if (!settingsLoaded) return; window.electronAPI.storeSet('manifestOutputDir', outputDir) }, [outputDir, settingsLoaded])
+  useEffect(() => { if (!settingsLoaded) return; window.electronAPI.storeSet('manifestSameAsInput', sameAsInput) }, [sameAsInput, settingsLoaded])
+  useEffect(() => { if (!settingsLoaded) return; window.electronAPI.storeSet('manifestOverwrite', overwrite) }, [overwrite, settingsLoaded])
+  useEffect(() => { if (!settingsLoaded) return; window.electronAPI.storeSet('manifestFormats', formats) }, [formats, settingsLoaded])
 
   const fetchManifests = useCallback(async () => {
     setLoading(true)
@@ -137,14 +79,8 @@ export default function ToolsPage() {
     setError(null)
     try {
       const selectedFormats = Object.entries(formats).filter(([, v]) => v).map(([k]) => k)
-      const body: Record<string, unknown> = {
-        inputDir,
-        formats: selectedFormats,
-        overwrite,
-      }
-      if (!sameAsInput && outputDir) {
-        body.outputDir = outputDir
-      }
+      const body: Record<string, unknown> = { inputDir, formats: selectedFormats, overwrite }
+      if (!sameAsInput && outputDir) body.outputDir = outputDir
 
       const res = await fetch(`${API_BASE}/api/manifests/generate`, {
         method: 'POST',
@@ -191,176 +127,116 @@ export default function ToolsPage() {
     : manifests
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      overflow: 'hidden',
-    }}>
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div style={{
-        padding: '16px 24px',
-        background: '#12122a',
-        borderBottom: '1px solid #2a2a4a',
-      }}>
-        <h1 style={{ margin: 0, fontSize: 18, color: '#e0e0e0' }}>Tools</h1>
+      <div className="px-[24px] py-[16px] bg-surface border-b border-border">
+        <h1 className="m-0 text-[18px] text-text">Tools</h1>
       </div>
 
-      <div style={{
-        flex: 1,
-        overflow: 'auto',
-        padding: 24,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 24,
-      }}>
+      <div className="flex-1 overflow-auto p-[24px] flex flex-col gap-[24px]">
         {/* Manifest Generator Card */}
-        <div style={{
-          background: '#16162a',
-          border: '1px solid #2a2a4a',
-          borderRadius: 8,
-          padding: 20,
-        }}>
-          <h2 style={{ margin: '0 0 16px', fontSize: 15, color: '#e0e0e0' }}>Manifest Generator</h2>
+        <div className="bg-surface border border-border rounded-[8px] p-[20px]">
+          <h2 className="m-0 mb-[16px] text-[15px] text-text">Manifest Generator</h2>
 
           {/* Input Directory */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={labelStyle}>Input Directory</label>
-            <div style={{ display: 'flex', gap: 8 }}>
+          <div className="mb-[14px]">
+            <label className="text-[12px] text-text-secondary mb-[4px] block">Input Directory</label>
+            <div className="flex gap-[8px]">
               <input
                 type="text"
                 value={inputDir}
                 onChange={e => setInputDir(e.target.value)}
                 placeholder="Path to scan for model folders..."
-                style={{ ...inputStyle, flex: 1 }}
+                className="flex-1 px-[12px] py-[8px] bg-input border border-border rounded text-text text-[13px] outline-none"
               />
-              <button onClick={handleBrowseInput} style={browseButtonStyle}>Browse...</button>
+              <button onClick={handleBrowseInput} className="px-[16px] py-[8px] bg-input text-text border border-border rounded cursor-pointer text-[13px] whitespace-nowrap hover:bg-hover">Browse...</button>
             </div>
           </div>
 
           {/* Output Directory */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="mb-[14px]">
+            <label className="text-[12px] text-text-secondary mb-[4px] flex items-center gap-[8px]">
               Output Directory
-              <label style={checkboxLabelStyle}>
-                <input
-                  type="checkbox"
-                  checked={sameAsInput}
-                  onChange={e => setSameAsInput(e.target.checked)}
-                />
+              <label className="text-[13px] text-text cursor-pointer flex items-center gap-[6px]">
+                <input type="checkbox" checked={sameAsInput} onChange={e => setSameAsInput(e.target.checked)} />
                 Same as input
               </label>
             </label>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="flex gap-[8px]">
               <input
                 type="text"
                 value={sameAsInput ? inputDir : outputDir}
                 onChange={e => setOutputDir(e.target.value)}
                 disabled={sameAsInput}
-                style={{ ...inputStyle, flex: 1, opacity: sameAsInput ? 0.5 : 1 }}
+                className="flex-1 px-[12px] py-[8px] bg-input border border-border rounded text-text text-[13px] outline-none disabled:opacity-50"
               />
-              <button onClick={handleBrowseOutput} disabled={sameAsInput} style={{ ...browseButtonStyle, opacity: sameAsInput ? 0.5 : 1 }}>Browse...</button>
+              <button onClick={handleBrowseOutput} disabled={sameAsInput} className="px-[16px] py-[8px] bg-input text-text border border-border rounded cursor-pointer text-[13px] whitespace-nowrap hover:bg-hover disabled:opacity-50 disabled:cursor-default">Browse...</button>
             </div>
           </div>
 
           {/* Options Row */}
-          <div style={{ display: 'flex', gap: 24, marginBottom: 18, flexWrap: 'wrap' }}>
-            {/* Model Formats */}
+          <div className="flex gap-[24px] mb-[18px] flex-wrap">
             <div>
-              <label style={labelStyle}>Model Formats</label>
-              <div style={{ display: 'flex', gap: 12 }}>
+              <label className="text-[12px] text-text-secondary mb-[4px] block">Model Formats</label>
+              <div className="flex gap-[12px]">
                 {Object.keys(formats).map(fmt => (
-                  <label key={fmt} style={checkboxLabelStyle}>
-                    <input
-                      type="checkbox"
-                      checked={formats[fmt]}
-                      onChange={() => toggleFormat(fmt)}
-                    />
+                  <label key={fmt} className="text-[13px] text-text cursor-pointer flex items-center gap-[6px]">
+                    <input type="checkbox" checked={formats[fmt]} onChange={() => toggleFormat(fmt)} />
                     .{fmt}
                   </label>
                 ))}
               </div>
             </div>
-
-            {/* Overwrite */}
             <div>
-              <label style={labelStyle}>Options</label>
-              <label style={checkboxLabelStyle}>
-                <input
-                  type="checkbox"
-                  checked={overwrite}
-                  onChange={e => setOverwrite(e.target.checked)}
-                />
+              <label className="text-[12px] text-text-secondary mb-[4px] block">Options</label>
+              <label className="text-[13px] text-text cursor-pointer flex items-center gap-[6px]">
+                <input type="checkbox" checked={overwrite} onChange={e => setOverwrite(e.target.checked)} />
                 Overwrite existing manifests
               </label>
             </div>
           </div>
 
           {/* Generate Button + Status */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div className="flex items-center gap-[16px]">
             <button
               onClick={handleGenerate}
               disabled={generating || !inputDir}
+              className="px-[20px] py-[8px] rounded text-[13px] font-semibold border-none cursor-pointer disabled:cursor-default"
               style={{
-                padding: '8px 20px',
-                background: (generating || !inputDir) ? '#333' : '#8c8cff',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 4,
-                cursor: (generating || !inputDir) ? 'default' : 'pointer',
-                fontSize: 13,
-                fontWeight: 600,
+                background: (generating || !inputDir) ? 'var(--color-input)' : 'var(--color-accent)',
+                color: (generating || !inputDir) ? 'var(--color-text-disabled)' : '#fff',
               }}
             >
               {generating ? 'Generating...' : 'Generate Manifests'}
             </button>
-
             {lastResult && !error && (
-              <span style={{ fontSize: 13, color: '#8c8cff' }}>
+              <span className="text-[13px] text-accent">
                 Generated {lastResult.generated} manifests at {lastResult.timestamp}
               </span>
             )}
             {error && (
-              <span style={{ fontSize: 13, color: '#ff6666' }}>{error}</span>
+              <span className="text-[13px] text-danger">{error}</span>
             )}
           </div>
         </div>
 
         {/* Manifest List Card */}
-        <div style={{
-          background: '#16162a',
-          border: '1px solid #2a2a4a',
-          borderRadius: 8,
-          padding: 20,
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h2 style={{ margin: 0, fontSize: 15, color: '#e0e0e0' }}>
-              Manifests {!loading && <span style={{ color: '#666', fontWeight: 400 }}>({manifests.length})</span>}
+        <div className="bg-surface border border-border rounded-[8px] p-[20px] flex-1 flex flex-col overflow-hidden">
+          <div className="flex justify-between items-center mb-[12px]">
+            <h2 className="m-0 text-[15px] text-text">
+              Manifests {!loading && <span className="text-text-disabled font-normal">({manifests.length})</span>}
             </h2>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div className="flex gap-[8px] items-center">
               <input
                 type="text"
                 placeholder="Filter..."
                 value={filter}
                 onChange={e => setFilter(e.target.value)}
-                style={{ ...inputStyle, width: 200 }}
+                className="w-[200px] px-[12px] py-[8px] bg-input border border-border rounded text-text text-[13px] outline-none"
               />
               <button
                 onClick={fetchManifests}
-                style={{
-                  padding: '6px 14px',
-                  background: '#2a2a4a',
-                  color: '#ccc',
-                  border: '1px solid #3a3a5a',
-                  borderRadius: 4,
-                  cursor: 'pointer',
-                  fontSize: 13,
-                  whiteSpace: 'nowrap',
-                }}
+                className="px-[14px] py-[6px] bg-input text-text border border-border rounded cursor-pointer text-[13px] whitespace-nowrap hover:bg-hover"
               >
                 Refresh
               </button>
@@ -368,38 +244,36 @@ export default function ToolsPage() {
           </div>
 
           {loading ? (
-            <div style={{ color: '#666', fontSize: 13, padding: 20, textAlign: 'center' }}>Loading...</div>
+            <div className="text-text-disabled text-[13px] p-[20px] text-center">Loading...</div>
           ) : filtered.length === 0 ? (
-            <div style={{ color: '#666', fontSize: 13, padding: 20, textAlign: 'center' }}>
+            <div className="text-text-disabled text-[13px] p-[20px] text-center">
               {manifests.length === 0 ? 'No manifests found. Configure the settings above and click "Generate Manifests".' : 'No matches.'}
             </div>
           ) : (
-            <div style={{ flex: 1, overflow: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <div className="flex-1 overflow-auto">
+              <table className="w-full border-collapse text-[13px]">
                 <thead>
-                  <tr style={{ color: '#888', textAlign: 'left', borderBottom: '1px solid #2a2a4a' }}>
-                    <th style={{ padding: '8px 12px', fontWeight: 500 }}>Name</th>
-                    <th style={{ padding: '8px 12px', fontWeight: 500 }}>Format</th>
-                    <th style={{ padding: '8px 12px', fontWeight: 500 }}>Textures</th>
-                    <th style={{ padding: '8px 12px', fontWeight: 500 }}>Path</th>
-                    <th style={{ padding: '8px 12px', fontWeight: 500 }}></th>
+                  <tr className="text-text-secondary text-left border-b border-border">
+                    <th className="p-[8px_12px] font-medium">Name</th>
+                    <th className="p-[8px_12px] font-medium">Format</th>
+                    <th className="p-[8px_12px] font-medium">Textures</th>
+                    <th className="p-[8px_12px] font-medium">Path</th>
+                    <th className="p-[8px_12px] font-medium"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map(m => (
                     <tr
                       key={m.assetsPath}
-                      style={{ borderBottom: '1px solid #1e1e3a', cursor: 'pointer' }}
+                      className="border-b border-border cursor-pointer hover:bg-hover"
                       onClick={() => handleLoadManifest(m)}
-                      onMouseEnter={e => (e.currentTarget.style.background = '#1e1e3a')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <td style={{ padding: '8px 12px', color: '#e0e0e0' }}>{m.name}</td>
-                      <td style={{ padding: '8px 12px', color: '#888' }}>{m.modelFormat.toUpperCase()}</td>
-                      <td style={{ padding: '8px 12px', color: '#888' }}>{m.textures.length}</td>
-                      <td style={{ padding: '8px 12px', color: '#666', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.assetsPath}</td>
-                      <td style={{ padding: '8px 12px' }}>
-                        <span style={{ color: '#8c8cff', fontSize: 12 }}>Open</span>
+                      <td className="p-[8px_12px] text-text">{m.name}</td>
+                      <td className="p-[8px_12px] text-text-secondary">{m.modelFormat.toUpperCase()}</td>
+                      <td className="p-[8px_12px] text-text-secondary">{m.textures.length}</td>
+                      <td className="p-[8px_12px] text-text-disabled max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap">{m.assetsPath}</td>
+                      <td className="p-[8px_12px]">
+                        <span className="text-accent text-[12px]">Open</span>
                       </td>
                     </tr>
                   ))}

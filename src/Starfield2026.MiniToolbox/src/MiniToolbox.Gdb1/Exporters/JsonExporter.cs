@@ -48,11 +48,18 @@ public static class JsonExporter
     /// </summary>
     public static void ExportManifest(ModelPackage package, string outputPath)
     {
+        string outputDir = Path.GetDirectoryName(outputPath)!;
+        string folderName = Path.GetFileName(outputDir);
         var manifest = new ExportManifest
         {
+            Name = !string.IsNullOrEmpty(package.Name) ? package.Name : folderName,
+            Dir = outputDir.Replace('\\', '/'),
+            AssetsPath = folderName,
             Format = "obj",
+            ModelFormat = "obj",
             Id = package.Id,
             ModelFile = "model.obj",
+            MtlFile = package.Textures.Count > 0 ? "model.mtl" : null,
             Textures = package.Textures.Select(t => t.FileName).ToList(),
             TextureDetails = package.Textures.Select(t => new ManifestTextureEntry
             {

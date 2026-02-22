@@ -2,17 +2,6 @@ import { useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import { useStore } from '../../store';
 
-const btnStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: 4,
-  background: 'none',
-  border: 'none',
-  color: '#808080',
-  cursor: 'pointer',
-};
-
 export function AnimationPlayer() {
   const frames = useStore((s) => s.frames);
   const isPlaying = useStore((s) => s.isPlaying);
@@ -37,21 +26,15 @@ export function AnimationPlayer() {
       <button
         onClick={() => setCurrentFrame(Math.max(0, currentFrame - 1))}
         disabled={currentFrame === 0}
-        style={{ ...btnStyle, opacity: currentFrame === 0 ? 0.3 : 1 }}
+        className="flex items-center justify-center p-[4px] bg-transparent border-none text-text-secondary cursor-pointer disabled:opacity-30"
       >
         <ChevronLeft size={16} />
       </button>
 
       <button
         onClick={togglePlayback}
-        style={{
-          ...btnStyle,
-          width: 28,
-          height: 28,
-          borderRadius: '50%',
-          background: '#094771',
-          color: '#e0e0e0',
-        }}
+        className="flex items-center justify-center w-[28px] h-[28px] rounded-full border-none cursor-pointer"
+        style={{ background: 'var(--color-active)', color: 'var(--color-text)' }}
       >
         {isPlaying ? <Pause size={14} /> : <Play size={14} />}
       </button>
@@ -59,7 +42,7 @@ export function AnimationPlayer() {
       <button
         onClick={() => setCurrentFrame(Math.min(frames.length - 1, currentFrame + 1))}
         disabled={currentFrame === frames.length - 1}
-        style={{ ...btnStyle, opacity: currentFrame === frames.length - 1 ? 0.3 : 1 }}
+        className="flex items-center justify-center p-[4px] bg-transparent border-none text-text-secondary cursor-pointer disabled:opacity-30"
       >
         <ChevronRight size={16} />
       </button>

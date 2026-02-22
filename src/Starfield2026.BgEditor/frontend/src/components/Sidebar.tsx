@@ -1,49 +1,36 @@
-import { NavLink } from 'react-router-dom'
-import { Hexagon, Play, Settings, Archive, type LucideIcon } from 'lucide-react'
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Hexagon, Play, Settings, Archive } from 'lucide-react';
 
-const navItems: { to: string; label: string; Icon: LucideIcon }[] = [
-  { to: '/', label: 'Editor', Icon: Hexagon },
-  { to: '/animations', label: 'Anim', Icon: Play },
-  { to: '/tools', label: 'Tools', Icon: Settings },
-  { to: '/extraction', label: 'Extract', Icon: Archive },
-]
+const navItems = [
+  { path: '/', label: 'Editor', icon: Hexagon },
+  { path: '/animations', label: 'Anim', icon: Play },
+  { path: '/tools', label: 'Tools', icon: Settings },
+  { path: '/extraction', label: 'Extract', icon: Archive },
+] as const;
 
 export default function Sidebar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   return (
-    <nav style={{
-      width: 56,
-      minWidth: 56,
-      display: 'flex',
-      flexDirection: 'column',
-      background: '#12122a',
-      borderRight: '1px solid #2a2a4a',
-      paddingTop: 8,
-      gap: 4,
-    }}>
-      {navItems.map(item => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          end={item.to === '/'}
-          style={({ isActive }) => ({
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 2,
-            padding: '10px 4px',
-            textDecoration: 'none',
-            color: isActive ? '#8c8cff' : '#888',
-            background: isActive ? '#1e1e3a' : 'transparent',
-            borderLeft: isActive ? '2px solid #8c8cff' : '2px solid transparent',
-            fontSize: 10,
-            cursor: 'pointer',
-            transition: 'color 0.15s',
-          })}
-        >
-          <item.Icon size={20} strokeWidth={1.5} />
-          <span>{item.label}</span>
-        </NavLink>
-      ))}
-    </nav>
-  )
+    <aside className="flex flex-col h-full w-[36px] bg-bg border-r border-border shrink-0">
+      {navItems.map(({ path, label, icon: Icon }) => {
+        const active = location.pathname === path;
+        return (
+          <button
+            key={path}
+            onClick={() => navigate(path)}
+            title={label}
+            className="w-[36px] h-[36px] flex items-center justify-center bg-transparent border-none cursor-pointer hover:bg-hover"
+            style={{
+              color: active ? '#e0e0e0' : '#555555',
+              borderLeft: active ? '2px solid #569cd6' : '2px solid transparent',
+            }}
+          >
+            <Icon size={18} />
+          </button>
+        );
+      })}
+    </aside>
+  );
 }

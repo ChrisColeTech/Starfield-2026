@@ -123,9 +123,17 @@ public static class TrinityTextureBaker
 
         maskImage.Dispose();
 
-        // Save the baked texture, overwriting the existing BaseColorMap albedo
+        // Save the baked texture — but only overwrite if existing albedo is a blank placeholder
         string albFileName = GetAlbedoFileName(material);
         string outPath = Path.Combine(texOutDir, albFileName);
+
+        if (File.Exists(outPath) && !IsBlankAlbedo(outPath))
+        {
+            // Existing albedo has real content (skin, clothing, etc.) — don't overwrite
+            Console.WriteLine($"  Skipped layer bake: {Path.GetFileName(outPath)} (albedo has content) [{material.ShaderName}]");
+            return null;
+        }
+
         result.SaveAsPng(outPath);
 
         Console.WriteLine($"  Baked layer texture: {Path.GetFileName(outPath)} ({width}x{height}) [{material.ShaderName}]");
@@ -191,6 +199,47 @@ public static class TrinityTextureBaker
             return fileName + ".png";
         }
         return material.Name + "_layerbaked.png";
+    }
+
+    /// <summary>
+    /// Check if an existing albedo PNG is a blank placeholder (mostly white/near-white).
+    /// Returns true if the texture is blank and safe to overwrite with baked layer data.
+    /// Samples pixels across the image to avoid reading every pixel.
+    /// </summary>
+    private static bool IsBlankAlbedo(string pngPath)
+    {
+        try
+        {
+            using var img = Image.Load<Rgba32>(pngPath);
+            int w = img.Width, h = img.Height;
+            if (w == 0 || h == 0) return true;
+
+            // Sample up to 64 pixels in a grid pattern
+            int stepX = Math.Max(1, w / 8);
+            int stepY = Math.Max(1, h / 8);
+            int totalSampled = 0;
+            int whiteSampled = 0;
+
+            for (int y = 0; y < h; y += stepY)
+            {
+                for (int x = 0; x < w; x += stepX)
+                {
+                    var px = img[x, y];
+                    totalSampled++;
+                    // Consider "white" if all channels >= 250
+                    if (px.R >= 250 && px.G >= 250 && px.B >= 250)
+                        whiteSampled++;
+                }
+            }
+
+            // If >90% of sampled pixels are white, it's a blank placeholder
+            return totalSampled > 0 && (float)whiteSampled / totalSampled > 0.9f;
+        }
+        catch
+        {
+            // If we can't read it, assume it's safe to overwrite
+            return true;
+        }
     }
 
     private static string? FindBntxFile(string referencePath, string tempRoot)

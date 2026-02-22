@@ -1,0 +1,23 @@
+{
+  "name": "switch-toolbox-lib",
+  "version": "1.0.0",
+  "description": "TypeScript port of SwitchToolboxCli.Core and App",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "test": "node dist/Program.js --help",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "flatbuffers": "^24.3.25",
+    "koffi": "^2.15.1",
+    "sharp": "^0.33.5"
+  }
+}
