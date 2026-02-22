@@ -15,6 +15,7 @@ return command switch
     "trpak" => TrpakCommand.Run(commandArgs),
     "gdb1" => Gdb1Command.Run(commandArgs),
     "garc" => GarcCommand.Run(commandArgs),
+    "text" => TextDecodeCommand.Run(commandArgs),
     "help" or "--help" or "-h" => PrintUsage(),
     "version" or "--version" or "-v" => PrintVersion(),
     _ => HandleLegacyArgs(args)
@@ -31,6 +32,7 @@ int PrintUsage()
     Console.WriteLine("  trpak    Extract from Pokemon Scarlet/Violet archives (.trpfs/.trpak)");
     Console.WriteLine("  gdb1     Extract from Star Fox Zero/Guard resources (.modelgdb/.texturegdb)");
     Console.WriteLine("  garc     Extract from 3DS Pokemon GARC archives (Sun/Moon, X/Y)");
+    Console.WriteLine("  text     Decode Sun/Moon game text files (XOR encrypted)");
     Console.WriteLine("  help     Show this help message");
     Console.WriteLine("  version  Show version information");
     Console.WriteLine();

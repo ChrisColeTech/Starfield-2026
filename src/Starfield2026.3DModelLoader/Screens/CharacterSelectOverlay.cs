@@ -25,6 +25,15 @@ public class CharacterSelectOverlay
     private int _scrollOffset;
     private bool _finished;
 
+    // Key-repeat acceleration for held Up/Down
+    private float _holdTimer;
+    private float _repeatInterval;
+    private int _holdDirection; // -1=up, 1=down, 0=none
+    private const float InitialDelay = 0.3f;
+    private const float FastRepeat = 0.02f;
+    private const float SlowRepeat = 0.12f;
+    private const float AccelTime = 1.5f; // seconds to reach max speed
+
     /// <summary>Set when user picks a character. Null if cancelled.</summary>
     public string? SelectedFolder { get; private set; }
     public bool IsFinished => _finished;
@@ -48,7 +57,7 @@ public class CharacterSelectOverlay
             .ToArray();
     }
 
-    public void Update(InputSnapshot input)
+    public void Update(InputSnapshot input, float dt)
     {
         if (_finished) return;
 
@@ -87,8 +96,47 @@ public class CharacterSelectOverlay
             var cat = _categories[_catIndex];
             int count = cat.Characters.Length;
 
-            if (input.Up && _itemIndex > 0) _itemIndex--;
-            if (input.Down && _itemIndex < count - 1) _itemIndex++;
+            // Determine held direction from raw keyboard state
+            bool upHeld = input.IsKeyHeld(Microsoft.Xna.Framework.Input.Keys.Up) || input.IsKeyHeld(Microsoft.Xna.Framework.Input.Keys.W);
+            bool downHeld = input.IsKeyHeld(Microsoft.Xna.Framework.Input.Keys.Down) || input.IsKeyHeld(Microsoft.Xna.Framework.Input.Keys.S);
+
+            int dir = downHeld ? 1 : upHeld ? -1 : 0;
+
+            if (dir != _holdDirection || dir == 0)
+            {
+                // Direction changed or released — reset
+                _holdDirection = dir;
+                _holdTimer = 0f;
+                _repeatInterval = SlowRepeat;
+
+                // Apply initial press
+                if (input.Up && _itemIndex > 0) _itemIndex--;
+                if (input.Down && _itemIndex < count - 1) _itemIndex++;
+            }
+            else
+            {
+                // Same direction held — accumulate time and accelerate
+                _holdTimer += dt;
+                if (_holdTimer > InitialDelay)
+                {
+                    float holdTime = _holdTimer - InitialDelay;
+                    float t = Math.Min(holdTime / AccelTime, 1f);
+                    _repeatInterval = MathHelper.Lerp(SlowRepeat, FastRepeat, t);
+
+                    _repeatInterval -= dt;
+                    if (_repeatInterval <= 0f)
+                    {
+                        // Fire repeat(s)
+                        int steps = Math.Max(1, (int)(-_repeatInterval / Math.Max(FastRepeat, 0.001f)) + 1);
+                        for (int s = 0; s < steps; s++)
+                        {
+                            _itemIndex += dir;
+                            _itemIndex = Math.Clamp(_itemIndex, 0, count - 1);
+                        }
+                        _repeatInterval = MathHelper.Lerp(SlowRepeat, FastRepeat, t);
+                    }
+                }
+            }
 
             if (input.Confirm && count > 0)
             {
@@ -109,8 +157,8 @@ public class CharacterSelectOverlay
         sb.Draw(pixel, new Rectangle(0, 0, screenW, screenH), Color.Black * 0.75f);
 
         int pad = 8 * scale;
-        int panelW = Math.Min(screenW - pad * 4, 200 * scale);
-        int panelH = Math.Min(screenH - pad * 4, 180 * scale);
+        int panelW = Math.Min(screenW - pad * 4, 320 * scale);
+        int panelH = Math.Min(screenH - pad * 4, 280 * scale);
         int panelX = (screenW - panelW) / 2;
         int panelY = (screenH - panelH) / 2;
 

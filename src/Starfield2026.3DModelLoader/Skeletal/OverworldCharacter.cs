@@ -15,7 +15,16 @@ public sealed class OverworldCharacter : IDisposable
     private SkinnedDaeModel? _model;
     private BasicEffect? _effect;
     private float _fitScale = 1f;
-    private const float TargetHeight = 2.0f;
+    private const float TargetHumanHeight = 2.0f;
+
+    // Models come from different sources with different unit scales.
+    // Sun-moon field characters are ~170 units for a human.
+    // Scarlet characters/pokemon are ~1.2 units for a human.
+    // We detect which group by checking if height > threshold, then apply
+    // a single scale per group so relative sizes within a group are preserved.
+    private const float SunMoonFieldRefHeight = 170f;  // human-sized trainer in sun-moon field units
+    private const float ScarletRefHeight = 1.2f;       // human-sized trainer in scarlet units
+    private const float GroupThreshold = 10f;           // heights above this are sun-moon scale
 
     public void Load(GraphicsDevice device, string characterFolderPath)
     {
@@ -48,9 +57,12 @@ public sealed class OverworldCharacter : IDisposable
 
         float modelHeight = _model.BoundsMax.Y - _model.BoundsMin.Y;
         if (modelHeight > 0.001f)
-            _fitScale = TargetHeight / modelHeight;
+        {
+            float refHeight = modelHeight > GroupThreshold ? SunMoonFieldRefHeight : ScarletRefHeight;
+            _fitScale = TargetHumanHeight / refHeight;
+        }
 
-        ModelLoaderLog.Info($"[Character] Model height={modelHeight:F3}, fitScale={_fitScale:F3} (target={TargetHeight})");
+        ModelLoaderLog.Info($"[Character] Model height={modelHeight:F3}, fitScale={_fitScale:F3}, rendered height={modelHeight * _fitScale:F3}");
         ModelLoaderLog.Info($"[Character] === Character load complete ===");
         IsLoaded = true;
     }
@@ -60,7 +72,9 @@ public sealed class OverworldCharacter : IDisposable
         if (_controller == null) return;
 
         string desiredTag;
-        if (isRunning && _controller.HasClip("Run"))
+        if (!isGrounded && _controller.HasClip("Jump"))
+            desiredTag = "Jump";
+        else if (isRunning && _controller.HasClip("Run"))
             desiredTag = "Run";
         else if (isMoving && _controller.HasClip("Walk"))
             desiredTag = "Walk";

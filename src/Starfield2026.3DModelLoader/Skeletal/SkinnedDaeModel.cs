@@ -442,19 +442,9 @@ public class SkinnedDaeModel : IDisposable
             int[] v = ParseInts(vertexWeights.Element(Col + "v")?.Value);
             if (vcount.Length == 0 || v.Length == 0) continue;
 
-            // Also parse inverse bind matrices and apply to rig
-            string? ibmSourceId = joints.Elements(Col + "input")
-                .FirstOrDefault(x => x.Attribute("semantic")?.Value == "INV_BIND_MATRIX")
-                ?.Attribute("source")?.Value.TrimStart('#');
-            if (!string.IsNullOrWhiteSpace(ibmSourceId) && sources.TryGetValue(ibmSourceId, out XElement? ibmSource))
-            {
-                float[] ibmData = ParseFloats(ibmSource.Element(Col + "float_array")?.Value);
-                int matCount = ibmData.Length / 16;
-                var ibmMatrices = new Matrix[matCount];
-                for (int m = 0; m < matCount; m++)
-                    ibmMatrices[m] = ReadMatrixFromFloats(ibmData, m * 16);
-                rig.SetInverseBindMatrices(jointNames, ibmMatrices);
-            }
+            // PokemonGreen does NOT read IBMs from the DAE — it uses the computed ones
+            // from the skeleton hierarchy (InverseBind = Invert(BindWorld)). The DAE IBMs
+            // can include non-bone joints that corrupt the rig, so skip the override.
 
             var influences = new List<VertexInfluence>(vcount.Length);
             int cursor = 0;

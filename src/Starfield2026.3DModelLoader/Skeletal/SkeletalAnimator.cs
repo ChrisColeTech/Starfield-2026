@@ -83,6 +83,24 @@ public class SkeletalAnimator
             SkinPose[i] = Rig.InverseBindTransforms[i] * WorldPose[i];
     }
 
+    /// <summary>
+    /// Recompute WorldPose and SkinPose from the current LocalPose.
+    /// Call after externally modifying LocalPose entries (e.g. procedural overlay).
+    /// </summary>
+    public void RebuildPose()
+    {
+        for (int i = 0; i < Rig.Bones.Count; i++)
+        {
+            int parent = Rig.Bones[i].ParentIndex;
+            if (parent < 0)
+                WorldPose[i] = LocalPose[i];
+            else
+                WorldPose[i] = LocalPose[i] * WorldPose[parent];
+
+            SkinPose[i] = Rig.InverseBindTransforms[i] * WorldPose[i];
+        }
+    }
+
     private void ResetToBindPose()
     {
         for (int i = 0; i < Rig.Bones.Count; i++)

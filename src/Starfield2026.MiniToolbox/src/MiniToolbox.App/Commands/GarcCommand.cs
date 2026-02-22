@@ -18,7 +18,9 @@ public static class GarcCommand
         bool infoMode = false;
         bool listMode = false;
         bool extractMode = false;
+        bool dumpMode = false;
         bool bakeTextures = false;
+        bool flatMode = false;
         int limit = 0;
         int skip = 0;
 
@@ -36,6 +38,8 @@ public static class GarcCommand
                 case "--bake":           bakeTextures = true; break;
                 case "--limit" or "-n":  limit = int.Parse(args[++i]); break;
                 case "--skip":           skip = int.Parse(args[++i]); break;
+                case "--flat":           flatMode = true; break;
+                case "--dump":           dumpMode = true; break;
                 case "--help" or "-h":   PrintUsage(); return 0;
             }
         }
@@ -45,9 +49,16 @@ public static class GarcCommand
 
         if (infoMode) return RunInfo(inputFile);
         if (listMode) return RunList(inputFile, skip, limit);
+        if (dumpMode)
+        {
+            outputDir ??= Path.Combine(Directory.GetCurrentDirectory(), "garc_dump");
+            return RunDump(inputFile, outputDir, skip, limit);
+        }
         if (extractMode)
         {
             outputDir ??= Path.Combine(Directory.GetCurrentDirectory(), "garc_export");
+            if (flatMode)
+                return RunFlatExtract(inputFile, outputDir, format, skip, limit, bakeTextures);
             return RunExtract(inputFile, outputDir, format, filter, skip, limit, bakeTextures);
         }
 
@@ -71,6 +82,8 @@ public static class GarcCommand
         Console.WriteLine("  --skip         Skip first N groups");
         Console.WriteLine("  --filter       Only extract matching Pokemon IDs (e.g. pm0025)");
         Console.WriteLine("  --bake         Bake multi-texture materials into single diffuse");
+        Console.WriteLine("  --flat         Extract each entry individually (no Pokemon grouping, for maps/terrain)");
+        Console.WriteLine("  --dump         Dump raw (decompressed) entry bytes to files");
         Console.WriteLine("  --info         Show GARC file summary");
         Console.WriteLine("  --list         List entries with detected types");
         Console.WriteLine("  --extract      Extract models, textures, and animations");
@@ -392,18 +405,232 @@ public static class GarcCommand
         }
 
         // Write manifest
+        string manifestModelFileName = manifestModels.Count > 0 ? manifestModels[0].File : null;
         ManifestSerializer.Write(Path.Combine(groupDir, "manifest.json"), new ExportManifest
         {
+            Name = group.Id,
+            Dir = groupDir.Replace('\\', '/'),
+            AssetsPath = Path.GetRelativePath(outputDir, groupDir).Replace('\\', '/'),
             Format = format,
+            ModelFormat = format,
             Id = group.Id,
             AnimationMode = "split",
-            ModelFile = manifestModels.Count > 0 ? manifestModels[0].File : null,
+            ModelFile = manifestModelFileName,
             Models = manifestModels,
             Textures = manifestTextures,
             Clips = manifestClips
         });
 
         Console.WriteLine($"  {group.Id}: {scene.Models.Count} model(s), {scene.Textures.Count} tex, {scene.SkeletalAnimations.Count} clip(s)");
+    }
+
+    // ── Flat Extract (per-entry, for maps/terrain) ─────────────────────────
+
+    private static int RunFlatExtract(string inputFile, string outputDir, string format,
+        int skip, int limit, bool bakeTextures)
+    {
+        Console.WriteLine($"Loading GARC: {inputFile}");
+        Console.WriteLine($"Output: {outputDir} (flat mode — one folder per model entry)");
+        Console.WriteLine();
+
+        using var fs = new FileStream(inputFile, FileMode.Open, FileAccess.Read);
+        var entries = GARC.GetEntries(fs);
+        Directory.CreateDirectory(outputDir);
+
+        int start = Math.Min(skip, entries.Length);
+        int end = limit > 0 ? Math.Min(start + limit, entries.Length) : entries.Length;
+
+        int extracted = 0, skipped = 0, failed = 0;
+
+        for (int i = start; i < end; i++)
+        {
+            byte[] data;
+            try { data = Decompress(GARC.ReadEntry(fs, entries[i])); }
+            catch { skipped++; continue; }
+
+            if (data.Length < 4) { skipped++; continue; }
+
+            // Try to parse this entry as an H3D scene
+            H3D scene;
+            try
+            {
+                using var ms = new MemoryStream(data);
+                scene = FormatIdentifier.IdentifyAndOpen(ms);
+            }
+            catch { skipped++; continue; }
+
+            if (scene == null || scene.Models.Count == 0)
+            {
+                skipped++;
+                continue;
+            }
+
+            // Derive folder name from model name or entry index
+            string folderName = scene.Models[0].Name;
+            if (string.IsNullOrEmpty(folderName))
+                folderName = $"entry_{i:D5}";
+            folderName = SanitizeName(folderName);
+
+            // Avoid collisions
+            string groupDir = Path.Combine(outputDir, folderName);
+            if (Directory.Exists(groupDir))
+            {
+                int suffix = 2;
+                while (Directory.Exists($"{groupDir}_{suffix}")) suffix++;
+                groupDir = $"{groupDir}_{suffix}";
+                folderName = Path.GetFileName(groupDir);
+            }
+
+            try
+            {
+                Directory.CreateDirectory(groupDir);
+
+                // Save textures
+                string texturesDir = Path.Combine(groupDir, "textures");
+                var manifestTextures = new List<string>();
+
+                if (scene.Textures.Count > 0)
+                {
+                    Directory.CreateDirectory(texturesDir);
+                    foreach (var tex in scene.Textures)
+                    {
+                        string safeName = SanitizeName(tex.Name);
+                        string texPath = Path.Combine(texturesDir, $"{safeName}.png");
+                        try
+                        {
+                            using var bmp = tex.ToBitmap();
+                            bmp.Save(texPath, ImageFormat.Png);
+                            manifestTextures.Add($"textures/{safeName}.png");
+                        }
+                        catch { }
+                    }
+                }
+
+                if (bakeTextures)
+                    PicaTextureBaker.BakeScene(scene, texturesDir);
+
+                // Export model DAEs
+                var manifestModels = new List<ManifestModelEntry>();
+
+                for (int m = 0; m < scene.Models.Count; m++)
+                {
+                    string modelSuffix = scene.Models.Count > 1 ? $"_{m}" : "";
+                    string modelFileName = $"model{modelSuffix}.{format}";
+                    string modelFile = Path.Combine(groupDir, modelFileName);
+
+                    var dae = new DAE(scene, m);
+
+                    if (dae.library_images != null)
+                    {
+                        foreach (var img in dae.library_images)
+                        {
+                            if (img.init_from != null && !img.init_from.Contains("textures/"))
+                                img.init_from = $"./textures/{Path.GetFileName(img.init_from)}";
+                        }
+                    }
+
+                    dae.Save(modelFile);
+
+                    var mdl = scene.Models[m];
+                    manifestModels.Add(new ManifestModelEntry
+                    {
+                        File = modelFileName,
+                        Name = mdl.Name ?? $"model{modelSuffix}",
+                        MeshCount = mdl.Meshes.Count,
+                        BoneCount = mdl.Skeleton.Count
+                    });
+                }
+
+                // Export animation clips (maps rarely have these, but handle them)
+                var manifestClips = new List<ManifestClipEntry>();
+
+                if (scene.SkeletalAnimations.Count > 0)
+                {
+                    string clipsDir = Path.Combine(groupDir, "clips");
+                    Directory.CreateDirectory(clipsDir);
+
+                    for (int a = 0; a < scene.SkeletalAnimations.Count; a++)
+                    {
+                        string clipFileName = $"clip_{a:D3}.dae";
+                        string clipFile = Path.Combine(clipsDir, clipFileName);
+
+                        new DAE(scene, 0, a, clipOnly: true).Save(clipFile);
+
+                        var anim = scene.SkeletalAnimations[a];
+                        manifestClips.Add(new ManifestClipEntry
+                        {
+                            Index = a,
+                            Id = $"clip_{a:D3}",
+                            Name = anim.Name ?? $"clip_{a}",
+                            SourceName = anim.Name,
+                            File = $"clips/{clipFileName}",
+                            FrameCount = (int)anim.FramesCount,
+                            Fps = 30,
+                            BoneCount = anim.Elements.Count
+                        });
+                    }
+                }
+
+                // Write manifest
+                string flatModelFileName = manifestModels.Count > 0 ? manifestModels[0].File : null;
+                ManifestSerializer.Write(Path.Combine(groupDir, "manifest.json"), new ExportManifest
+                {
+                    Name = folderName,
+                    Dir = groupDir.Replace('\\', '/'),
+                    AssetsPath = Path.GetRelativePath(outputDir, groupDir).Replace('\\', '/'),
+                    Format = format,
+                    ModelFormat = format,
+                    Id = folderName,
+                    AnimationMode = manifestClips.Count > 0 ? "split" : "static",
+                    ModelFile = flatModelFileName,
+                    Models = manifestModels,
+                    Textures = manifestTextures,
+                    Clips = manifestClips
+                });
+
+                Console.WriteLine($"  [{i:D5}] {folderName}: {scene.Models.Count} model(s), {scene.Textures.Count} tex, {scene.SkeletalAnimations.Count} clip(s)");
+                extracted++;
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"  ERROR [{i:D5}]: {ex.Message}");
+                failed++;
+            }
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"=== Flat extract complete ===");
+        Console.WriteLine($"  Extracted: {extracted}  Skipped: {skipped}  Failed: {failed}");
+
+        return failed > 0 && extracted == 0 ? 1 : 0;
+    }
+
+    // ── Dump (raw bytes) ───────────────────────────────────────────────────
+
+    private static int RunDump(string inputFile, string outputDir, int skip, int limit)
+    {
+        Console.WriteLine($"Loading GARC: {inputFile}");
+        Console.WriteLine($"Output: {outputDir} (raw dump)");
+        Console.WriteLine();
+
+        using var fs = new FileStream(inputFile, FileMode.Open, FileAccess.Read);
+        var entries = GARC.GetEntries(fs);
+        Directory.CreateDirectory(outputDir);
+
+        int start = Math.Min(skip, entries.Length);
+        int end = limit > 0 ? Math.Min(start + limit, entries.Length) : entries.Length;
+
+        for (int i = start; i < end; i++)
+        {
+            byte[] data = Decompress(GARC.ReadEntry(fs, entries[i]));
+            string outPath = Path.Combine(outputDir, $"entry_{i:D5}.bin");
+            File.WriteAllBytes(outPath, data);
+            Console.WriteLine($"  [{i:D5}] {data.Length} bytes");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"Dumped {end - start} entries to {outputDir}");
+        return 0;
     }
 
     // ── Entry classification ──────────────────────────────────────────────

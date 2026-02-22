@@ -144,6 +144,86 @@ public static class ColladaSkeletalLoader
         return new SkeletalAnimationClip(clipName, maxTime, tracks);
     }
 
+    /// <summary>
+    /// Load a clip with bone name remapping for retargeting.
+    /// Channel targets reference the source skeleton's bone names;
+    /// boneNameMap translates them to the target skeleton's names.
+    /// </summary>
+    public static SkeletalAnimationClip LoadClipRetargeted(
+        string clipDaePath, SkeletonRig targetRig,
+        Dictionary<string, string> boneNameMap, string clipName)
+    {
+        ModelLoaderLog.Info($"[Clip] Loading retargeted clip '{clipName}' from: {clipDaePath}");
+        var doc = XDocument.Load(clipDaePath);
+        var root = doc.Root!;
+
+        var floatSources = new Dictionary<string, float[]>(StringComparer.Ordinal);
+        foreach (var src in root.Descendants(Col + "source"))
+        {
+            string? id = src.Attribute("id")?.Value;
+            var fa = src.Element(Col + "float_array");
+            if (id != null && fa != null)
+            {
+                float[] data = ParseFloats((string)fa);
+                if (data.Length > 0)
+                    floatSources[id] = data;
+            }
+        }
+
+        var animations = root.Descendants(Col + "animation")
+            .Where(a => a.Elements(Col + "sampler").Any())
+            .ToList();
+
+        var tracks = new List<BoneAnimationTrack>();
+        float maxTime = 0f;
+
+        foreach (var anim in animations)
+        {
+            var channel = anim.Element(Col + "channel");
+            if (channel == null) continue;
+
+            string target = (string?)channel.Attribute("target") ?? "";
+            if (!target.EndsWith("/transform", StringComparison.Ordinal))
+                continue;
+
+            string sourceBoneName = target[..target.IndexOf('/')];
+
+            // Remap bone name from reference → target skeleton
+            string targetBoneName = boneNameMap.TryGetValue(sourceBoneName, out string? mapped)
+                ? mapped : sourceBoneName;
+
+            if (!targetRig.TryGetBoneIndex(targetBoneName, out int boneIndex))
+                continue;
+
+            var sampler = anim.Element(Col + "sampler");
+            if (sampler == null) continue;
+
+            string? inputSourceId = GetSamplerSourceId(sampler, "INPUT")?.TrimStart('#');
+            string? outputSourceId = GetSamplerSourceId(sampler, "OUTPUT")?.TrimStart('#');
+            if (inputSourceId == null || outputSourceId == null) continue;
+
+            if (!floatSources.TryGetValue(inputSourceId, out float[]? times)) continue;
+            if (!floatSources.TryGetValue(outputSourceId, out float[]? values)) continue;
+
+            int matrixCount = values.Length / 16;
+            int keyCount = Math.Min(times.Length, matrixCount);
+            if (keyCount == 0) continue;
+
+            var keyframes = new List<AnimationKeyframe>(keyCount);
+            for (int i = 0; i < keyCount; i++)
+            {
+                Matrix m = ReadMatrixFromFloats(values, i * 16);
+                keyframes.Add(new AnimationKeyframe(times[i], m));
+                if (times[i] > maxTime) maxTime = times[i];
+            }
+
+            tracks.Add(new BoneAnimationTrack(boneIndex, keyframes));
+        }
+
+        ModelLoaderLog.Info($"[Clip] Retargeted clip '{clipName}': {tracks.Count} tracks, duration={maxTime:F3}s");
+        return new SkeletalAnimationClip(clipName, maxTime, tracks);
+    }
+
     // --- Mesh geometry parsing ---
 
     public static (Vector3[] positions, Vector3[] normals, Vector2[] texCoords, int[] indices, int[] skinWeightIndices)

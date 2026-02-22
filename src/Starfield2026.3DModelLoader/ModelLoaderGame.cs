@@ -107,6 +107,18 @@ public class ModelLoaderGame : Game
         foreach (var c in _characters)
             ModelLoaderLog.Info($"  [{c.Category}] {c.Name}: {c.ManifestPath}");
 
+        // Set shared animation source (Sun-Moon tr0001_00 as reference)
+        string sharedAnimFolder = Path.Combine(modelsRoot, "Characters", "sun-moon", "field", "tr0001_00");
+        if (Directory.Exists(sharedAnimFolder))
+        {
+            Skeletal.SplitModelAnimationSetLoader.SharedAnimationFolder = sharedAnimFolder;
+            ModelLoaderLog.Info($"Shared animations: {sharedAnimFolder}");
+        }
+        else
+        {
+            ModelLoaderLog.Info($"Shared animation folder not found: {sharedAnimFolder}");
+        }
+
         // Init FreeRoam
         _freeRoam.Initialize(GraphicsDevice);
 
@@ -161,7 +173,7 @@ public class ModelLoaderGame : Game
         // --- Character select overlay ---
         if (_charSelect != null)
         {
-            _charSelect.Update(snap);
+            _charSelect.Update(snap, (float)gameTime.ElapsedGameTime.TotalSeconds);
             if (_charSelect.IsFinished)
             {
                 if (_charSelect.SelectedFolder != null)

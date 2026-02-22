@@ -8,6 +8,19 @@ using Starfield2026.ModelLoader;
 
 namespace Starfield2026.ModelLoader.Skeletal;
 
+/// <summary>
+/// How to source animation clips when loading a character.
+/// </summary>
+public enum AnimationLoadMode
+{
+    /// <summary>Load only the model's own clips. No shared animations.</summary>
+    Own,
+    /// <summary>Load own clips first, then fill missing tags from shared reference.</summary>
+    FillMissing,
+    /// <summary>Ignore own clips entirely. All animations come from shared reference.</summary>
+    SharedOnly,
+}
+
 public class SplitModelAnimationSet
 {
     public string ModelPath { get; }
@@ -36,6 +49,8 @@ public static class SplitModelAnimationSetLoader
         ("BattleAttack", new[] { "battle_attack", "attack01", "attack_01" }),
         ("BattleHit",   new[] { "battle_damage", "damage01", "hit01" }),
         ("BattleFaint", new[] { "battle_down", "down01", "faint" }),
+        ("Jump",        new[] { "jump", "leap" }),
+        ("Land",        new[] { "land" }),
         ("Run",         new[] { "run", "dash" }),
         ("Walk",        new[] { "walk" }),
         ("Idle",        new[] { "wait", "idle", "stand" }),
@@ -45,9 +60,26 @@ public static class SplitModelAnimationSetLoader
         ("BallThrow",   new[] { "ballthrow", "ball_throw" }),
     };
 
+    /// <summary>
+    /// Path to the reference character whose animations can be shared.
+    /// Set once at startup by ModelLoaderGame.
+    /// </summary>
+    public static string? SharedAnimationFolder { get; set; }
+
+    /// <summary>
+    /// Controls how animations are loaded for all characters.
+    /// </summary>
+    public static AnimationLoadMode LoadMode { get; set; } = AnimationLoadMode.FillMissing;
+
+    /// <summary>
+    /// Which tags to fill from shared when using FillMissing mode.
+    /// Ignored in Own and SharedOnly modes.
+    /// </summary>
+    public static HashSet<string> FillTags { get; set; } = new() { "Jump", "Land" };
+
     public static SplitModelAnimationSet Load(string groupFolderPath, string modelName = "model")
     {
-        ModelLoaderLog.Info($"[AnimSet] Loading animation set from: {groupFolderPath}");
+        ModelLoaderLog.Info($"[AnimSet] Loading animation set from: {groupFolderPath} (mode={LoadMode})");
         string manifestPath = Path.Combine(groupFolderPath, "manifest.json");
         if (!File.Exists(manifestPath))
             throw new FileNotFoundException("Manifest not found", manifestPath);
@@ -67,7 +99,8 @@ public static class SplitModelAnimationSetLoader
         var clips = new Dictionary<string, SkeletalAnimationClip>();
         var clipsByTag = new Dictionary<string, SkeletalAnimationClip>();
 
-        if (manifest.Clips != null)
+        // Step 1: Load own clips (unless SharedOnly)
+        if (LoadMode != AnimationLoadMode.SharedOnly && manifest.Clips != null)
         {
             foreach (var entry in manifest.Clips)
             {
@@ -81,22 +114,20 @@ public static class SplitModelAnimationSetLoader
                 var clip = ColladaSkeletalLoader.LoadClip(clipPath, skeleton, sourceName);
                 clips[clipId] = clip;
 
-                // Tag resolution: semanticName > pattern match on name > slot map from source anim number
-                string? tag = entry.SemanticName;
-                if (string.IsNullOrWhiteSpace(tag))
-                    tag = ResolveTag(sourceName);
-                if (string.IsNullOrWhiteSpace(tag))
-                {
-                    int sourceSlot = ParseSourceSlot(entry.Name, entry.Index);
-                    tag = MapOverworldSlot(sourceSlot);
-                }
-
-                ModelLoaderLog.Info($"[AnimSet] Clip '{clipId}' (source='{sourceName}', idx={entry.Index}): tag={tag ?? "(none)"}, file={clipFile}");
+                string? tag = ResolveTagForEntry(entry, sourceName);
+                ModelLoaderLog.Info($"[AnimSet] Clip '{clipId}' (source='{sourceName}', idx={entry.Index}): tag={tag ?? "(none)"}");
                 if (tag != null && !clipsByTag.ContainsKey(tag))
                     clipsByTag[tag] = clip;
             }
         }
 
+        // Step 2: Load from shared reference
+        if (LoadMode == AnimationLoadMode.SharedOnly)
+            LoadSharedClips(skeleton, clips, clipsByTag, tagsToFill: null); // null = load all
+        else if (LoadMode == AnimationLoadMode.FillMissing)
+            LoadSharedClips(skeleton, clips, clipsByTag, tagsToFill: FillTags);
+
+        // Idle fallback
         if (!clipsByTag.ContainsKey("Idle") && clips.Count > 0)
         {
             clipsByTag["Idle"] = clips.Values.First();
@@ -105,6 +136,90 @@ public static class SplitModelAnimationSetLoader
 
         ModelLoaderLog.Info($"[AnimSet] Animation set complete: {clips.Count} clips, {clipsByTag.Count} tagged");
         return new SplitModelAnimationSet(modelPath, skeleton, clips, clipsByTag);
+    }
+
+    /// <summary>
+    /// Load clips from the shared reference folder and retarget to the target skeleton.
+    /// If tagsToFill is null, loads ALL shared clips.
+    /// If tagsToFill is set, only loads clips whose tag is in the set AND not already present.
+    /// </summary>
+    private static void LoadSharedClips(
+        SkeletonRig skeleton,
+        Dictionary<string, SkeletalAnimationClip> clips,
+        Dictionary<string, SkeletalAnimationClip> clipsByTag,
+        HashSet<string>? tagsToFill)
+    {
+        if (string.IsNullOrEmpty(SharedAnimationFolder)) return;
+
+        string refManifestPath = Path.Combine(SharedAnimationFolder, "manifest.json");
+        if (!File.Exists(refManifestPath)) return;
+
+        // If filling specific tags, check if any are actually missing
+        if (tagsToFill != null)
+        {
+            bool anyMissing = false;
+            foreach (var tag in tagsToFill)
+            {
+                if (!clipsByTag.ContainsKey(tag)) { anyMissing = true; break; }
+            }
+            if (!anyMissing) return;
+        }
+
+        ManifestData refManifest;
+        using (var refStream = File.OpenRead(refManifestPath))
+        {
+            refManifest = JsonSerializer.Deserialize<ManifestData>(refStream, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }) ?? new ManifestData();
+        }
+        if (refManifest.Clips == null) return;
+
+        var boneMap = BoneMapping.GetMapForRig(skeleton);
+
+        foreach (var entry in refManifest.Clips)
+        {
+            string sourceName = entry.SourceName ?? entry.Name ?? $"clip_{entry.Index:D3}";
+            string? tag = ResolveTagForEntry(entry, sourceName);
+            if (tag == null) continue;
+
+            // Skip if already have this tag
+            if (clipsByTag.ContainsKey(tag)) continue;
+
+            // In FillMissing mode, only load tags in the fill set
+            if (tagsToFill != null && !tagsToFill.Contains(tag)) continue;
+
+            string clipFile = entry.File ?? $"clips/clip_{entry.Index:D3}.dae";
+            string clipPath = Path.Combine(SharedAnimationFolder, clipFile);
+            if (!File.Exists(clipPath)) continue;
+
+            SkeletalAnimationClip clip;
+            if (boneMap != null)
+                clip = ColladaSkeletalLoader.LoadClipRetargeted(clipPath, skeleton, boneMap, sourceName);
+            else
+                clip = ColladaSkeletalLoader.LoadClip(clipPath, skeleton, sourceName);
+
+            string clipId = $"shared_{tag.ToLowerInvariant()}";
+            clips[clipId] = clip;
+            clipsByTag[tag] = clip;
+            ModelLoaderLog.Info($"[AnimSet] Shared '{tag}': {clip.Tracks.Count} tracks, remap={boneMap != null}");
+        }
+    }
+
+    /// <summary>
+    /// Resolve tag for a clip entry: semanticName > pattern match > slot map.
+    /// </summary>
+    private static string? ResolveTagForEntry(ClipEntry entry, string sourceName)
+    {
+        string? tag = entry.SemanticName;
+        if (string.IsNullOrWhiteSpace(tag))
+            tag = ResolveTag(sourceName);
+        if (string.IsNullOrWhiteSpace(tag))
+        {
+            int sourceSlot = ParseSourceSlot(entry.Name, entry.Index);
+            tag = MapOverworldSlot(sourceSlot);
+        }
+        return tag;
     }
 
     private static string? ResolveTag(string sourceName)
@@ -121,15 +236,10 @@ public static class SplitModelAnimationSetLoader
         return null;
     }
 
-    /// <summary>
-    /// Parse the source animation slot number from a clip name like "anim_7" or "Motion_17".
-    /// Falls back to the sequential clip index if parsing fails.
-    /// </summary>
     private static int ParseSourceSlot(string? name, int fallbackIndex)
     {
         if (string.IsNullOrWhiteSpace(name)) return fallbackIndex;
 
-        // Try to extract number after last underscore: "anim_7" → 7, "Motion_17" → 17
         int lastUnderscore = name.LastIndexOf('_');
         if (lastUnderscore >= 0 && lastUnderscore < name.Length - 1)
         {
@@ -139,10 +249,6 @@ public static class SplitModelAnimationSetLoader
         return fallbackIndex;
     }
 
-    /// <summary>
-    /// Sun/Moon overworld character animation slots (GARC a/2/0/0).
-    /// Slot numbers are sparse — not all characters have all slots.
-    /// </summary>
     private static string? MapOverworldSlot(int slot) => slot switch
     {
         0   => "Idle",

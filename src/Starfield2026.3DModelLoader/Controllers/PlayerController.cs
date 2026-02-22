@@ -13,13 +13,13 @@ public class PlayerController
     public bool IsRunning { get; private set; }
     public bool IsGrounded { get; private set; } = true;
 
-    private float _walkSpeed = 12f;
-    private float _runSpeed = 22f;
+    private float _walkSpeed = 6f;
+    private float _runSpeed = 12f;
     private float _rotationSpeed = 3f;
     private float _worldHalfSize = 500f;
     private float _verticalVelocity;
     private float _gravity = 60f;
-    private float _jumpForce = 32f;
+    private float _jumpForce = 18f;
     private bool _runningToggled;
     private float _currentSpeed;
     private float _currentTurnSpeed;
