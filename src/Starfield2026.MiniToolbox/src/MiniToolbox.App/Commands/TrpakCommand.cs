@@ -734,10 +734,10 @@ public static class TrpakCommand
                 continue;
 
             var trmdlFiles = Directory.GetFiles(dir, "*.trmdl");
-            var trmshFiles = Directory.GetFiles(dir, "*.trmsh");
             var trmbfFiles = Directory.GetFiles(dir, "*.trmbf");
 
-            if (trmdlFiles.Length == 0 || trmshFiles.Length == 0 || trmbfFiles.Length == 0)
+            // Only require .trmdl + .trmbf — decoder will probe .bin files for hidden .trmsh
+            if (trmdlFiles.Length == 0 || trmbfFiles.Length == 0)
                 continue;
 
             // Pick the largest .trmdl as the primary (skip tiny fallback files)
