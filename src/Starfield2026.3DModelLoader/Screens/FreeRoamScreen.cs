@@ -1,12 +1,13 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Starfield2026.ModelLoader.Animations;
 using Starfield2026.ModelLoader.Controllers;
+using Starfield2026.ModelLoader.Helpers;
 using Starfield2026.ModelLoader.Input;
 using Starfield2026.ModelLoader.Rendering;
-using Starfield2026.ModelLoader.Skeletal;
-
 namespace Starfield2026.ModelLoader.Screens;
 
 public class FreeRoamScreen
@@ -16,6 +17,10 @@ public class FreeRoamScreen
     private CubeRenderer _cubeRenderer = null!;
     private OverworldCharacter? _character;
     private PlayerController _player = new();
+
+    public AnimationLoadMode LoadMode { get; set; } = AnimationLoadMode.FillMissing;
+    public HashSet<string> FillTags { get; set; } = new() { "Jump", "Land" };
+    public Dictionary<string, string> SharedAnimationFolders { get; set; } = new();
 
     // Camera state
     private float _camYaw;
@@ -70,19 +75,25 @@ public class FreeRoamScreen
     {
         try
         {
-            ModelLoaderLog.Info($"[FreeRoam] LoadCharacter: {folderPath}");
-            _character?.Dispose();
-            _character = new OverworldCharacter();
-            _character.Load(_device, folderPath);
-            StatusText = $"Loaded: {System.IO.Path.GetFileName(folderPath)}";
-            ModelLoaderLog.Info($"[FreeRoam] Character loaded successfully: {StatusText}");
+            var animSet = AnimationSetLoader.Load(
+                folderPath,
+                resolveSharedFolder: (path, skel) =>
+                    TrainerGender.IsTrainerFolder(path)
+                        ? SharedAnimationResolver.Resolve(path, skel, SharedAnimationFolders)
+                        : null,
+                loadMode: LoadMode,
+                fillTags: FillTags);
+
+            _character ??= new OverworldCharacter();
+            _character.Load(_device, animSet);
+            StatusText = $"Loaded: {System.IO.Path.GetFileName(folderPath)} ({animSet.ClipsByTag.Count} tags)";
         }
         catch (Exception ex)
         {
+            ModelLoaderLog.Info($"[FreeRoam] Failed to load character: {ex.Message}");
             _character?.Dispose();
             _character = null;
-            StatusText = $"Load failed: {ex.Message}";
-            ModelLoaderLog.Error($"[FreeRoam] Character load failed: {folderPath}", ex);
+            StatusText = $"Failed: {System.IO.Path.GetFileName(folderPath)}";
         }
     }
 
@@ -166,7 +177,8 @@ public class FreeRoamScreen
         }
         else
         {
-            _cubeRenderer.Draw(device, _view, _projection, pos, yaw, 1.5f, new Color(0, 220, 255));
+            var cubePos = new Vector3(pos.X, pos.Y + 0.75f, pos.Z);
+            _cubeRenderer.Draw(device, _view, _projection, cubePos, yaw, 1.5f, new Color(0, 220, 255));
         }
     }
 }

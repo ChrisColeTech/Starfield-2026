@@ -92,14 +92,14 @@ The `animationEditorStore.ts` `OVERWORLD_SLOT_MAP` was synced from 4 entries to 
 
 ```bash
 # Option A: Using the TS CLI (extract-garc.ts)
-cd D:\Projects\PokemonGreen\src\PokemonGreen.BgEditor\backend
+cd D:\Projects\Starfield2026\src\Starfield2026.BgEditor\backend
 npx tsx test/extract-garc.ts \
   <path-to-garc> \
-  D:\Projects\PokemonGreen\src\PokemonGreen.Assets\Pokemon3D\characters\overworld \
+  D:\Projects\Starfield2026\src\Starfield2026.Assets\Pokemon3D\characters\overworld \
   --split-model-anims
 
 # Option B: Using OhanaCli (C#)
-cd D:\Projects\PokemonGreen\src\PokemonGreen.OhanaCli
+cd D:\Projects\Starfield2026\src\Starfield2026.OhanaCli
 dotnet run --project src/OhanaCli.App -- <path-to-bch> --split-model-anims -o <output-dir>
 ```
 
@@ -116,11 +116,11 @@ Open any `manifest.json` and confirm:
 
 ```bash
 # Terminal 1
-cd D:\Projects\PokemonGreen\src\PokemonGreen.BgEditor\backend
+cd D:\Projects\Starfield2026\src\Starfield2026.BgEditor\backend
 npm install && npm run dev
 
 # Terminal 2
-cd D:\Projects\PokemonGreen\src\PokemonGreen.BgEditor\frontend
+cd D:\Projects\Starfield2026\src\Starfield2026.BgEditor\frontend
 npm install && npm run dev
 ```
 
@@ -136,7 +136,7 @@ npm install && npm run dev
 ### Step 4: Build and run the 3D POC
 
 ```bash
-dotnet run --project src/PokemonGreen.3D/PokemonGreen.3D.csproj
+dotnet run --project src/Starfield2026.3D/Starfield2026.3D.csproj
 ```
 
 1. Character renders on grid — should play Idle animation
@@ -162,7 +162,7 @@ If a clip plays correctly in BgEditor but not in the 3D POC, check:
 ### BgEditor Backend (Fastify, port 3001)
 
 ```bash
-cd src/PokemonGreen.BgEditor/backend
+cd src/Starfield2026.BgEditor/backend
 npm run dev
 ```
 
@@ -176,7 +176,7 @@ npm run dev
 
 Test the manifest read endpoint:
 ```bash
-curl "http://localhost:3001/api/manifests/read?dir=D:/Projects/PokemonGreen/src/PokemonGreen.Assets/Pokemon3D/characters/overworld/tr0001_00"
+curl "http://localhost:3001/api/manifests/read?dir=D:/Projects/Starfield2026/src/Starfield2026.Assets/Pokemon3D/characters/overworld/tr0001_00"
 ```
 
 Test the manifest save endpoint:
@@ -189,7 +189,7 @@ curl -X POST http://localhost:3001/api/manifests/save \
 ### BgEditor Frontend (Vite, port 5173)
 
 ```bash
-cd src/PokemonGreen.BgEditor/frontend
+cd src/Starfield2026.BgEditor/frontend
 npm run dev
 ```
 

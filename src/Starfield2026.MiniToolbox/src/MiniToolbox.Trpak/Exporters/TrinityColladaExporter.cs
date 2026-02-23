@@ -434,8 +434,17 @@ namespace MiniToolbox.Trpak.Exporters
             if (_data.Materials == null) return null;
             foreach (var mat in _data.Materials)
             {
-                if (string.Equals(mat.Name, materialName, StringComparison.OrdinalIgnoreCase) && mat.Textures.Count > 0)
-                    return mat.Textures[0].FilePath;
+                if (!string.Equals(mat.Name, materialName, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (mat.Textures.Count == 0) return null;
+
+                // Prefer BaseColorMap (albedo) over other texture types
+                var albedo = mat.Textures.FirstOrDefault(t =>
+                    string.Equals(t.Name, "BaseColorMap", StringComparison.OrdinalIgnoreCase));
+                if (albedo != null) return albedo.FilePath;
+
+                // Fall back to first texture
+                return mat.Textures[0].FilePath;
             }
             return null;
         }

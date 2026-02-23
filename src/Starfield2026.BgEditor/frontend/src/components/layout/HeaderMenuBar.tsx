@@ -11,7 +11,9 @@ export function HeaderMenuBar({ menus }: HeaderMenuBarProps) {
         <>
             {menus.map((menu) => (
                 <Menu as="div" key={menu.label} className="relative" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                    <MenuButton className="h-[30px] px-[10px] bg-transparent border-none text-text cursor-pointer hover:bg-hover text-[13px] focus:outline-none data-[open]:bg-[#2d2d2d]">
+                    <MenuButton
+                        className={`h-[30px] px-[10px] bg-transparent border-none cursor-pointer text-[13px] focus:outline-none hover:bg-hover data-[open]:bg-[#2d2d2d] ${menu.active ? 'text-text' : 'text-text-secondary'}`}
+                    >
                         {menu.label}
                     </MenuButton>
 

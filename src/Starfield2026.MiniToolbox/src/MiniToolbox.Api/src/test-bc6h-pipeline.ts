@@ -14,7 +14,7 @@ import { BntxDecoder, BntxFormat } from './lib/Texture/index.js';
 import { initDirectXTexBridge } from './lib/Bridge/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const outDir = 'D:\\Projects\\PokemonGreen\\src\\PokemonGreen.Tests\\test-textures\\format-investigation';
+const outDir = 'D:\\Projects\\Starfield2026\\src\\Starfield2026.Tests\\test-textures\\format-investigation';
 fs.mkdirSync(outDir, { recursive: true });
 
 console.log('=== BC6H Pipeline Integration Test ===\n');

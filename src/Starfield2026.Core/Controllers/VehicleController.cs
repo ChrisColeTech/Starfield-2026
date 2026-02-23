@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Starfield2026.Core.Input;
+using Starfield2026.Core.Systems;
 
 namespace Starfield2026.Core.Controllers;
 
@@ -10,7 +11,8 @@ public class VehicleController
     public float Speed { get; private set; }
     public bool IsMoving => Math.Abs(Speed) > 1f;
     public bool IsTurbo { get; private set; }
-    public bool HasBoost { get; private set; }
+    public bool HasBoost => Boosts?.IsActive ?? _boostTimer > 0;
+    public BoostSystem? Boosts { get; set; }
     public Vector3 Forward => new((float)Math.Sin(Yaw), 0, (float)Math.Cos(Yaw));
     public Vector3 RumbleOffset { get; private set; }
     
@@ -36,13 +38,16 @@ public class VehicleController
         Speed = 0f;
         _targetSpeed = 0f;
         _cruiseActive = false;
-        HasBoost = false;
         _boostTimer = 0f;
     }
     
     public void ActivateBoost(float duration = 5f)
     {
-        HasBoost = true;
+        if (Boosts != null)
+        {
+            Boosts.ActivateBoost();
+            return;
+        }
         _boostTimer = duration;
     }
     
@@ -64,14 +69,14 @@ public class VehicleController
     
     private void HandleBoost(float dt)
     {
+        // When BoostSystem is wired, it manages the timer centrally
+        if (Boosts != null) return;
+
         if (_boostTimer > 0)
         {
             _boostTimer -= dt;
             if (_boostTimer <= 0)
-            {
-                HasBoost = false;
                 _boostTimer = 0;
-            }
         }
     }
     

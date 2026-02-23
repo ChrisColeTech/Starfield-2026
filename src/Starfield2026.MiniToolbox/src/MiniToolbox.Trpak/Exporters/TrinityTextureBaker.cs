@@ -45,13 +45,97 @@ public static class TrinityTextureBaker
     }
 
     /// <summary>
+    /// For albedo textures shared by multiple layered materials with DIFFERENT BaseColorLayer
+    /// values, pick the best representative material to bake with. Returns a map of
+    /// albedoFileName → chosen material name. Materials not in this map either aren't shared
+    /// or all agree on colors (any material can bake). Materials in the map should only bake
+    /// if they are the chosen representative.
+    /// </summary>
+    public static Dictionary<string, string> FindSharedAlbedoRepresentatives(IReadOnlyList<TrinityMaterial> materials)
+    {
+        // Group materials by their albedo texture filename
+        var groups = new Dictionary<string, List<TrinityMaterial>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var mat in materials)
+        {
+            if (!NeedsLayerBaking(mat)) continue;
+            string albFileName = GetAlbedoFileName(mat);
+            if (!groups.TryGetValue(albFileName, out var list))
+            {
+                list = new List<TrinityMaterial>();
+                groups[albFileName] = list;
+            }
+            list.Add(mat);
+        }
+
+        var representatives = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (name, mats) in groups)
+        {
+            if (mats.Count <= 1) continue;
+
+            // Check if all materials in this group have the same BaseColorLayer values
+            bool hasConflict = false;
+            var refColors = ExtractBaseColors(mats[0]);
+            for (int m = 1; m < mats.Count; m++)
+            {
+                var colors = ExtractBaseColors(mats[m]);
+                for (int i = 0; i < 4; i++)
+                {
+                    if (Vector3.DistanceSquared(refColors[i], colors[i]) > 0.001f)
+                    {
+                        hasConflict = true;
+                        goto doneChecking;
+                    }
+                }
+            }
+            doneChecking:
+
+            if (!hasConflict) continue;
+
+            // Pick the material with the most color energy (highest sum of color magnitudes).
+            // This avoids picking a material with all-black layers (the pm1106 bug).
+            TrinityMaterial best = mats[0];
+            float bestEnergy = ColorEnergy(ExtractBaseColors(mats[0]));
+            for (int m = 1; m < mats.Count; m++)
+            {
+                float energy = ColorEnergy(ExtractBaseColors(mats[m]));
+                if (energy > bestEnergy)
+                {
+                    bestEnergy = energy;
+                    best = mats[m];
+                }
+            }
+            representatives[name] = best.Name;
+        }
+        return representatives;
+    }
+
+    private static float ColorEnergy(Vector3[] colors)
+    {
+        float sum = 0;
+        foreach (var c in colors)
+            sum += c.LengthSquared();
+        return sum;
+    }
+
+    /// <summary>
     /// Bake the layered material's albedo from LayerMaskMap + color parameters.
     /// Overwrites the existing BaseColorMap PNG with the composited result.
     /// Returns the path to the baked texture, or null if baking fails.
     /// </summary>
-    public static string? BakeLayeredTexture(TrinityMaterial material, string tempRoot, string texOutDir)
+    public static string? BakeLayeredTexture(TrinityMaterial material, string tempRoot, string texOutDir,
+        Dictionary<string, string>? sharedAlbedoReps = null)
     {
         if (!NeedsLayerBaking(material)) return null;
+
+        // When multiple materials share the same albedo with different layer colors,
+        // only the chosen representative (most colorful) should bake.
+        string albFileName = GetAlbedoFileName(material);
+        if (sharedAlbedoReps != null && sharedAlbedoReps.TryGetValue(albFileName, out var repName))
+        {
+            if (!string.Equals(material.Name, repName, StringComparison.OrdinalIgnoreCase))
+                return null; // Not the chosen representative — skip silently
+            Console.WriteLine($"  Layer bake: {albFileName} using representative material {repName} [{material.ShaderName}]");
+        }
 
         // Find the LayerMaskMap texture
         var lymRef = material.Textures.FirstOrDefault(t =>
@@ -124,7 +208,6 @@ public static class TrinityTextureBaker
         maskImage.Dispose();
 
         // Save the baked texture — but only overwrite if existing albedo is a blank placeholder
-        string albFileName = GetAlbedoFileName(material);
         string outPath = Path.Combine(texOutDir, albFileName);
 
         if (File.Exists(outPath) && !IsBlankAlbedo(outPath))
@@ -188,7 +271,7 @@ public static class TrinityTextureBaker
         return intensities;
     }
 
-    private static string GetAlbedoFileName(TrinityMaterial material)
+    internal static string GetAlbedoFileName(TrinityMaterial material)
     {
         // Try to find the BaseColorMap texture reference
         var albRef = material.Textures.FirstOrDefault(t =>
@@ -218,7 +301,8 @@ public static class TrinityTextureBaker
             int stepX = Math.Max(1, w / 8);
             int stepY = Math.Max(1, h / 8);
             int totalSampled = 0;
-            int whiteSampled = 0;
+
+            float totalLuminance = 0;
 
             for (int y = 0; y < h; y += stepY)
             {
@@ -226,14 +310,15 @@ public static class TrinityTextureBaker
                 {
                     var px = img[x, y];
                     totalSampled++;
-                    // Consider "white" if all channels >= 250
-                    if (px.R >= 250 && px.G >= 250 && px.B >= 250)
-                        whiteSampled++;
+                    // Luminance (perceptual)
+                    totalLuminance += (px.R * 0.299f + px.G * 0.587f + px.B * 0.114f) / 255f;
                 }
             }
 
-            // If >90% of sampled pixels are white, it's a blank placeholder
-            return totalSampled > 0 && (float)whiteSampled / totalSampled > 0.9f;
+            // Average luminance > 0.85 means the texture is effectively a white/near-white placeholder
+            // (real textured albedos like skin, clothing, fire have much lower average luminance)
+            float avgLuminance = totalSampled > 0 ? totalLuminance / totalSampled : 1f;
+            return avgLuminance > 0.85f;
         }
         catch
         {

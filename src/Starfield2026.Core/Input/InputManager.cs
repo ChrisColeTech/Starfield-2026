@@ -65,6 +65,7 @@ public class InputManager
             JumpHeld = _keyboard.IsKeyDown(Keys.Space) || _keyboard.IsKeyDown(Keys.C) || _keyboard.IsKeyDown(Keys.LeftAlt) || _keyboard.IsKeyDown(Keys.RightAlt),
             JumpPressed = IsJustPressed(Keys.Space) || IsJustPressed(Keys.C) || IsJustPressed(Keys.LeftAlt) || IsJustPressed(Keys.RightAlt),
             FireHeld = _keyboard.IsKeyDown(Keys.Space),
+            FireAltHeld = _keyboard.IsKeyDown(Keys.X),
             ConfirmPressed = IsJustPressed(Keys.Enter),
             CancelPressed = IsJustPressed(Keys.Escape) || IsJustPressed(Keys.Back),
             PausePressed = IsJustPressed(Keys.Tab),

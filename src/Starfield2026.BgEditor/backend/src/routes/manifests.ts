@@ -12,6 +12,7 @@ interface Manifest {
   modelFile: string
   modelFormat: string
   textures: string[]
+  clipCount: number
   mtlFile?: string
 }
 
@@ -124,7 +125,18 @@ function collectManifests(folderPath: string): Manifest[] {
   for (const mf of manifestFiles) {
     try {
       const content = fs.readFileSync(path.join(folderPath, mf), 'utf-8')
-      manifests.push(JSON.parse(content))
+      const parsed = JSON.parse(content)
+      // Always use the actual folder path, not the stale dir from inside the manifest
+      parsed.dir = folderPath.replace(/\\/g, '/')
+      // Count clips from both flat and nested manifest formats
+      let clipCount = 0
+      if (Array.isArray(parsed.clips)) {
+        clipCount = parsed.clips.length
+      } else if (Array.isArray(parsed.models)) {
+        clipCount = parsed.models.reduce((sum: number, m: any) => sum + (Array.isArray(m.clips) ? m.clips.length : 0), 0)
+      }
+      parsed.clipCount = clipCount
+      manifests.push(parsed)
     } catch { /* skip malformed */ }
   }
 
@@ -142,7 +154,7 @@ function collectManifests(folderPath: string): Manifest[] {
 export default async function manifestRoutes(app: FastifyInstance, opts: { assetsDir: string }) {
   const { assetsDir } = opts
 
-  // Read a raw manifest.json from a folder path
+  // Read a raw manifest.json from a folder path — normalizes to consistent models[] format
   app.get<{ Querystring: { dir: string } }>('/api/manifests/read', async (request, reply) => {
     const dir = request.query.dir
     if (!dir) {
@@ -156,7 +168,45 @@ export default async function manifestRoutes(app: FastifyInstance, opts: { asset
     }
     try {
       const content = fs.readFileSync(manifestPath, 'utf-8')
-      return JSON.parse(content)
+      const parsed = JSON.parse(content)
+
+      // Normalize clips array — ensure each clip has id, sourceName fields
+      const normalizeClips = (clips: any[]) => clips.map((c: any, i: number) => ({
+        index: c.index ?? i,
+        id: c.id || c.name || `clip_${String(i).padStart(3, '0')}`,
+        name: c.name || c.id || `clip_${i}`,
+        sourceName: c.sourceName || c.name || '',
+        semanticName: c.semanticName || null,
+        semanticSource: c.semanticSource || null,
+        file: c.file || '',
+        frameCount: c.frameCount || 0,
+        fps: c.fps || 30,
+      }))
+
+      if (parsed.models && Array.isArray(parsed.models)) {
+        // Models exist — normalize each model entry
+        const rootClips = Array.isArray(parsed.clips) ? parsed.clips : []
+        parsed.models = parsed.models.map((m: any) => ({
+          name: m.name || '',
+          // Support both "file" and "modelFile" keys
+          modelFile: m.modelFile || m.file || parsed.modelFile || 'model.dae',
+          // Clips may be on the model or at root level
+          clips: normalizeClips(m.clips || rootClips),
+          meshCount: m.meshCount,
+          boneCount: m.boneCount,
+        }))
+      } else if (parsed.modelFile) {
+        // Flat format — no models array, just modelFile + clips at root
+        const modelName = parsed.modelFile.replace(/\.[^.]+$/, '')
+        parsed.models = [{
+          name: modelName,
+          modelFile: parsed.modelFile,
+          clips: normalizeClips(parsed.clips || []),
+        }]
+      }
+
+      if (!parsed.mode) parsed.mode = 'split-model-anims'
+      return parsed
     } catch (err) {
       reply.code(500)
       return { error: `Failed to read manifest: ${err}` }
@@ -217,4 +267,67 @@ export default async function manifestRoutes(app: FastifyInstance, opts: { asset
     }
     return collectManifests(dir)
   })
+
+  // Bake a clip's animations into the model DAE and return the merged XML
+  app.get<{ Querystring: { dir: string; clip: string; model?: string } }>(
+    '/api/clips/bake',
+    async (request, reply) => {
+      const { dir, clip, model } = request.query
+      if (!dir || !clip) {
+        reply.code(400)
+        return { error: 'Missing "dir" and/or "clip" query parameters' }
+      }
+
+      const modelFile = model || 'model.dae'
+      const modelPath = path.join(dir, modelFile)
+      const clipPath = path.join(dir, clip)
+
+      if (!fs.existsSync(modelPath)) {
+        reply.code(404)
+        return { error: `Model not found: ${modelFile}` }
+      }
+      if (!fs.existsSync(clipPath)) {
+        reply.code(404)
+        return { error: `Clip not found: ${clip}` }
+      }
+
+      try {
+        const modelXml = fs.readFileSync(modelPath, 'utf-8')
+        const clipXml = fs.readFileSync(clipPath, 'utf-8')
+
+        // Extract <library_animations> ... </library_animations> from clip
+        const animStart = clipXml.indexOf('<library_animations')
+        const animEnd = clipXml.indexOf('</library_animations>')
+        if (animStart < 0 || animEnd < 0) {
+          reply.code(422)
+          return { error: 'Clip DAE has no <library_animations>' }
+        }
+        const animBlock = clipXml.substring(animStart, animEnd + '</library_animations>'.length)
+
+        // Remove any existing <library_animations> from model
+        let merged = modelXml
+        const existingStart = merged.indexOf('<library_animations')
+        if (existingStart >= 0) {
+          const existingEnd = merged.indexOf('</library_animations>', existingStart)
+          if (existingEnd >= 0) {
+            merged = merged.substring(0, existingStart) +
+              merged.substring(existingEnd + '</library_animations>'.length)
+          }
+        }
+
+        // Insert clip animations before </COLLADA>
+        const insertIdx = merged.lastIndexOf('</COLLADA>')
+        if (insertIdx < 0) {
+          reply.code(422)
+          return { error: 'Model DAE missing </COLLADA> tag' }
+        }
+        merged = merged.substring(0, insertIdx) + '\n' + animBlock + '\n' + merged.substring(insertIdx)
+
+        reply.type('application/xml').send(merged)
+      } catch (err) {
+        reply.code(500)
+        return { error: `Bake failed: ${err}` }
+      }
+    },
+  )
 }

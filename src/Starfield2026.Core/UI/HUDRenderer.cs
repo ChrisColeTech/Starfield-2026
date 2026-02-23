@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Starfield2026.Core.Rendering;
@@ -19,7 +20,7 @@ public class HUDRenderer
         _font = new PixelFont(spriteBatch, pixel);
     }
 
-    public void Draw(GraphicsDevice device, GameState state, AmmoSystem? ammo, BoostSystem? boosts, string? activeScreenType, float? speed = null, int overworldBoosts = 0, Vector3? playerWorldPos = null, float playerYaw = 0f)
+    public void Draw(GraphicsDevice device, GameState state, AmmoSystem? ammo, BoostSystem? boosts, string? activeScreenType, float? speed = null, int overworldBoosts = 0, Vector3? playerWorldPos = null, float playerYaw = 0f, List<Vector3>? enemyPositions = null, float? fuelPercent = null, bool fuelOverheated = false)
     {
         int screenW = device.Viewport.Width;
         int screenH = device.Viewport.Height;
@@ -85,17 +86,22 @@ public class HUDRenderer
         // ═══════════════════════════════════════════════
         bool noAmmoScreen = activeScreenType == "overworld" || activeScreenType == "freeroam";
         bool hasAmmo = ammo != null && !noAmmoScreen;
-        bool hasBoosts = (boosts != null && !noAmmoScreen) || (activeScreenType == "overworld" && overworldBoosts > 0);
-        bool hasSpeed = (activeScreenType == "driving" || activeScreenType == "space") && speed.HasValue;
+        bool hasBoosts = boosts != null && (boosts.BoostCount > 0 || boosts.IsActive);
+        bool hasSpeed = (activeScreenType == "driving" || activeScreenType == "space" || activeScreenType == "floaty") && speed.HasValue;
+        bool hasFuel = fuelPercent.HasValue;
 
         int leftLineCount = 0;
         if (hasAmmo) leftLineCount++;
         if (hasBoosts) leftLineCount++;
 
-        if (leftLineCount > 0)
+        if (leftLineCount > 0 || hasFuel)
         {
             int leftPanelW = barW + pad * 2;
-            int leftPanelH = pad + lineH * leftLineCount + lineGap * Math.Max(0, leftLineCount - 1) + pad;
+            int boostRowH = hasBoosts ? (lineH + lineGap + barH) : 0;
+            int ammoRowH = hasAmmo ? lineH : 0;
+            int fuelRowH = hasFuel ? (lineGap + lineH + lineGap + barH) : 0;
+            int totalRowH = ammoRowH + boostRowH + (hasAmmo && hasBoosts ? lineGap : 0) + fuelRowH;
+            int leftPanelH = pad + totalRowH + pad;
             int leftPanelX = margin;
             int leftPanelY = margin;
             var leftPanel = new Rectangle(leftPanelX, leftPanelY, leftPanelW, leftPanelH);
@@ -115,25 +121,76 @@ public class HUDRenderer
                 ly += lineH + lineGap;
             }
 
-            if (hasBoosts)
+            if (hasBoosts && boosts != null)
             {
-                int boostCount = activeScreenType == "overworld" ? overworldBoosts : boosts?.BoostCount ?? 0;
+                int boostCount = boosts.BoostCount + (boosts.IsActive ? 1 : 0);
                 string boostText = $"Boosts: {boostCount}";
                 UIDraw.ShadowedText(_spriteBatch, _font, boostText,
                     new Vector2(leftPanelX + pad, ly), UITheme.PurpleAccent, UITheme.TextShadow);
+                ly += lineH + lineGap;
+                BoostBar.Draw(_spriteBatch, _pixel,
+                    new Rectangle(leftPanelX + pad, ly, barW, barH),
+                    boosts.BoostCount, boosts.IsActive, boosts.ActivePercent);
+                ly += barH;
+            }
+
+            if (hasFuel)
+            {
+                ly += lineGap;
+                var fuelColor = fuelOverheated ? Color.Red : new Color(60, 160, 255);
+                string fuelText = fuelOverheated ? "COOLDOWN" : "Fuel";
+                UIDraw.ShadowedText(_spriteBatch, _font, fuelText,
+                    new Vector2(leftPanelX + pad, ly), fuelColor, UITheme.TextShadow);
+                ly += lineH + lineGap;
+
+                // Background
+                var fuelBarRect = new Rectangle(leftPanelX + pad, ly, barW, barH);
+                _spriteBatch.Draw(_pixel, fuelBarRect, new Color(20, 30, 50));
+                // Fill
+                int fillW = (int)(barW * fuelPercent!.Value);
+                if (fillW > 0)
+                {
+                    var fillColor = fuelOverheated ? new Color(200, 50, 50) : new Color(60, 160, 255);
+                    _spriteBatch.Draw(_pixel, new Rectangle(fuelBarRect.X, fuelBarRect.Y, fillW, barH), fillColor);
+                }
             }
         }
 
         // ═══════════════════════════════════════════════
-        //  SPEED — bottom-left panel
+        //  SPEED / ALTIMETER — bottom-right panel
         // ═══════════════════════════════════════════════
-        if (hasSpeed)
+        bool isFloaty = activeScreenType == "floaty";
+        if (isFloaty && hasSpeed && playerWorldPos.HasValue)
         {
+            // Combined panel with both speed and altitude
+            string speedText = $"{(int)Math.Abs(speed!.Value)} mph";
+            string altText = $"{(int)playerWorldPos.Value.Y} ft";
+            int speedTextW = _font.MeasureWidth(speedText);
+            int altTextW = _font.MeasureWidth(altText);
+            int maxTextW = Math.Max(speedTextW, altTextW);
+            int combPanelW = maxTextW + pad * 2;
+            int combPanelH = lineH * 2 + lineGap + pad * 2;
+            int combPanelX = screenW - combPanelW - margin;
+            int combPanelY = screenH - combPanelH - margin;
+            var combPanel = new Rectangle(combPanelX, combPanelY, combPanelW, combPanelH);
+
+            UIDraw.ShadowedPanel(_spriteBatch, _pixel, combPanel, radius,
+                UITheme.SlatePanelBg, shadowOff, Color.Black * 0.3f);
+            UIDraw.ShadowedText(_spriteBatch, _font, speedText,
+                new Vector2(combPanel.Right - pad - speedTextW, combPanelY + pad),
+                UITheme.TextPrimary, UITheme.TextShadow);
+            UIDraw.ShadowedText(_spriteBatch, _font, altText,
+                new Vector2(combPanel.Right - pad - altTextW, combPanelY + pad + lineH + lineGap),
+                UITheme.TextSecondary, UITheme.TextShadow);
+        }
+        else if (hasSpeed)
+        {
+            // Speed-only panel for driving/space
             string speedText = $"{(int)Math.Abs(speed!.Value)} mph";
             int speedTextW = _font.MeasureWidth(speedText);
             int speedPanelW = speedTextW + pad * 2;
             int speedPanelH = lineH + pad * 2;
-            int speedPanelX = margin;
+            int speedPanelX = screenW - speedPanelW - margin;
             int speedPanelY = screenH - speedPanelH - margin;
             var speedPanel = new Rectangle(speedPanelX, speedPanelY, speedPanelW, speedPanelH);
 
@@ -144,10 +201,10 @@ public class HUDRenderer
         }
 
         // ═══════════════════════════════════════════════
-        //  MINIMAP — bottom-left circle (freeroam & overworld)
+        //  MINIMAP — bottom-left circle (all screens)
         //  Rotates with player yaw, north indicator
         // ═══════════════════════════════════════════════
-        if ((activeScreenType == "freeroam" || activeScreenType == "overworld") && playerWorldPos.HasValue)
+        if (playerWorldPos.HasValue)
         {
             int mapDiameter = Math.Max(80, 120 * screenW / 800);
             int mapRadius = mapDiameter / 2;
@@ -165,25 +222,37 @@ public class HUDRenderer
             // Draw quadrant fills rotated by player yaw
             // For each pixel in the circle, rotate by -yaw to get world direction,
             // then color by which quadrant that world position falls in
-            float worldHalf = 500f;
-            // Player forward = (Sin(yaw), 0, Cos(yaw)), +Z = south, -Z = north
-            // We want minimap "up" = player forward, so rotate screen coords by yaw
+            // Minimap view radius in world units — how much world area the minimap shows
+            float mapViewRadius = 500f;
+            float playerX = playerWorldPos.Value.X;
+            float playerZ = playerWorldPos.Value.Z;
+
             float sinYaw = (float)Math.Sin(playerYaw);
             float cosYaw = (float)Math.Cos(playerYaw);
 
-            // Player normalized position (0..1 range)
-            float pnx = (playerWorldPos.Value.X + worldHalf) / (worldHalf * 2f);
-            float pnz = (playerWorldPos.Value.Z + worldHalf) / (worldHalf * 2f);
-
-            bool isFreeroam = activeScreenType == "freeroam";
-            var nwColor = isFreeroam ? new Color(40, 200, 80, 150) : new Color(0, 180, 220, 150);
-            var neColor = isFreeroam ? new Color(60, 140, 220, 150) : new Color(0, 180, 220, 150);
-            var swColor = isFreeroam ? new Color(220, 180, 40, 150) : new Color(0, 180, 220, 150);
-            var seColor = isFreeroam ? new Color(160, 60, 200, 150) : new Color(0, 180, 220, 150);
+            bool useQuadrants = activeScreenType == "floaty" || activeScreenType == "freeroam";
+            Color nwColor, neColor, swColor, seColor;
+            if (useQuadrants)
+            {
+                nwColor = new Color(40, 200, 80, 150);
+                neColor = new Color(60, 140, 220, 150);
+                swColor = new Color(220, 180, 40, 150);
+                seColor = new Color(160, 60, 200, 150);
+            }
+            else
+            {
+                Color gridColor = activeScreenType switch
+                {
+                    "driving" => new Color(80, 120, 80, 150),
+                    "space" => new Color(0, 140, 255, 150),
+                    "overworld" => new Color(40, 180, 80, 150),
+                    _ => new Color(0, 180, 220, 150),
+                };
+                nwColor = neColor = swColor = seColor = gridColor;
+            }
 
             for (int row = -mapRadius; row <= mapRadius; row++)
             {
-                // Find horizontal extent of circle at this row
                 int dx = (int)Math.Sqrt(mapRadius * mapRadius - row * row);
                 if (dx <= 0) continue;
 
@@ -191,34 +260,27 @@ public class HUDRenderer
                 int xStart = cx - dx;
                 int xEnd = cx + dx;
 
-                // Batch consecutive pixels of the same color into spans
                 Color? spanColor = null;
                 int spanStart = xStart;
 
                 for (int x = xStart; x <= xEnd; x++)
                 {
-                    // Pixel offset from center, normalized to -1..1
                     float lx = (float)(x - cx) / mapRadius;
                     float ly = (float)(y - cy) / mapRadius;
 
-                    // Rotate screen pixel into world space
-                    // Screen up (ly<0) → player forward (Sin(yaw), Cos(yaw))
-                    // Screen right (lx>0) → player right (-Cos(yaw), Sin(yaw))
-                    float wx = -(lx * cosYaw + ly * sinYaw);
-                    float wy = lx * sinYaw - ly * cosYaw;
+                    // Rotate screen pixel to world offset from player
+                    float wx = -(lx * cosYaw + ly * sinYaw) * mapViewRadius;
+                    float wz = (lx * sinYaw - ly * cosYaw) * mapViewRadius;
 
-                    // Map from minimap-space to world-space normalized coords
-                    // minimap center = player position in world
-                    float worldNx = pnx + wx * 0.5f;
-                    float worldNz = pnz + wy * 0.5f;
+                    // Actual world coordinates
+                    float worldX = playerX + wx;
+                    float worldZ = playerZ + wz;
 
                     Color c;
-                    if (worldNx < 0 || worldNx > 1 || worldNz < 0 || worldNz > 1)
-                        c = UITheme.SlatePanelBg;
-                    else if (worldNx < 0.5f)
-                        c = worldNz < 0.5f ? nwColor : swColor;
+                    if (worldX < 0)
+                        c = worldZ < 0 ? nwColor : swColor;
                     else
-                        c = worldNz < 0.5f ? neColor : seColor;
+                        c = worldZ < 0 ? neColor : seColor;
 
                     if (c != spanColor)
                     {
@@ -228,19 +290,17 @@ public class HUDRenderer
                         spanStart = x;
                     }
                 }
-                // Flush last span
                 if (spanColor.HasValue && xEnd >= spanStart)
                     _spriteBatch.Draw(_pixel, new Rectangle(spanStart, y, xEnd - spanStart + 1, 1), spanColor.Value);
             }
 
             // Quadrant divider lines — world X=0 and Z=0 axes, rotated by yaw
-            // Inverse transform (world→screen): lx = -wx*cos + wy*sin, ly = -wx*sin - wy*cos
             var lineColor = UITheme.TextSecondary * 0.5f;
-            // World center offset from player in minimap-normalized space
-            float centerOffX = (0.5f - pnx) / 0.5f;
-            float centerOffZ = (0.5f - pnz) / 0.5f;
-            float scx = -centerOffX * cosYaw + centerOffZ * sinYaw;
-            float scy = -centerOffX * sinYaw - centerOffZ * cosYaw;
+            // World origin offset from player in minimap-pixel space
+            float originOffX = -playerX / mapViewRadius;
+            float originOffZ = -playerZ / mapViewRadius;
+            float scx = -originOffX * cosYaw + originOffZ * sinYaw;
+            float scy = -originOffX * sinYaw - originOffZ * cosYaw;
             int worldCx = cx + (int)(scx * mapRadius);
             int worldCy = cy + (int)(scy * mapRadius);
             // World X axis on screen: direction = (-cos, -sin)
@@ -268,15 +328,38 @@ public class HUDRenderer
             int dotSize = Math.Max(3, 2 * scale);
             _spriteBatch.Draw(_pixel, new Rectangle(cx - dotSize / 2, cy - dotSize / 2, dotSize, dotSize), Color.White);
 
-            // North indicator — north = world (0, -1) in XZ
-            // Using inverse transform: screenX = -0*cos + (-1)*sin = -sin, screenY = -0*sin - (-1)*cos = cos
+            // Enemy red dots on minimap
+            if (enemyPositions != null)
+            {
+                int enemyDotSize = Math.Max(2, scale + 1);
+                foreach (var ePos in enemyPositions)
+                {
+                    float ex = (ePos.X - playerX) / mapViewRadius;
+                    float ez = (ePos.Z - playerZ) / mapViewRadius;
+                    // Rotate to screen space using same transform as minimap
+                    float sx = -(ex * cosYaw + ez * sinYaw);
+                    float sy = -(ex * sinYaw - ez * cosYaw);
+                    // Check if within circle
+                    if (sx * sx + sy * sy < 1f)
+                    {
+                        int epx = cx + (int)(sx * mapRadius);
+                        int epy = cy + (int)(sy * mapRadius);
+                        _spriteBatch.Draw(_pixel, new Rectangle(epx - enemyDotSize / 2, epy - enemyDotSize / 2, enemyDotSize, enemyDotSize), Color.Red);
+                    }
+                }
+            }
+
+            // North indicator "N" — north = world (0, -1) in XZ
             float nDirX = -sinYaw;
             float nDirY = cosYaw;
             int nLen = mapRadius - 4 * scale;
             int nx = cx + (int)(nDirX * nLen);
             int ny = cy + (int)(nDirY * nLen);
-            int nSize = Math.Max(3, 2 * scale);
-            _spriteBatch.Draw(_pixel, new Rectangle(nx - nSize / 2, ny - nSize / 2, nSize, nSize), new Color(255, 60, 60));
+            int savedScale = _font.Scale;
+            _font.Scale = Math.Max(1, scale - 1);
+            int nw = _font.MeasureWidth("N");
+            _font.Draw("N", nx - nw / 2, ny - _font.CharHeight / 2, new Color(255, 60, 60));
+            _font.Scale = savedScale;
         }
     }
 

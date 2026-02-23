@@ -97,7 +97,7 @@
 4. Select a different character, verify it loads without crash
 
 ### Phase 3: Fix Skeletal Geometry (See Doc 16, Strategy 1)
-1. The current `SkinnedDaeModel` already has the PokemonGreen-style per-mesh architecture (explicit geometry/skin pairing, per-mesh textures, face mesh depth handling)
+1. The current `SkinnedDaeModel` already has the Starfield2026-style per-mesh architecture (explicit geometry/skin pairing, per-mesh textures, face mesh depth handling)
 2. Verify that `ParseControllers()` matches each skin to its geometry via `<skin source="#geometry_id">`
 3. Test with a simple single-mesh model first, then multi-mesh
 4. If geometry looks correct in bind pose but wrong when animated, the issue is in `SkeletalAnimator.SkinPose` computation

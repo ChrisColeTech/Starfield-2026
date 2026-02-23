@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
-namespace Starfield2026.ModelLoader.Skeletal;
+namespace Starfield2026.ModelLoader.DTOs;
 
-public record SkeletonBone(int Index, string Name, string NodeId, int ParentIndex, Matrix BindLocalTransform);
-
-public class SkeletonRig
+public sealed class Skeleton
 {
-    public IReadOnlyList<SkeletonBone> Bones { get; }
+    public IReadOnlyList<Bone> Bones { get; }
     public Matrix[] BindLocalTransforms { get; }
     public Matrix[] BindWorldTransforms { get; }
     public Matrix[] InverseBindTransforms { get; }
@@ -16,7 +14,7 @@ public class SkeletonRig
     private readonly Dictionary<string, int> _nameToIndex = new();
     private readonly Dictionary<string, int> _nodeIdToIndex = new();
 
-    public SkeletonRig(List<SkeletonBone> bones)
+    public Skeleton(List<Bone> bones)
     {
         Bones = bones;
         int count = bones.Count;
@@ -27,12 +25,11 @@ public class SkeletonRig
         for (int i = 0; i < count; i++)
         {
             var bone = bones[i];
-            BindLocalTransforms[i] = bone.BindLocalTransform;
+            BindLocalTransforms[i] = bone.LocalTransform;
 
-            if (bone.ParentIndex < 0)
-                BindWorldTransforms[i] = bone.BindLocalTransform;
-            else
-                BindWorldTransforms[i] = bone.BindLocalTransform * BindWorldTransforms[bone.ParentIndex];
+            BindWorldTransforms[i] = bone.ParentIndex < 0
+                ? bone.LocalTransform
+                : bone.LocalTransform * BindWorldTransforms[bone.ParentIndex];
 
             Matrix.Invert(ref BindWorldTransforms[i], out InverseBindTransforms[i]);
 
@@ -43,18 +40,12 @@ public class SkeletonRig
 
     public bool TryGetBoneIndex(string name, out int index)
     {
-        if (_nameToIndex.TryGetValue(name, out index))
-            return true;
-        if (_nodeIdToIndex.TryGetValue(name, out index))
-            return true;
+        if (_nameToIndex.TryGetValue(name, out index)) return true;
+        if (_nodeIdToIndex.TryGetValue(name, out index)) return true;
         index = -1;
         return false;
     }
 
-    /// <summary>
-    /// Override inverse bind matrices with values from the COLLADA file.
-    /// These are authoritative and should replace the computed ones.
-    /// </summary>
     public void SetInverseBindMatrices(string[] jointNames, Matrix[] matrices)
     {
         for (int i = 0; i < jointNames.Length && i < matrices.Length; i++)

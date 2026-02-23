@@ -5,7 +5,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Starfield2026.Core.Controllers;
 using Starfield2026.Core.Input;
 using Starfield2026.Core.Rendering;
-using Starfield2026.ModelLoader.Skeletal;
+using Starfield2026.Core.Systems;
+using Starfield2026.Core.Systems.Coins;
 
 namespace Starfield2026.Core.Screens;
 
@@ -18,7 +19,10 @@ public class FreeRoamScreen : IGameScreen
     private GraphicsDevice _device = null!;
     private QuadrantGridRenderer _grid = null!;
     private CubeRenderer _cubeRenderer = null!;
-    private OverworldCharacter? _character;
+    private CoinCollectibleSystem _coinSystem = null!;
+    private ProjectileSystem _projectiles = null!;
+    // TODO: re-add when Skeletal rewrite is complete
+    // private OverworldCharacter? _character;
     private PlayerController _player = new();
 
     // ─── Own camera state ───────────────────────────────────────────
@@ -49,6 +53,10 @@ public class FreeRoamScreen : IGameScreen
     // ─── Public accessors ────────────────────────────────────────────
     public Vector3 Position => _player.Position;
     public float Yaw => _player.Yaw;
+    public AmmoSystem? Ammo { get; set; }
+    public EnemySystem? Enemies { get; set; }
+    public Color PlayerTint { get; set; } = new Color(0, 220, 255);
+    public CoinCollectibleSystem CoinSystem => _coinSystem;
 
     // ─── Status text ────────────────────────────────────────────────
     public string StatusText { get; private set; } = "No model loaded";
@@ -71,6 +79,17 @@ public class FreeRoamScreen : IGameScreen
         _player.Initialize(new Vector3(0, 0.825f, 0));
         _player.WorldHalfSize = 500f;
         _camTarget = _player.Position;
+
+        _coinSystem = new CoinCollectibleSystem { DriftSpeed = 0f };
+        _coinSystem.Initialize(device, new InfiniteRunnerCoinSpawner
+        {
+            SpawnInterval = 3f,
+            CorridorWidth = 20f,
+        });
+
+        _projectiles = new ProjectileSystem { FireRate = 0.15f };
+        _projectiles.Initialize(device);
+
     }
 
     public void SetPosition(Vector3 position)
@@ -82,41 +101,8 @@ public class FreeRoamScreen : IGameScreen
 
     public void LoadCharacter(string folderPath)
     {
-        // Clear stale log
-        string logPath = System.IO.Path.Combine(AppContext.BaseDirectory, "character_load.log");
-        try { System.IO.File.Delete(logPath); } catch { }
-
-        try
-        {
-            _character?.Dispose();
-            _character = new OverworldCharacter();
-            _character.Load(_device, folderPath);
-            StatusText = $"Loaded: {System.IO.Path.GetFileName(folderPath)}";
-
-            // Diagnostic: log mesh stats
-            var (positions, normals, texCoords, indices, skinWeightIndices) =
-                ColladaSkeletalLoader.LoadGeometry(
-                    System.IO.Path.Combine(folderPath, "model.dae"));
-            var (weights, jointNames, _) =
-                ColladaSkeletalLoader.LoadSkinWeights(
-                    System.IO.Path.Combine(folderPath, "model.dae"));
-            System.IO.File.WriteAllText(logPath,
-                $"Folder: {folderPath}\n" +
-                $"Deduped verts: {positions.Length}\n" +
-                $"Indices: {indices.Length} ({indices.Length / 3} tris)\n" +
-                $"Skin weights: {weights.Length}\n" +
-                $"Joint names: {jointNames.Length}\n" +
-                $"SkinWeightIndices: {skinWeightIndices.Length}\n" +
-                $"SkinWeightIdx range: {(skinWeightIndices.Length > 0 ? $"{skinWeightIndices.Min()}..{skinWeightIndices.Max()}" : "empty")}\n");
-        }
-        catch (Exception ex)
-        {
-            _character?.Dispose();
-            _character = null;
-            StatusText = $"Load failed: {ex.Message}";
-            System.Diagnostics.Debug.WriteLine($"[FreeRoam] Character load failed: {ex}");
-            System.IO.File.WriteAllText(logPath, $"Folder: {folderPath}\n\n{ex}");
-        }
+        // TODO: re-add when Skeletal rewrite is complete
+        StatusText = $"Loaded: {System.IO.Path.GetFileName(folderPath)}";
     }
 
     public void Update(GameTime gameTime, InputSnapshot input)
@@ -134,8 +120,27 @@ public class FreeRoamScreen : IGameScreen
         // ── Player movement (walk/run/jump, no hover) ──
         _player.Update(dt, input);
 
+        _coinSystem.Update(dt, _player.Position, 5f, _player.Speed);
+
+        // Shooting
+        if (input.FireHeld && Ammo != null && Ammo.CanFire(Ammo.SelectedType))
+        {
+            float yaw = _player.Yaw;
+            var forward = new Vector3((float)Math.Sin(yaw), 0, (float)Math.Cos(yaw));
+            if (_projectiles.TryFire(
+                _player.Position + forward * 2f,
+                forward * 80f,
+                Ammo.SelectedType))
+            {
+                Ammo.TryConsumeSelectedAmmo();
+            }
+        }
+        _projectiles.Update(dt);
+
+        Enemies?.Update(dt, _player.Position, _projectiles);
+
         // ── Update character animation ──
-        _character?.Update(dt, _player.IsMoving, _player.IsRunning, _player.IsGrounded);
+        // TODO: _character?.Update(dt, _player.IsMoving, _player.IsRunning, _player.IsGrounded);
 
         // ── Update camera ──
         UpdateCamera(dt);
@@ -190,6 +195,9 @@ public class FreeRoamScreen : IGameScreen
         device.BlendState = BlendState.AlphaBlend;
 
         _grid.Draw(device, _view, _projection);
+        _coinSystem.Draw(device, _view, _projection);
+        _projectiles.Draw(device, _view, _projection);
+        Enemies?.Draw(device, _view, _projection);
 
         var pos = _player.Position;
         float yaw = _player.Yaw;
@@ -200,18 +208,15 @@ public class FreeRoamScreen : IGameScreen
             yaw, new Vector3(1.5f, 0.05f, 1.5f), Color.Black * 0.4f);
 
         // Character or fallback cube
-        var drawPos = pos;
-
-        if (_character is { IsLoaded: true })
-        {
-            _character.Draw(device, _view, _projection, drawPos, yaw);
-        }
-        else
-        {
-            _cubeRenderer.Draw(device, _view, _projection, drawPos, yaw, 1.5f, new Color(0, 220, 255));
-        }
+        // TODO: re-add when Skeletal rewrite is complete
+        var cubePos = new Vector3(pos.X, pos.Y + 0.75f, pos.Z);
+        _cubeRenderer.Draw(device, _view, _projection, cubePos, yaw, 1.5f, PlayerTint);
     }
 
-    public void OnEnter() { }
+    public void OnEnter()
+    {
+        _projectiles.Clear();
+        Enemies?.Clear();
+    }
     public void OnExit() { }
 }

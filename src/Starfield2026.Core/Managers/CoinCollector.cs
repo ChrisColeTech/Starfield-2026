@@ -19,13 +19,9 @@ public class CoinCollector
     
     public void CollectFromScreen(IGameScreen screen)
     {
-        var (gold, red, blue, green) = screen switch
-        {
-            OverworldScreen overworld => overworld.CoinSystem.GetAndResetNewlyCollected(),
-            DrivingScreen driving => driving.CoinSystem.GetAndResetNewlyCollected(),
-            SpaceFlightScreen space => space.CoinSystem.GetAndResetNewlyCollected(),
-            _ => (0, 0, 0, 0)
-        };
+        var coins = screen.CoinSystem;
+        if (coins == null) return;
+        var (gold, red, blue, green) = coins.GetAndResetNewlyCollected();
         
         if (gold > 0 || red > 0 || blue > 0 || green > 0)
         {

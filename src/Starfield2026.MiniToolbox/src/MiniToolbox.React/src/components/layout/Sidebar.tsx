@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Clapperboard, FileOutput } from 'lucide-react';
 
 const navItems = [
-    { path: '/', label: 'Viewer', icon: Clapperboard },
+    { path: '/viewer', label: 'Viewer', icon: Clapperboard },
     { path: '/export', label: 'Export', icon: FileOutput },
 ] as const;
 
@@ -13,7 +13,7 @@ export function Sidebar() {
     return (
         <aside className="flex flex-col h-full w-[36px] bg-bg border-r border-border shrink-0">
             {navItems.map(({ path, label, icon: Icon }) => {
-                const active = location.pathname === path;
+                const active = location.pathname === path || location.pathname.startsWith(path + '/');
                 return (
                     <button
                         key={path}

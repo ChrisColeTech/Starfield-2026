@@ -1,10 +1,20 @@
 import { create } from 'zustand'
 import * as THREE from 'three'
 import type { SplitManifest } from '../types/animation'
-import { loadModelOnly, loadClipDae } from '../services/sceneService'
+import { loadModelOnly, loadBakedClip } from '../services/sceneService'
 import { useEditorStore } from './editorStore'
 
 const API_BASE = 'http://localhost:3001'
+
+interface ManifestListEntry {
+  name: string
+  dir: string
+  assetsPath: string
+  modelFile: string
+  modelFormat: string
+  textures: string[]
+  clipCount: number
+}
 
 interface AnimationEditorState {
   folderPath: string | null
@@ -21,7 +31,15 @@ interface AnimationEditorState {
   activeClipIndex: number
   clipLoading: boolean
 
+  // Scan browser state (persists across page nav)
+  scanDir: string
+  manifests: ManifestListEntry[]
+  scanning: boolean
+  selectedManifestIndex: number
+
   // Actions
+  scanFolder: (dir: string) => Promise<void>
+  selectManifest: (index: number) => void
   loadFolder: (dir: string) => Promise<void>
   selectClip: (index: number) => Promise<void>
   tagClip: (index: number, semanticName: string | null) => void
@@ -70,6 +88,30 @@ export const useAnimationEditorStore = create<AnimationEditorState>()((set, get)
   activeClipIndex: -1,
   clipLoading: false,
 
+  // Scan browser state
+  scanDir: '',
+  manifests: [],
+  scanning: false,
+  selectedManifestIndex: -1,
+
+  scanFolder: async (dir: string) => {
+    if (!dir.trim()) return
+    set({ scanning: true, scanDir: dir })
+    try {
+      const res = await fetch(`${API_BASE}/api/manifests?dir=${encodeURIComponent(dir)}`)
+      const data = await res.json()
+      set({ manifests: data, selectedManifestIndex: -1, scanning: false })
+    } catch {
+      set({ scanning: false })
+    }
+  },
+
+  selectManifest: (index: number) => {
+    const { manifests } = get()
+    set({ selectedManifestIndex: index })
+    const m = manifests[index]
+    if (m?.dir) get().loadFolder(m.dir)
+  },
   loadFolder: async (dir: string) => {
     set({ loading: true, error: null, folderPath: dir, dirty: false, activeClipIndex: -1 })
 
@@ -130,21 +172,25 @@ export const useAnimationEditorStore = create<AnimationEditorState>()((set, get)
 
     try {
       const clip = model.clips[index]
-      const editorScene = useEditorStore.getState().scene
-      if (!editorScene) return
+      console.log(`[AnimationEditor] Loading baked clip ${index}: "${clip.name}" file="${clip.file}"`)
 
-      const animations = await loadClipDae(folderPath, clip.file, editorScene)
+      // Fetch merged model+clip DAE from backend
+      const { scene, animations } = await loadBakedClip(folderPath, model.modelFile, clip.file)
 
-      // Push to editorStore for Viewport playback
+      // Push full scene + animations to editorStore
+      const editorStore = useEditorStore.getState()
+      editorStore.setAnimationPlaying(false)
       useEditorStore.setState({
+        scene,
         animations,
+        sceneName: model.name,
         activeClipIndex: 0,
         animationPlaying: true,
       })
 
       set({ clipLoading: false })
     } catch (err) {
-      console.warn('[AnimationEditor] Failed to load clip:', err)
+      console.warn('[AnimationEditor] Failed to load baked clip:', err)
       set({ clipLoading: false })
     }
   },

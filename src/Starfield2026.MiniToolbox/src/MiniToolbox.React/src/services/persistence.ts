@@ -26,7 +26,7 @@ const DEFAULTS: PersistedState = {
     maxModels: 0,
     exportMode: 'baked',
     sidebarCollapsed: false,
-    lastActivePage: '/export',
+    lastActivePage: '/viewer',
     viewerFolder: '',
     clipPanelOpen: true,
     propsPanelOpen: true,

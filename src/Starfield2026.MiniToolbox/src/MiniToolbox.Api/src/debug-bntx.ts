@@ -10,7 +10,7 @@ import sharp from 'sharp';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nugetDir = path.resolve(__dirname, '..', 'bin', 'Release', 'net8.0');
 
-const outDir = 'D:\\Projects\\PokemonGreen\\src\\PokemonGreen.Tests\\test-textures\\format-investigation';
+const outDir = 'D:\\Projects\\Starfield2026\\src\\Starfield2026.Tests\\test-textures\\format-investigation';
 fs.mkdirSync(outDir, { recursive: true });
 
 // CRITICAL: Add nuget output dir to PATH for native DLL resolution

@@ -19,6 +19,8 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
     private readonly TrpfsLoader _loader;
     private readonly ExtractionOptions _options;
     private readonly bool _splitMode;
+    private Dictionary<string, (ulong hash, string path)>? _filenameIndex;
+    private readonly object _filenameIndexLock = new();
 
     public TrpakFileGroupExtractor(TrpfsLoader loader, ExtractionOptions? options = null)
     {
@@ -110,6 +112,7 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
             }
 
             // Phase 5: Bake layered material textures
+            var sharedAlbedoReps = TrinityTextureBaker.FindSharedAlbedoRepresentatives(exportData.Materials);
             foreach (var mat in exportData.Materials)
             {
                 if (EyeTextureBaker.IsEyeMaterial(mat))
@@ -118,7 +121,7 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
                 }
                 else if (TrinityTextureBaker.NeedsLayerBaking(mat))
                 {
-                    TrinityTextureBaker.BakeLayeredTexture(mat, job.TempPath, texOutDir);
+                    TrinityTextureBaker.BakeLayeredTexture(mat, job.TempPath, texOutDir, sharedAlbedoReps);
                 }
             }
 
@@ -131,19 +134,34 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
 
             if (exportData.Armature != null)
             {
-                // Build animation search directories:
-                // Trainer models (chara/model_tr/trXXXX_name/ or chara/model_uq/trXXXX_name/)
-                // have animations in chara/motion_uq/trXXXX_name/ and chara/motion_cc_base/trXXXX_name/
+                // Trainer models (chara/model_tr/trXXXX_name/ or chara/model_uq/trXXXX_name/ + ik_chara variants)
+                // have animations in motion_uq/trXXXX_name/ and motion_cc_base/trXXXX_name/
                 var animDirs = new List<string> { modelDir };
-                if (modelDir.StartsWith("chara/model_tr/", StringComparison.OrdinalIgnoreCase) ||
-                    modelDir.StartsWith("chara/model_uq/", StringComparison.OrdinalIgnoreCase))
+                
+                string charaPrefix = "";
+                if (modelDir.StartsWith("chara/", StringComparison.OrdinalIgnoreCase))
+                    charaPrefix = "chara/";
+                else if (modelDir.StartsWith("ik_chara/", StringComparison.OrdinalIgnoreCase))
+                    charaPrefix = "ik_chara/";
+
+                if (!string.IsNullOrEmpty(charaPrefix))
                 {
-                    // Extract the folder name (e.g. "tr0930_stafff/")
-                    string trainerFolder = modelDir.Split('/').Where(s => s.StartsWith("tr", StringComparison.OrdinalIgnoreCase)).FirstOrDefault() ?? "";
+                    // Extract the folder name (e.g. "tr0930_stafff", "tr0002_00_rival_m")
+                    string trainerFolder = modelDir.Split('/').FirstOrDefault(s => s.StartsWith("tr", StringComparison.OrdinalIgnoreCase)) ?? "";
                     if (!string.IsNullOrEmpty(trainerFolder))
                     {
-                        animDirs.Add($"chara/motion_uq/{trainerFolder}/");
-                        animDirs.Add($"chara/motion_cc_base/{trainerFolder}/");
+                        // Add all common motion directories for this character folder
+                        animDirs.Add($"{charaPrefix}motion_uq/{trainerFolder}/");
+                        animDirs.Add($"{charaPrefix}motion_cc_base/{trainerFolder}/");
+                        animDirs.Add($"{charaPrefix}motion_cc_ir/{trainerFolder}/");
+                        
+                        // Map the specific `model_XXX` to `motion_XXX` dynamically
+                        string modelType = modelDir.Split('/').FirstOrDefault(s => s.StartsWith("model_", StringComparison.OrdinalIgnoreCase));
+                        if (!string.IsNullOrEmpty(modelType))
+                        {
+                            string motionType = "motion_" + modelType.Substring(6);
+                            animDirs.Add($"{charaPrefix}{motionType}/{trainerFolder}/");
+                        }
                     }
                 }
 
@@ -187,8 +205,9 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
                         result.OutputFiles.Add($"{(_splitMode ? "clips" : "animations")}/{clipId}.dae");
                         animIndex++;
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        Console.Error.WriteLine($"[ClipError] Failed to process {animName} for {job.Name}: {ex.Message}");
                         // Continue with other animations
                     }
                 }
@@ -235,6 +254,7 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
         }
         catch (Exception ex)
         {
+            Console.Error.WriteLine($"    FAIL [{job.Name}]: {ex.Message}");
             return ExtractionResult.Failed(job.Id, ex.Message);
         }
     }
@@ -259,12 +279,15 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
             var bytes = _loader.ExtractFile(relPath);
             if (bytes == null)
             {
-                // Fallback: search archive by filename (handles shared textures like cm_eye_lens00_alb.bntx)
-                bytes = TryExtractByFilename(relPath, out string? foundPath);
-                if (bytes != null && foundPath != null)
-                    relPath = foundPath;
-                else
-                    continue;
+                // Fallback: search archive by filename — only for textures (shared cm_*.bntx files)
+                // Skip for non-texture files to avoid expensive O(n) archive scans
+                if (relPath.EndsWith(".bntx", StringComparison.OrdinalIgnoreCase))
+                {
+                    bytes = TryExtractByFilename(relPath, out string? foundPath);
+                    if (bytes != null && foundPath != null)
+                        relPath = foundPath;
+                }
+                if (bytes == null) continue;
             }
 
             // Write to temp immediately
@@ -414,17 +437,25 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
         string fileName = Path.GetFileName(failedPath);
         if (string.IsNullOrWhiteSpace(fileName)) return null;
 
-        // Search the archive for a file with this exact filename
-        var match = _loader.FindFiles(name =>
-            name.EndsWith("/" + fileName, StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(Path.GetFileName(name), fileName, StringComparison.OrdinalIgnoreCase))
-            .FirstOrDefault();
+        // Build filename→hash index on first use (one-time O(n) scan, then O(1) lookups)
+        lock (_filenameIndexLock)
+        {
+            if (_filenameIndex == null)
+            {
+                _filenameIndex = new Dictionary<string, (ulong, string)>(StringComparer.OrdinalIgnoreCase);
+                foreach (var (hash, name) in _loader.FindFiles(_ => true))
+                {
+                    string fn = Path.GetFileName(name);
+                    _filenameIndex.TryAdd(fn, (hash, name));
+                }
+            }
+        }
 
-        if (match.hash == 0) return null;
+        if (!_filenameIndex.TryGetValue(fileName, out var match)) return null;
 
         var bytes = _loader.ExtractFile(match.hash);
         if (bytes != null)
-            foundPath = NormalizePath(match.name);
+            foundPath = NormalizePath(match.path);
         return bytes;
     }
 

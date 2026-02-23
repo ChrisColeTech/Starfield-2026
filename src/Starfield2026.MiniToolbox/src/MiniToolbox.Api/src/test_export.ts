@@ -7,9 +7,9 @@ import { main } from './cli.js';
 // Override process.argv
 process.argv = [
     'node', 'cli.ts',
-    '--arc', 'D:\\Projects\\PokemonGreen\\src\\PokemonGreen.Tests\\scarlet-dump\\arc',
+    '--arc', 'D:\\Projects\\Starfield2026\\src\\Starfield2026.Tests\\scarlet-dump\\arc',
     '--model', 'pokemon/data/pm0025/pm0025_00_00/pm0025_00_00.trmdl',
-    '--output', 'D:\\Projects\\PokemonGreen\\src\\PokemonGreen.Tests\\scarlet-dump\\exported'
+    '--output', 'D:\\Projects\\Starfield2026\\src\\Starfield2026.Tests\\scarlet-dump\\exported'
 ];
 
 console.log('Starting full export test...');

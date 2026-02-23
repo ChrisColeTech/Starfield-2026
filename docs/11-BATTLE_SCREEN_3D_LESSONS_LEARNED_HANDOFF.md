@@ -3,7 +3,7 @@
 ## 1. What We Accomplished
 
 ### Battle Screen System (New)
-Ported 3D battle screen from PokemonGreen reference project:
+Ported 3D battle screen from Starfield2026 reference project:
 
 | File | Purpose |
 |------|---------|
@@ -15,7 +15,7 @@ Ported 3D battle screen from PokemonGreen reference project:
 | `Battle/BattleBackgroundResolver.cs` | Maps encounter type to background |
 
 ### KermFont System (Ported)
-Custom bitmap font rendering from PokemonGreen:
+Custom bitmap font rendering from Starfield2026:
 
 | File | Purpose |
 |------|---------|
@@ -186,8 +186,8 @@ private const bool DebugStartInBattle = true;  // Set to false for normal play
 3. **Test single model** - Load just Grass.dae, check if any mesh data returned
 4. **Add debug draw** - Draw placeholder cube if model fails to load
 
-### Issue 4: PokemonGreen.Assets Project Missing
-**Symptoms:** Can't build PokemonGreen reference project
+### Issue 4: Starfield2026.Assets Project Missing
+**Symptoms:** Can't build Starfield2026 reference project
 **Root Cause:** `.csproj` file deleted (possibly by rogue git command)
 
 **Strategies:**
@@ -242,7 +242,7 @@ Starfield2026.Core/UI/Fonts/
 ## 8. Lessons Learned
 
 ### 1. Stay Focused on Target Project
-- We're building **Starfield-2026**, not fixing PokemonGreen
+- We're building **Starfield-2026**, not fixing Starfield2026
 - Old project is reference/source only - don't try to repair it
 - Copy working code, don't restore broken projects
 
@@ -268,4 +268,4 @@ Starfield2026.Core/UI/Fonts/
 
 *Generated: 2026-02-20*
 *Project: https://github.com/ChrisColeTech/Starfield-2026*
-*Reference: D:\Projects\PokemonGreen (source of ported code)*
+*Reference: D:\Projects\Starfield2026 (source of ported code)*

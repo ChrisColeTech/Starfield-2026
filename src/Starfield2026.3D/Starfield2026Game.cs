@@ -10,7 +10,6 @@ using Starfield2026.Core.Managers;
 using Starfield2026.Core.Maps;
 using Starfield2026.Core.Rendering;
 using Starfield2026.Core.Save;
-using Starfield2026.ModelLoader.Skeletal;
 using Starfield2026.Core.Screens;
 using Starfield2026.Core.Screens.Battle;
 using Starfield2026.Core.Systems;
@@ -29,11 +28,13 @@ public class Starfield2026Game : Game
     private GameState _state = null!;
     private AmmoSystem _ammo = null!;
     private BoostSystem _boosts = null!;
+    private EnemySystem _enemies = null!;
     private ScreenManager _screens = null!;
     private CoinCollector _coinCollector = null!;
     private HUDRenderer _hud = null!;
 
     private OverworldScreen _overworld = null!;
+    private FloatyScreen _floaty = null!;
     private DrivingScreen _driving = null!;
     private SpaceFlightScreen _spaceflight = null!;
 
@@ -46,6 +47,8 @@ public class Starfield2026Game : Game
     private IScreenOverlay? _pauseOverlay;
     private Texture2D _pixel = null!;
     private PixelFont _uiFont = null!;
+    private float _damageFlashTimer;
+    private const float DamageFlashDuration = 0.3f;
 
     private static readonly string GameLogFile = Path.Combine(AppContext.BaseDirectory, "game_loop.log");
     private bool _gameLoopLogged;
@@ -84,9 +87,9 @@ public class Starfield2026Game : Game
 
         InitializeDatabase();
 
-        // Sync character manifests with DB (only rescans if count changed)
+        // TODO: re-add ManifestScanner when Skeletal rewrite is complete
         string modelsRoot = Path.Combine(AppContext.BaseDirectory, "Models");
-        var scannedEntries = ManifestScanner.Scan(modelsRoot);
+        var scannedEntries = new List<(string name, string category, string manifestPath)>();
         int dbCharCount = _database.GetCharacterCount();
         if (dbCharCount != scannedEntries.Count)
             _database.RebuildCharacters(scannedEntries);
@@ -121,13 +124,25 @@ public class Starfield2026Game : Game
 
     private void InitializeScreens()
     {
-        _overworld = new OverworldScreen { Ammo = _ammo, Boosts = _boosts };
-        _driving = new DrivingScreen { Ammo = _ammo, Boosts = _boosts };
-        _spaceflight = new SpaceFlightScreen { Ammo = _ammo, Boosts = _boosts };
+        _enemies = new EnemySystem
+        {
+            SpawnInterval = 8f,
+            SpawnRadius = 120f,
+            MaxActive = 5,
+            PlayerHitRadius = 3f,
+            SpawnMode = EnemySpawnMode.Ring,
+        };
+        _enemies.Initialize(GraphicsDevice);
+        _enemies.OnPlayerCollision += (_, _) => TriggerBattle();
 
-        _freeRoam = new FreeRoamScreen();
+        _overworld = new OverworldScreen { Ammo = _ammo, Boosts = _boosts, Enemies = _enemies };
+        _floaty = new FloatyScreen { Ammo = _ammo, Boosts = _boosts, Enemies = _enemies };
+        _driving = new DrivingScreen { Ammo = _ammo, Boosts = _boosts, Enemies = _enemies };
+        _spaceflight = new SpaceFlightScreen { Ammo = _ammo, Boosts = _boosts, Enemies = _enemies };
+        _freeRoam = new FreeRoamScreen { Ammo = _ammo, Enemies = _enemies };
 
         _overworld.Initialize(GraphicsDevice);
+        _floaty.Initialize(GraphicsDevice);
         _driving.Initialize(GraphicsDevice);
         _spaceflight.Initialize(GraphicsDevice);
         _freeRoam.Initialize(GraphicsDevice);
@@ -140,14 +155,16 @@ public class Starfield2026Game : Game
                 _freeRoam.LoadCharacter(Path.GetDirectoryName(savedChar.ManifestPath)!);
         }
 
-        // Restore saved position if resuming on model test screen
+        // Restore saved position if resuming
         if (_state.CurrentScreen == "freeroam")
             _freeRoam.SetPosition(_state.PlayerPosition);
+        if (_state.CurrentScreen == "floaty")
+            _floaty.SetPosition(_state.PlayerPosition);
 
         _overworld.OnLaunchRequested += () => _screens.TransitionTo(_driving, "driving");
         _overworld.OnMapTransition += warp => HandleMapTransition(warp);
         _driving.OnExitDrivingRequested += () => _screens.TransitionTo(_spaceflight, "space");
-        _spaceflight.OnLandRequested += () => _screens.TransitionTo(_overworld, "overworld");
+        _spaceflight.OnLandRequested += () => _screens.TransitionTo(_floaty, "floaty");
 
         _screens = new ScreenManager(screenName =>
         {
@@ -158,6 +175,7 @@ public class Starfield2026Game : Game
         var initial = _state.CurrentScreen switch
         {
             "overworld" => (IGameScreen)_overworld,
+            "floaty" => _floaty,
             "driving" => _driving,
             "freeroam" => _freeRoam,
             _ => _spaceflight
@@ -190,14 +208,21 @@ public class Starfield2026Game : Game
 
         _battleScreen.OnBattleExit = () =>
         {
+            // Handle enemy based on battle outcome
+            if (_battleScreen.LastOutcome == BattleScreen3D.BattleOutcome.Victory)
+                _enemies.DefeatCollidedEnemy();
+            else
+                _enemies.ReleaseCollidedEnemy(_state.PlayerPosition);
+
             // Restore previous screen from State
             var nextScreen = _state.CurrentScreen switch
             {
                 "driving" => (IGameScreen)_driving,
                 "space" => _spaceflight,
-                _ => _overworld
+                "floaty" => _floaty,
+                _ => _floaty
             };
-            var nextName = _state.CurrentScreen ?? "overworld";
+            var nextName = _state.CurrentScreen ?? "floaty";
 
             _screens.TransitionTo(nextScreen, nextName, () =>
             {
@@ -260,6 +285,10 @@ public class Starfield2026Game : Game
                         _freeRoam.LoadCharacter(cs.SelectedFolder);
                     }
                 }
+                else if (_pauseOverlay is GameOverScreen)
+                {
+                    _state.ResetHealth();
+                }
                 _pauseOverlay = null;
             }
             base.Update(gameTime);
@@ -288,24 +317,86 @@ public class Starfield2026Game : Game
             {
                 var (next, name) = _screens.ActiveScreen switch
                 {
-                    OverworldScreen => ((IGameScreen)_driving, "driving"),
+                    FloatyScreen => ((IGameScreen)_driving, "driving"),
                     DrivingScreen => ((IGameScreen)_spaceflight, "space"),
                     SpaceFlightScreen => ((IGameScreen)_freeRoam, "freeroam"),
-                    FreeRoamScreen => ((IGameScreen)_overworld, "overworld"),
-                    _ => ((IGameScreen)_overworld, "overworld"),
+                    FreeRoamScreen => ((IGameScreen)_overworld!, "overworld"),
+                    OverworldScreen => ((IGameScreen)_floaty, "floaty"),
+                    _ => ((IGameScreen)_floaty, "floaty"),
                 };
                 _screens.TransitionTo(next, name);
             }
         }
 
+        _boosts.Update(dt);
+
+        if (_damageFlashTimer > 0) _damageFlashTimer -= dt;
+
         _screens.Update(dt, screen =>
         {
             if (_mode != GameMode.Battle)
             {
+                // Player cube tint — flash red on hit, blink as health drops
+                Color baseTint = screen switch
+                {
+                    SpaceFlightScreen => new Color(100, 255, 100),
+                    DrivingScreen => new Color(255, 100, 50),
+                    _ => new Color(0, 220, 255),
+                };
+                if (_damageFlashTimer > 0)
+                    screen.PlayerTint = Color.Red;
+                else if (_state.HealthPercent < 0.3f && _state.HealthPercent > 0f)
+                {
+                    float blinkSpeed = 4f + (1f - _state.HealthPercent / 0.3f) * 8f;
+                    bool showRed = ((int)(gameTime.TotalGameTime.TotalSeconds * blinkSpeed) % 2) == 0;
+                    screen.PlayerTint = showRed ? Color.Red : baseTint;
+                }
+                else
+                    screen.PlayerTint = baseTint;
+
+                // Point enemy system at the active screen's coin system for death bursts
+                _enemies.CoinSystem = screen.CoinSystem;
+
+                // Configure enemy system per screen
+                if (screen is SpaceFlightScreen sf)
+                {
+                    _enemies.SpawnMode = EnemySpawnMode.Ahead;
+                    _enemies.PlayerForward = -Vector3.UnitZ;
+                    _enemies.SpeedMultiplier = 1f;
+                    _enemies.MinimumSpeed = sf.CurrentSpeed * 1.2f;
+                    _enemies.SpawnInterval = 20f;
+                }
+                else
+                {
+                    _enemies.SpawnMode = screen is OverworldScreen ? EnemySpawnMode.Ring : EnemySpawnMode.Ring;
+                    _enemies.SpeedMultiplier = 1f;
+                    _enemies.MinimumSpeed = 0f;
+                    _enemies.SpawnInterval = 8f;
+                }
+
                 screen.Update(gameTime, input);
                 _coinCollector.CollectFromScreen(screen);
 
-                if (screen is OverworldScreen overworld)
+                // Check enemy projectile hits on player
+                int enemyHits = _enemies.CheckPlayerProjectileHits(_state.PlayerPosition);
+                if (enemyHits > 0)
+                {
+                    _state.TakeDamage(enemyHits * 5);
+                    _damageFlashTimer = DamageFlashDuration;
+                }
+
+                // Game over check
+                if (_state.IsDead && _pauseOverlay == null)
+                {
+                    _pauseOverlay = new GameOverScreen();
+                    _enemies.Clear();
+                }
+
+                if (screen is FloatyScreen floaty)
+                {
+                    _state.PlayerPosition = floaty.Position;
+                }
+                else if (screen is OverworldScreen overworld)
                 {
                     _state.PlayerPosition = overworld.Position;
                 }
@@ -337,6 +428,7 @@ public class Starfield2026Game : Game
 
         string screenType = _screens.ActiveScreen switch
         {
+            FloatyScreen => "floaty",
             OverworldScreen => "overworld",
             DrivingScreen => "driving",
             FreeRoamScreen => "freeroam",
@@ -344,27 +436,60 @@ public class Starfield2026Game : Game
         };
         float? speed = _screens.ActiveScreen switch
         {
+            FloatyScreen => _floaty.CurrentSpeed,
             DrivingScreen => _driving.CurrentSpeed,
             SpaceFlightScreen => _spaceflight.CurrentSpeed,
             _ => null
         };
         int overworldBoosts = _screens.ActiveScreen == _overworld ? (_overworld.Boosts?.BoostCount ?? 0) : 0;
-        Vector3? playerWorldPos = screenType switch
+        Vector3? playerWorldPos = _screens.ActiveScreen switch
         {
-            "freeroam" => _freeRoam.Position,
-            "overworld" => _overworld.Position,
+            FloatyScreen => _floaty.Position,
+            DrivingScreen => _driving.Position,
+            SpaceFlightScreen => _spaceflight.Position,
+            FreeRoamScreen => _freeRoam.Position,
+            OverworldScreen => _overworld.Position,
             _ => null
         };
-        float playerYaw = screenType switch
+        float playerYaw = _screens.ActiveScreen switch
         {
-            "freeroam" => _freeRoam.Yaw,
-            "overworld" => _overworld.Yaw,
+            FloatyScreen => _floaty.Yaw,
+            DrivingScreen => _driving.Yaw,
+            FreeRoamScreen => _freeRoam.Yaw,
+            OverworldScreen => _overworld.Yaw,
             _ => 0f
         };
         if (_mode != GameMode.Battle)
         {
-            _hud.Draw(GraphicsDevice, _state, _ammo, _boosts, screenType, speed, overworldBoosts, playerWorldPos, playerYaw);
+            float? fuelPct = _screens.ActiveScreen is FloatyScreen fs ? fs.FuelPercent : null;
+            bool fuelOh = _screens.ActiveScreen is FloatyScreen fs2 && fs2.FuelOverheated;
+            _hud.Draw(GraphicsDevice, _state, _ammo, _boosts, screenType, speed, overworldBoosts, playerWorldPos, playerYaw, _enemies.GetPositions(), fuelPct, fuelOh);
         }
+        // Damage flash — red overlay that fades out
+        if (_damageFlashTimer > 0 && _mode != GameMode.Battle)
+        {
+            float flashAlpha = (_damageFlashTimer / DamageFlashDuration) * 0.4f;
+            _spriteBatch.Draw(_pixel,
+                new Rectangle(0, 0, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height),
+                Color.Red * flashAlpha);
+        }
+
+        // Low health pulse — persistent red border that pulses faster as health drops
+        if (_state.HealthPercent < 0.3f && _state.HealthPercent > 0f && _mode != GameMode.Battle)
+        {
+            float intensity = 1f - (_state.HealthPercent / 0.3f); // 0 at 30%, 1 at 0%
+            float pulseSpeed = 3f + intensity * 5f; // faster as health drops
+            float pulse = ((float)Math.Sin(gameTime.TotalGameTime.TotalSeconds * pulseSpeed) + 1f) * 0.5f;
+            float alpha = pulse * intensity * 0.35f;
+            int bw = Math.Max(4, (int)(intensity * 12)); // border width
+            int sw2 = GraphicsDevice.Viewport.Width;
+            int sh2 = GraphicsDevice.Viewport.Height;
+            _spriteBatch.Draw(_pixel, new Rectangle(0, 0, sw2, bw), Color.Red * alpha);
+            _spriteBatch.Draw(_pixel, new Rectangle(0, sh2 - bw, sw2, bw), Color.Red * alpha);
+            _spriteBatch.Draw(_pixel, new Rectangle(0, 0, bw, sh2), Color.Red * alpha);
+            _spriteBatch.Draw(_pixel, new Rectangle(sw2 - bw, 0, bw, sh2), Color.Red * alpha);
+        }
+
         _hud.DrawTransition(GraphicsDevice, _screens.GetTransitionAlpha());
 
         // Pause overlay on top
@@ -378,6 +503,13 @@ public class Starfield2026Game : Game
 
         _spriteBatch.End();
         base.Draw(gameTime);
+    }
+
+    private void TriggerBattle()
+    {
+        if (_mode == GameMode.Battle) return;
+        _mode = GameMode.Battle;
+        _battleScreen.EnterBattle();
     }
 
     private void HandleMapTransition(WarpConnection warp)

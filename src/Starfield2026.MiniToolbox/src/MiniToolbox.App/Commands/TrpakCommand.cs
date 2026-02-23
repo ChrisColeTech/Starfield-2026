@@ -23,6 +23,7 @@ public static class TrpakCommand
         string? modelPath = null;
         string? outputDir = null;
         string? convertDir = null;
+        string? rebakeDir = null;
         int skip = 0;
         int limit = int.MaxValue;
         bool listMode = false;
@@ -76,6 +77,9 @@ public static class TrpakCommand
                     break;
                 case "--convert-dir":
                     convertDir = args[++i];
+                    break;
+                case "--rebake":
+                    rebakeDir = args[++i];
                     break;
                 case "--skip":
                     skip = int.Parse(args[++i]);
@@ -813,6 +817,24 @@ public static class TrpakCommand
                         }
                     }
                     catch { /* skip bad textures */ }
+                }
+
+                // Phase 4: Bake layered material textures (eye + general layer baking)
+                var sharedAlbedoReps = TrinityTextureBaker.FindSharedAlbedoRepresentatives(exportData.Materials);
+                foreach (var mat in exportData.Materials)
+                {
+                    try
+                    {
+                        if (EyeTextureBaker.IsEyeMaterial(mat))
+                        {
+                            EyeTextureBaker.BakeEyeTexture(mat, dir, texDir);
+                        }
+                        else if (TrinityTextureBaker.NeedsLayerBaking(mat))
+                        {
+                            TrinityTextureBaker.BakeLayeredTexture(mat, dir, texDir, sharedAlbedoReps);
+                        }
+                    }
+                    catch { /* skip bake failures */ }
                 }
 
                 converted++;

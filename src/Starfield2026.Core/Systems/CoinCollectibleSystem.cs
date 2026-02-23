@@ -145,6 +145,21 @@ public class CoinCollectibleSystem
         return result;
     }
 
+    public void SpawnBurst(Vector3 position, int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            float angle = (float)(_random.NextDouble() * MathHelper.TwoPi);
+            float dist = 1f + (float)(_random.NextDouble() * 3f);
+            float x = position.X + (float)Math.Cos(angle) * dist;
+            float z = position.Z + (float)Math.Sin(angle) * dist;
+            float y = position.Y + (float)(_random.NextDouble() * 2f - 1f);
+
+            var type = PickCoinType(0.15f, 0.20f, 0.25f);
+            SpawnCoin(new Vector3(x, y, z), type);
+        }
+    }
+
     public void ClearCoins()
     {
         _coins.Clear();

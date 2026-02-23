@@ -24,6 +24,7 @@ public class OverworldScreen : IGameScreen
     private CubeRenderer _cubeRenderer = null!;
     private MapRenderer3D _mapRenderer = null!;
     private CoinCollectibleSystem _coinSystem = null!;
+    private ProjectileSystem _projectiles = null!;
 
     public AmmoSystem? Ammo { get; set; }
     public BoostSystem? Boosts { get; set; }
@@ -31,6 +32,9 @@ public class OverworldScreen : IGameScreen
     public string? CurrentMapId => _world.CurrentMapId;
     public Vector3 Position => _player.Position;
     public float Yaw => _player.Yaw;
+
+    public EnemySystem? Enemies { get; set; }
+    public Color PlayerTint { get; set; } = new Color(0, 220, 255);
 
     public event Action? OnLaunchRequested;
     public event Action? OnRandomEncounter;
@@ -73,6 +77,10 @@ public class OverworldScreen : IGameScreen
             DriftSpeed = 0f,
         };
         _coinSystem.Initialize(device, new GlobalMapCoinSpawner(75));
+
+        _projectiles = new ProjectileSystem { FireRate = 0.15f };
+        _projectiles.Initialize(device);
+
     }
 
     public void LoadCharacter(string folderPath)
@@ -91,7 +99,8 @@ public class OverworldScreen : IGameScreen
 
             if (spawnPosition.HasValue)
             {
-                _player.SetPosition(spawnPosition.Value, _player.Yaw);
+                var sp = spawnPosition.Value;
+                _player.SetPosition(new Vector3(sp.X, 0.825f, sp.Z), _player.Yaw);
                 _camera.SnapToTarget(_player.Position);
             }
             else
@@ -135,6 +144,23 @@ public class OverworldScreen : IGameScreen
         _background.Update(dt, _player.Speed, _player.Position);
         _coinSystem.Update(dt, _player.Position, 3f, _player.Speed, _world.CurrentMap);
 
+        // Shooting
+        if (input.FireAltHeld && Ammo != null && Ammo.CanFire(Ammo.SelectedType))
+        {
+            float yaw = _player.Yaw;
+            var forward = new Vector3((float)Math.Sin(yaw), 0, (float)Math.Cos(yaw));
+            if (_projectiles.TryFire(
+                _player.Position + forward * 2f,
+                forward * 80f,
+                Ammo.SelectedType))
+            {
+                Ammo.TryConsumeSelectedAmmo();
+            }
+        }
+        _projectiles.Update(dt);
+
+        Enemies?.Update(dt, _player.Position, _projectiles, _world.CurrentMap);
+
         float snap = _groundGrid.Spacing;
         float sx = (float)Math.Floor(_player.Position.X / snap) * snap;
         float sz = (float)Math.Floor(_player.Position.Z / snap) * snap;
@@ -175,6 +201,8 @@ public class OverworldScreen : IGameScreen
         }
 
         _coinSystem.Draw(device, view, proj);
+        _projectiles.Draw(device, view, proj);
+        Enemies?.Draw(device, view, proj);
 
         float groundY = 0.05f;
         _cubeRenderer.Draw(device, view, proj,
@@ -186,7 +214,7 @@ public class OverworldScreen : IGameScreen
 
         _cubeRenderer.Draw(device, view, proj,
             _player.Position + new Vector3(0, bob + hoverBob, 0),
-            _player.Yaw, 1.5f, new Color(0, 220, 255));
+            _player.Yaw, 1.5f, PlayerTint);
     }
 
     public void OnEnter() { }

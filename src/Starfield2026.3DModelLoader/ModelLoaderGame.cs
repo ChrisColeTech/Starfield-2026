@@ -5,11 +5,12 @@ using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Starfield2026.ModelLoader.Animations;
+using Starfield2026.ModelLoader.Helpers;
 using Starfield2026.ModelLoader.Input;
 using Starfield2026.ModelLoader.Save;
 using Starfield2026.ModelLoader.Screens;
 using Starfield2026.ModelLoader.Rendering;
-using Starfield2026.ModelLoader.Skeletal;
 using Starfield2026.ModelLoader.UI;
 
 namespace Starfield2026.ModelLoader;
@@ -107,17 +108,20 @@ public class ModelLoaderGame : Game
         foreach (var c in _characters)
             ModelLoaderLog.Info($"  [{c.Category}] {c.Name}: {c.ManifestPath}");
 
-        // Set shared animation source (Sun-Moon tr0001_00 as reference)
-        string sharedAnimFolder = Path.Combine(modelsRoot, "Characters", "sun-moon", "field", "tr0001_00");
-        if (Directory.Exists(sharedAnimFolder))
-        {
-            Skeletal.SplitModelAnimationSetLoader.SharedAnimationFolder = sharedAnimFolder;
-            ModelLoaderLog.Info($"Shared animations: {sharedAnimFolder}");
-        }
-        else
-        {
-            ModelLoaderLog.Info($"Shared animation folder not found: {sharedAnimFolder}");
-        }
+        // Scan shared animation folders
+        string sharedRoot = Path.Combine(assetsRoot, "Models", "SharedAnimations");
+        SharedAnimationResolver.ScanFolders(sharedRoot, _freeRoam.SharedAnimationFolders);
+        ModelLoaderLog.Info($"Shared animation folders: {_freeRoam.SharedAnimationFolders.Count}");
+        foreach (var kvp in _freeRoam.SharedAnimationFolders)
+            ModelLoaderLog.Info($"  {kvp.Key} -> {kvp.Value}");
+
+        // Restore animation settings
+        string? savedMode = _database.GetSetting("animation_mode");
+        if (savedMode != null && Enum.TryParse<AnimationLoadMode>(savedMode, out var mode))
+            _freeRoam.LoadMode = mode;
+        string? savedTags = _database.GetSetting("fill_tags");
+        if (savedTags != null)
+            _freeRoam.FillTags = new HashSet<string>(savedTags.Split(',', StringSplitOptions.RemoveEmptyEntries));
 
         // Init FreeRoam
         _freeRoam.Initialize(GraphicsDevice);
@@ -176,6 +180,15 @@ public class ModelLoaderGame : Game
             _charSelect.Update(snap, (float)gameTime.ElapsedGameTime.TotalSeconds);
             if (_charSelect.IsFinished)
             {
+                bool settingsChanged = _charSelect.AnimationSettingsChanged;
+
+                // Sync animation settings back from overlay
+                if (settingsChanged)
+                {
+                    _freeRoam.LoadMode = _charSelect.LoadMode;
+                    _freeRoam.FillTags = _charSelect.FillTags;
+                }
+
                 if (_charSelect.SelectedFolder != null)
                 {
                     ModelLoaderLog.Info($"Character selected: {_charSelect.SelectedFolder}");
@@ -193,6 +206,17 @@ public class ModelLoaderGame : Game
                         }
                     }
                 }
+                else if (settingsChanged)
+                {
+                    // Mode/tags changed but no new character picked — reload current
+                    ModelLoaderLog.Info("[UI] Animation settings changed, reloading current character");
+                    LoadCurrentCharacter();
+                }
+
+                // Persist animation settings
+                _database.SetSetting("animation_mode", _freeRoam.LoadMode.ToString());
+                _database.SetSetting("fill_tags", string.Join(",", _freeRoam.FillTags));
+
                 _charSelect = null;
             }
             base.Update(gameTime);
@@ -209,7 +233,7 @@ public class ModelLoaderGame : Game
         // Tab = open character select
         if (snap.PausePressed)
         {
-            _charSelect = new CharacterSelectOverlay(_characters);
+            _charSelect = new CharacterSelectOverlay(_characters, _freeRoam.LoadMode, _freeRoam.FillTags);
             base.Update(gameTime);
             return;
         }

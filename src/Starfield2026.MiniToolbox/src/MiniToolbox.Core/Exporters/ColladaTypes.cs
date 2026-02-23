@@ -121,7 +121,8 @@ namespace MiniToolbox.Core.Exporters
             var node = doc.CreateElement("vertices");
             node.Attributes.Append(Attr(doc, "id", Id));
             parent.AppendChild(node);
-            foreach (var i in Inputs) i.Write(doc, node);
+            // Inputs inside <vertices> are "unshared" — no offset or set attributes
+            foreach (var i in Inputs) i.WriteUnshared(doc, node);
         }
 
         private static XmlAttribute Attr(XmlDocument doc, string n, string v) { var a = doc.CreateAttribute(n); a.Value = v; return a; }
@@ -164,6 +165,15 @@ namespace MiniToolbox.Core.Exporters
             node.Attributes.Append(Attr(doc, "source", Source));
             node.Attributes.Append(Attr(doc, "offset", Offset.ToString()));
             if (Set >= 0) node.Attributes.Append(Attr(doc, "set", Set.ToString()));
+            parent.AppendChild(node);
+        }
+
+        /// <summary>Write without offset/set attributes (for inputs inside vertices element).</summary>
+        public void WriteUnshared(XmlDocument doc, XmlNode parent)
+        {
+            var node = doc.CreateElement("input");
+            node.Attributes.Append(Attr(doc, "semantic", Semantic.ToString()));
+            node.Attributes.Append(Attr(doc, "source", Source));
             parent.AppendChild(node);
         }
 
@@ -236,9 +246,9 @@ namespace MiniToolbox.Core.Exporters
             var sampler = doc.CreateElement("sampler2D"); np2.AppendChild(sampler);
             var src = doc.CreateElement("source"); src.InnerText = SurfaceSid; sampler.AppendChild(src);
 
-            var technique = doc.CreateElement("technique"); technique.Attributes.Append(Attr(doc, "sid", "COMMON")); profile.AppendChild(technique);
-            var phong = doc.CreateElement("phong"); technique.AppendChild(phong);
-            var diffuse = doc.CreateElement("diffuse"); phong.AppendChild(diffuse);
+            var technique = doc.CreateElement("technique"); technique.Attributes.Append(Attr(doc, "sid", "common")); profile.AppendChild(technique);
+            var lambert = doc.CreateElement("lambert"); technique.AppendChild(lambert);
+            var diffuse = doc.CreateElement("diffuse"); lambert.AppendChild(diffuse);
             var texture = doc.CreateElement("texture");
             texture.Attributes.Append(Attr(doc, "texture", SamplerSid));
             texture.Attributes.Append(Attr(doc, "texcoord", "CHANNEL0"));

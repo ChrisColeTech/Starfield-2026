@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Starfield2026.Core.Input;
+using Starfield2026.Core.Systems;
 
 namespace Starfield2026.Core.Controllers;
 
@@ -8,7 +9,8 @@ public class ShipController
     public Vector3 Position;
     public float CurrentSpeed;
     public bool IsMoving => CurrentSpeed > 0.5f;
-    public bool HasBoost { get; private set; }
+    public bool HasBoost => Boosts?.IsActive ?? _boostTimer > 0;
+    public BoostSystem? Boosts { get; set; }
     public Vector3 BobOffset { get; private set; }
     
     private float _targetSpeed;
@@ -25,13 +27,16 @@ public class ShipController
         Position = startPosition;
         _targetSpeed = _gearSpeeds[_gear];
         CurrentSpeed = _targetSpeed;
-        HasBoost = false;
         _boostTimer = 0f;
     }
     
     public void ActivateBoost(float duration = 10f)
     {
-        HasBoost = true;
+        if (Boosts != null)
+        {
+            Boosts.ActivateBoost();
+            return;
+        }
         _boostTimer = duration;
     }
     
@@ -45,14 +50,13 @@ public class ShipController
     
     private void HandleBoost(float dt)
     {
+        if (Boosts != null) return;
+
         if (_boostTimer > 0)
         {
             _boostTimer -= dt;
             if (_boostTimer <= 0)
-            {
-                HasBoost = false;
                 _boostTimer = 0;
-            }
         }
     }
     

@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-16
 **Scope:** Skeletal animation system for Pokemon 3D models, COLLADA animation parsing, CPU skinning pipeline, texture UV mapping
-**Codebase:** PokemonGreen.Assets (SkeletalModelData, BattleModelLoader, PokemonModelLoader), PokemonGreen (Game1 battle rendering)
+**Codebase:** Starfield2026.Assets (SkeletalModelData, BattleModelLoader, PokemonModelLoader), Starfield2026 (Game1 battle rendering)
 
 ---
 
@@ -107,8 +107,8 @@ Currently importing with only `Triangulate | GenerateSmoothNormals`. Consider:
 
 ### Prerequisites
 - .NET 9.0 SDK
-- 957+ Pokemon3D model folders in `src/PokemonGreen.Assets/Pokemon3D/`
-- Build: `dotnet build src/PokemonGreen/PokemonGreen.csproj`
+- 957+ Pokemon3D model folders in `src/Starfield2026.Assets/Pokemon3D/`
+- Build: `dotnet build src/Starfield2026/Starfield2026.csproj`
 
 ### Step 1: Implement Bind-Pose Matrix Decomposition
 In `SkeletalModelData.cs`, add a `DecomposeBindPose(XnaMatrix m)` method:
@@ -175,8 +175,8 @@ Once mesh shape is correct (Step 1-3), verify texture orientation:
 
 ### Running the Game
 ```bash
-dotnet build src/PokemonGreen/PokemonGreen.csproj
-dotnet run --project src/PokemonGreen/PokemonGreen.csproj
+dotnet build src/Starfield2026/Starfield2026.csproj
+dotnet run --project src/Starfield2026/Starfield2026.csproj
 ```
 Walk into tall grass, trigger an encounter. Battle screen should show:
 - 3D background (Grass/Cave depending on encounter type)
@@ -190,8 +190,8 @@ Walk into tall grass, trigger an encounter. Battle screen should show:
 
 ### Build & Run
 ```bash
-dotnet build src/PokemonGreen/PokemonGreen.csproj
-dotnet run --project src/PokemonGreen/PokemonGreen.csproj
+dotnet build src/Starfield2026/Starfield2026.csproj
+dotnet run --project src/Starfield2026/Starfield2026.csproj
 ```
 
 ### Diagnostic Log
@@ -319,10 +319,10 @@ Game1.DrawBattle3D()
 
 | File | Status | Purpose |
 |------|--------|---------|
-| `src/PokemonGreen.Assets/SkeletalModelData.cs` | **NEW** | Skeletal animation system: bone hierarchy, COLLADA anim parsing, CPU skinning, Draw |
-| `src/PokemonGreen.Assets/PokemonModelLoader.cs` | Modified | Changed to return `SkeletalModelData` instead of `BattleModelData` |
-| `src/PokemonGreen.Assets/BattleModelLoader.cs` | Modified (prev commit) | Made `ResolveDiffusePath`/`FindTextureForMaterial` internal for SkeletalModelData access |
-| `src/PokemonGreen/Game1.cs` | Modified | Changed model types to SkeletalModelData, wired animation Update, removed sine-wave bob |
+| `src/Starfield2026.Assets/SkeletalModelData.cs` | **NEW** | Skeletal animation system: bone hierarchy, COLLADA anim parsing, CPU skinning, Draw |
+| `src/Starfield2026.Assets/PokemonModelLoader.cs` | Modified | Changed to return `SkeletalModelData` instead of `BattleModelData` |
+| `src/Starfield2026.Assets/BattleModelLoader.cs` | Modified (prev commit) | Made `ResolveDiffusePath`/`FindTextureForMaterial` internal for SkeletalModelData access |
+| `src/Starfield2026/Game1.cs` | Modified | Changed model types to SkeletalModelData, wired animation Update, removed sine-wave bob |
 | `bin/Debug/net9.0/skeletal_log.txt` | Runtime | Diagnostic output from model loading and first-frame skinning |
 
 ### COLLADA DAE Model Structure (All Pokemon)

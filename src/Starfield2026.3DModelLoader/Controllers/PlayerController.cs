@@ -53,7 +53,7 @@ public class PlayerController
     {
         if (input.RunPressed)
             _runningToggled = !_runningToggled;
-        IsRunning = _runningToggled;
+        // IsRunning set below after IsMoving is computed
 
         bool jumpTriggered = input.JumpPressed;
 
@@ -81,6 +81,7 @@ public class PlayerController
         float moveZ = input.MoveZ;
 
         IsMoving = (Math.Abs(_currentSpeed) > 0.1f) || (moveZ != 0);
+        IsRunning = _runningToggled && IsMoving;
 
         float targetTurnSpeed = moveX != 0 ? -moveX * _rotationSpeed : 0f;
         float turnBlend = 1f - (float)Math.Exp(-10f * dt);

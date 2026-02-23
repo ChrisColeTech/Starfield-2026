@@ -1,0 +1,13 @@
+{
+    "name": "switchtoolbox",
+    "version": "1.0.0",
+    "private": true,
+    "description": "MiniToolbox — launches React, API backend, and Electron together",
+    "scripts": {
+        "dev": "npx -y concurrently -k -n react,api,electron -c cyan,yellow,magenta \"npm run dev:react\" \"npm run dev:api\" \"npm run dev:electron\"",
+        "dev:react": "npm --prefix src/MiniToolbox.React run dev",
+        "dev:api": "npm --prefix src/MiniToolbox.Api run dev",
+        "dev:electron": "npx -y wait-on http://localhost:5173 && npm --prefix src/MiniToolbox.Electron start",
+        "install:all": "npm --prefix src/MiniToolbox.React install && npm --prefix src/MiniToolbox.Api install && npm --prefix src/MiniToolbox.Electron install"
+    }
+}

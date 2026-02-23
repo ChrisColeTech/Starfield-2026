@@ -5,7 +5,7 @@ using Starfield2026.Core.Camera;
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-// using PokemonGreen.Assets;
+// using Starfield2026.Assets;
 using Starfield2026.Core.Input;
 using Starfield2026.Core.Items;
 using Starfield2026.Core.Pokemon;
@@ -38,7 +38,10 @@ public class BattleScreen3D
     private SwitchPhase _switchPhase;
     private int _switchPartyIndex = -1;
 
+    public enum BattleOutcome { None, Victory, Ran, Defeat }
+
     public bool InBattle { get; private set; }
+    public BattleOutcome LastOutcome { get; private set; } = BattleOutcome.None;
     public bool HasLoadedModels => _renderer.HasLoadedModels;
     public SkeletalModelData? AllyModel => _renderer.AllyModel;
     public SkeletalModelData? FoeModel => _renderer.FoeModel;
@@ -97,6 +100,7 @@ public class BattleScreen3D
         BattleBackground bg = BattleBackground.TallGrass)
     {
         InBattle = true;
+        LastOutcome = BattleOutcome.None;
         _allyPokemon = ally;
         _foePokemon = foe;
         _renderer.SetBackground(bg);
@@ -113,7 +117,7 @@ public class BattleScreen3D
                     (f, b, p, r) => _ui.SetMainMenuItems(f, b, p, r),
                     _allyPokemon, CloseFightMenu);
             },
-            exitBattle: ExitBattle);
+            exitBattle: ExitBattleFromTurnManager);
 
         // Wire animation callbacks
         _turnManager.OnAllyAttack = () => _renderer.AllyModel?.PlayIndex(1);
@@ -176,9 +180,19 @@ public class BattleScreen3D
         SetupMenuCallbacks();
     }
 
+    private void ExitBattleFromTurnManager()
+    {
+        // Turn manager calls this for both victory and defeat
+        // If outcome wasn't set yet by TryRun, determine from foe HP
+        if (LastOutcome == BattleOutcome.None)
+            LastOutcome = _foePokemon?.CurrentHP <= 0 ? BattleOutcome.Victory : BattleOutcome.Defeat;
+        ExitBattle();
+    }
+
     private void TryRun()
     {
         _ui.DeactivateMenu();
+        LastOutcome = BattleOutcome.Ran;
         _ui.ShowMessage("You got away safely!", ExitBattle);
     }
 

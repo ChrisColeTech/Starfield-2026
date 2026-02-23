@@ -20,11 +20,14 @@ public class DrivingScreen : IGameScreen
     private CubeRenderer _cubeRenderer = null!;
     private CoinCollectibleSystem _coinSystem = null!;
     private ProjectileSystem _projectiles = null!;
-    
     public AmmoSystem? Ammo { get; set; }
     public BoostSystem? Boosts { get; set; }
+    public EnemySystem? Enemies { get; set; }
+    public Color PlayerTint { get; set; } = new Color(255, 100, 50);
     public CoinCollectibleSystem CoinSystem => _coinSystem;
     public float CurrentSpeed => _vehicle.Speed;
+    public Vector3 Position => _vehicle.Position;
+    public float Yaw => _vehicle.Yaw;
     public event Action? OnExitDrivingRequested;
     
     public void ActivateBoost(float duration = 10f)
@@ -48,6 +51,7 @@ public class DrivingScreen : IGameScreen
         
         _vehicle = new VehicleController();
         _vehicle.Initialize(new Vector3(0, 0.75f, 0));
+        _vehicle.Boosts = Boosts;
         
         _groundGrid = new GridRenderer
         {
@@ -81,7 +85,7 @@ public class DrivingScreen : IGameScreen
         
         _projectiles = new ProjectileSystem { FireRate = 0.15f };
         _projectiles.Initialize(device);
-        
+
         _camDistance = _baseDistance;
     }
     
@@ -107,9 +111,11 @@ public class DrivingScreen : IGameScreen
             }
         }
         _projectiles.Update(dt);
-        
-        if (input.IsKeyJustPressed(Microsoft.Xna.Framework.Input.Keys.LeftShift) && Boosts != null && Boosts.TryActivate())
-            _vehicle.ActivateBoost(10f);
+
+        Enemies?.Update(dt, _vehicle.Position, _projectiles);
+
+        if (input.IsKeyJustPressed(Microsoft.Xna.Framework.Input.Keys.LeftShift))
+            _vehicle.ActivateBoost();
         
         float speedRatio = Math.Abs(_vehicle.Speed) / 100f;
         float targetDist = _baseDistance;
@@ -147,15 +153,17 @@ public class DrivingScreen : IGameScreen
         _groundGrid.Draw(device, view, proj);
         _coinSystem.Draw(device, view, proj);
         _projectiles.Draw(device, view, proj);
+        Enemies?.Draw(device, view, proj);
         
-        _cubeRenderer.Draw(device, view, proj, 
-            _vehicle.Position + _vehicle.RumbleOffset, 
-            _vehicle.Yaw, 1.8f, new Color(255, 100, 50));
+        _cubeRenderer.Draw(device, view, proj,
+            _vehicle.Position + _vehicle.RumbleOffset,
+            _vehicle.Yaw, 1.8f, PlayerTint);
     }
     
     public void OnEnter()
     {
         _projectiles.Clear();
+        Enemies?.Clear();
     }
     
     public void OnExit() { }

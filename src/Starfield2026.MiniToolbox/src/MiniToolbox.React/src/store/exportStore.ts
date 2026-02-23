@@ -87,7 +87,7 @@ export const useStore = create<ExportStore>()(
         toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
 
         // Navigation
-        lastActivePage: '/export',
+        lastActivePage: '/viewer',
         setLastActivePage: (lastActivePage) => set({ lastActivePage }),
 
         // Viewer

@@ -1,26 +1,11 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
-const Store = require('electron-store');
 
 // Hide native menu bar — we have our own in-app menu
 Menu.setApplicationMenu(null);
 
-// Persistent store
-const store = new Store({
-    name: 'switchtoolbox-settings',
-    defaults: {
-        arcPath: '',
-        outputDir: '',
-        parallelJobs: 8,
-        maxModels: 0,
-        exportMode: 'baked',
-        sidebarCollapsed: false,
-        lastActivePage: '/export',
-        viewerFolder: '',
-        clipPanelOpen: true,
-        propsPanelOpen: true,
-    },
-});
+// Store will be initialized asynchronously (electron-store v11 is ESM-only)
+let store;
 
 function createWindow() {
     const win = new BrowserWindow({
@@ -50,7 +35,25 @@ function createWindow() {
     return win;
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+    // Dynamic import for ESM-only electron-store v11
+    const { default: Store } = await import('electron-store');
+    store = new Store({
+        name: 'switchtoolbox-settings',
+        defaults: {
+            arcPath: '',
+            outputDir: '',
+            parallelJobs: 8,
+            maxModels: 0,
+            exportMode: 'baked',
+            sidebarCollapsed: false,
+            lastActivePage: '/viewer',
+            viewerFolder: '',
+            clipPanelOpen: true,
+            propsPanelOpen: true,
+        },
+    });
+
     createWindow();
 
     app.on('activate', () => {

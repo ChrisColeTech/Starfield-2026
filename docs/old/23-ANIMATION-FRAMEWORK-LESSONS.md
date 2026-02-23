@@ -99,7 +99,7 @@ The animation editor UI was already built in a prior session:
 ### 3.1 Re-export Once, Not Per Session
 **Impact: High** — Right now there are no clip DAEs for the `_fi` characters. Every time someone clones the repo and runs the 3D POC, they get a static character. The export step should be documented and ideally run as a one-time build script.
 
-**Approach:** Add a `scripts/export-overworld.sh` that runs OhanaCli against the GARC with `--split-model-anims` and outputs to `PokemonGreen.Assets/Pokemon3D/characters/overworld/`. Commit the generated assets.
+**Approach:** Add a `scripts/export-overworld.sh` that runs OhanaCli against the GARC with `--split-model-anims` and outputs to `Starfield2026.Assets/Pokemon3D/characters/overworld/`. Commit the generated assets.
 
 ### 3.2 Lazy Clip Loading
 **Impact: Medium** — `SplitModelAnimationSetLoader.Load()` parses ALL clip DAEs eagerly. For characters with 16+ clips, this means 16 COLLADA XML parses on character switch. Most clips (emotes, sitting, actions) are never played.
@@ -120,7 +120,7 @@ The animation editor UI was already built in a prior session:
 - .NET 9.0 SDK
 - Node.js 18+ (for BgEditor)
 - MonoGame 3.8 (pulled via NuGet automatically)
-- Character assets exported to `src/PokemonGreen.Assets/Pokemon3D/characters/overworld/`
+- Character assets exported to `src/Starfield2026.Assets/Pokemon3D/characters/overworld/`
 
 ### Step 1: Re-export characters (REQUIRED for animations)
 
@@ -128,14 +128,14 @@ The on-disk `_fi` exports have no clip DAEs. You must re-export:
 
 ```bash
 # OhanaCli — export overworld characters with split animations
-cd D:\Projects\PokemonGreen\src\PokemonGreen.OhanaCli
+cd D:\Projects\Starfield2026\src\Starfield2026.OhanaCli
 dotnet run --project src/OhanaCli.App -- <path-to-bch-file> --split-model-anims -o <output-dir>
 ```
 
 Or use SpicaCli against the GARC:
 ```bash
-cd D:\Projects\PokemonGreen\src\PokemonGreen.Spica\SpicaCli
-dotnet run -- split <garc-file> -o D:\Projects\PokemonGreen\src\PokemonGreen.Assets\Pokemon3D\characters\overworld
+cd D:\Projects\Starfield2026\src\Starfield2026.Spica\SpicaCli
+dotnet run -- split <garc-file> -o D:\Projects\Starfield2026\src\Starfield2026.Assets\Pokemon3D\characters\overworld
 ```
 
 ### Step 2: Verify manifest format
@@ -149,9 +149,9 @@ After re-export, check that `manifest.json` has:
 ### Step 3: Build and run the 3D POC
 
 ```bash
-cd D:\Projects\PokemonGreen
-dotnet build src/PokemonGreen.3D/PokemonGreen.3D.csproj
-dotnet run --project src/PokemonGreen.3D/PokemonGreen.3D.csproj
+cd D:\Projects\Starfield2026
+dotnet build src/Starfield2026.3D/Starfield2026.3D.csproj
+dotnet run --project src/Starfield2026.3D/Starfield2026.3D.csproj
 ```
 
 ### Step 4: Verify animations work
@@ -165,15 +165,15 @@ dotnet run --project src/PokemonGreen.3D/PokemonGreen.3D.csproj
 
 ```bash
 # Terminal 1 — backend
-cd D:\Projects\PokemonGreen\src\PokemonGreen.BgEditor\backend
+cd D:\Projects\Starfield2026\src\Starfield2026.BgEditor\backend
 npm run dev
 
 # Terminal 2 — frontend
-cd D:\Projects\PokemonGreen\src\PokemonGreen.BgEditor\frontend
+cd D:\Projects\Starfield2026\src\Starfield2026.BgEditor\frontend
 npm run dev
 ```
 
-Open `http://localhost:5173`, navigate to Animations page, paste a character folder path (e.g. `D:\Projects\PokemonGreen\src\PokemonGreen.Assets\Pokemon3D\characters\overworld\tr0001_00`), click Load. The clip list should appear with semantic tags. You can manually tag clips and save.
+Open `http://localhost:5173`, navigate to Animations page, paste a character folder path (e.g. `D:\Projects\Starfield2026\src\Starfield2026.Assets\Pokemon3D\characters\overworld\tr0001_00`), click Load. The clip list should appear with semantic tags. You can manually tag clips and save.
 
 ---
 
@@ -181,13 +181,13 @@ Open `http://localhost:5173`, navigate to Animations page, paste a character fol
 
 ### 3D POC (MonoGame)
 ```bash
-dotnet run --project src/PokemonGreen.3D/PokemonGreen.3D.csproj
+dotnet run --project src/Starfield2026.3D/Starfield2026.3D.csproj
 ```
 No API server — self-contained desktop app. Reads manifests directly from disk.
 
 ### BgEditor Backend (Fastify on port 3001)
 ```bash
-cd src/PokemonGreen.BgEditor/backend
+cd src/Starfield2026.BgEditor/backend
 npm install   # first time only
 npm run dev   # starts on http://localhost:3001
 ```
@@ -203,19 +203,19 @@ Key endpoints:
 
 ### BgEditor Frontend (Vite on port 5173)
 ```bash
-cd src/PokemonGreen.BgEditor/frontend
+cd src/Starfield2026.BgEditor/frontend
 npm install   # first time only
 npm run dev   # starts on http://localhost:5173
 ```
 
 ### OhanaCli
 ```bash
-dotnet run --project src/PokemonGreen.OhanaCli/src/OhanaCli.App -- <bch-file> --split-model-anims -o <output-dir>
+dotnet run --project src/Starfield2026.OhanaCli/src/OhanaCli.App -- <bch-file> --split-model-anims -o <output-dir>
 ```
 
 ### SpicaCli
 ```bash
-dotnet run --project src/PokemonGreen.Spica/SpicaCli -- split <garc-file> -o <output-dir>
+dotnet run --project src/Starfield2026.Spica/SpicaCli -- split <garc-file> -o <output-dir>
 ```
 
 ---

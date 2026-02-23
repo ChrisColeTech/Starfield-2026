@@ -34,27 +34,41 @@ export default function Viewport() {
     rendererRef.current = renderer
 
     const camera = new THREE.PerspectiveCamera(
-      50, // wider FOV for initial view; we'll fit to model
+      45,
       container.clientWidth / container.clientHeight,
       0.1,
-      10000,
+      1000,
     )
-    camera.position.set(0, 40, 80)
+    camera.position.set(3, 3, 5)
+    camera.lookAt(0, 1, 0)
     cameraRef.current = camera
 
     const controls = new OrbitControls(camera, renderer.domElement)
-    controls.target.set(0, 0, 0)
+    controls.target.set(0, 1, 0)
     controls.enableDamping = true
     controls.dampingFactor = 0.1
     controls.update()
     controlsRef.current = controls
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5)
-    sceneRef.current.add(ambientLight)
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
-    dirLight.position.set(10, 20, 10)
-    sceneRef.current.add(dirLight)
+    // Grid
+    const grid = new THREE.GridHelper(20, 20, 0x444444, 0x333333)
+    sceneRef.current.add(grid)
+
+    // Lights — three-point setup + hemisphere for natural ambient
+    const hemi = new THREE.HemisphereLight(0x8899bb, 0x443322, 0.8)
+    sceneRef.current.add(hemi)
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.2)
+    keyLight.position.set(5, 8, 5)
+    sceneRef.current.add(keyLight)
+
+    const fillLight = new THREE.DirectionalLight(0x8888cc, 0.4)
+    fillLight.position.set(-4, 4, -3)
+    sceneRef.current.add(fillLight)
+
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.3)
+    rimLight.position.set(0, 6, -8)
+    sceneRef.current.add(rimLight)
 
     // Render loop
     function animate() {
@@ -94,16 +108,11 @@ export default function Viewport() {
     const camera = cameraRef.current
     const controls = controlsRef.current
 
-    // Clean up previous model and animation mixer
+    // Clean up previous model
     if (modelGroupRef.current) {
       threeScene.remove(modelGroupRef.current)
       modelGroupRef.current = null
     }
-    if (mixerRef.current) {
-      mixerRef.current.stopAllAction()
-      mixerRef.current = null
-    }
-    activeActionRef.current = null
 
     if (!storeScene) return
 
@@ -128,10 +137,8 @@ export default function Viewport() {
             texturedCount++
             mat.map.minFilter = THREE.NearestFilter
             mat.map.magFilter = THREE.NearestFilter
-            mat.map.needsUpdate = true
+            if (mat.map.image) mat.map.needsUpdate = true
             console.log(`[BgEditor]   Texture: ${mat.map.name || '(unnamed)'}, image:`, mat.map.image ? `${mat.map.image.width}x${mat.map.image.height}` : 'NULL')
-          } else {
-            console.log(`[BgEditor]   Material without texture:`, mat.type, mat)
           }
         }
       }
@@ -139,16 +146,27 @@ export default function Viewport() {
     console.log(`[BgEditor] ${meshCount} meshes, ${texturedCount} textured materials, ${boneCount} bones`)
 
     // Compute bounding box and auto-fit camera
-    const box = new THREE.Box3().setFromObject(storeScene)
+    storeScene.updateMatrixWorld(true)
+    let box: THREE.Box3
+    try {
+      box = new THREE.Box3().setFromObject(storeScene)
+    } catch {
+      box = new THREE.Box3()
+      storeScene.traverse(n => {
+        if (n instanceof THREE.Mesh) {
+          n.geometry.computeBoundingBox()
+          if (n.geometry.boundingBox) {
+            box.expandByPoint(n.geometry.boundingBox.min.clone().applyMatrix4(n.matrixWorld))
+            box.expandByPoint(n.geometry.boundingBox.max.clone().applyMatrix4(n.matrixWorld))
+          }
+        }
+      })
+    }
     if (!box.isEmpty() && camera && controls) {
       const center = box.getCenter(new THREE.Vector3())
       const size = box.getSize(new THREE.Vector3())
       const maxDim = Math.max(size.x, size.y, size.z)
 
-      console.log(`[BgEditor] Bounds: min(${box.min.x.toFixed(1)}, ${box.min.y.toFixed(1)}, ${box.min.z.toFixed(1)}) max(${box.max.x.toFixed(1)}, ${box.max.y.toFixed(1)}, ${box.max.z.toFixed(1)})`)
-      console.log(`[BgEditor] Center: (${center.x.toFixed(1)}, ${center.y.toFixed(1)}, ${center.z.toFixed(1)}), maxDim: ${maxDim.toFixed(1)}`)
-
-      // Position camera to see the whole model
       const fov = camera.fov * (Math.PI / 180)
       const distance = (maxDim / 2) / Math.tan(fov / 2) * 1.5
       camera.position.set(center.x, center.y + maxDim * 0.3, center.z + distance)
@@ -159,35 +177,36 @@ export default function Viewport() {
       controls.target.copy(center)
       controls.update()
     }
+  }, [storeScene])
 
-    // Set up animation playback
-    if (storeAnimations && storeAnimations.length > 0) {
-      console.log(`[BgEditor] Setting up AnimationMixer with ${storeAnimations.length} clip(s)`)
-      const mixer = new THREE.AnimationMixer(storeScene)
-      mixerRef.current = mixer
-      clockRef.current.start()
-
-      // Debug: log track names for first clip
-      const firstClip = storeAnimations[0]
-      console.log(`[BgEditor]   First clip: "${firstClip.name}" (${firstClip.duration.toFixed(2)}s, ${firstClip.tracks.length} tracks)`)
-      for (const track of firstClip.tracks.slice(0, 10)) {
-        console.log(`[BgEditor]     Track: ${track.name} (${track.times.length} keyframes)`)
-      }
-      if (firstClip.tracks.length > 10) {
-        console.log(`[BgEditor]     ... and ${firstClip.tracks.length - 10} more tracks`)
-      }
-
-      // Play the active clip
-      const clipIdx = Math.min(activeClipIndex, storeAnimations.length - 1)
-      const clip = storeAnimations[clipIdx]
-      const action = mixer.clipAction(clip)
-      action.setLoop(THREE.LoopRepeat, Infinity)
-      if (!animationPlaying) {
-        action.paused = true
-      }
-      action.play()
-      activeActionRef.current = action
+  // Set up animation playback when animations change
+  useEffect(() => {
+    // Clean up previous mixer
+    if (mixerRef.current) {
+      mixerRef.current.stopAllAction()
+      mixerRef.current = null
     }
+    activeActionRef.current = null
+
+    if (!storeScene || !storeAnimations || storeAnimations.length === 0) return
+
+    console.log(`[BgEditor] Setting up AnimationMixer with ${storeAnimations.length} clip(s)`)
+    const mixer = new THREE.AnimationMixer(storeScene)
+    mixerRef.current = mixer
+    clockRef.current.start()
+
+    const firstClip = storeAnimations[0]
+    console.log(`[BgEditor]   Clip: "${firstClip.name}" (${firstClip.duration.toFixed(2)}s, ${firstClip.tracks.length} tracks)`)
+
+    const clipIdx = Math.min(activeClipIndex, storeAnimations.length - 1)
+    const clip = storeAnimations[clipIdx]
+    const action = mixer.clipAction(clip)
+    action.setLoop(THREE.LoopRepeat, Infinity)
+    if (!animationPlaying) {
+      action.paused = true
+    }
+    action.play()
+    activeActionRef.current = action
   }, [storeScene, storeAnimations])
 
   // Respond to play/pause changes
@@ -222,11 +241,8 @@ export default function Viewport() {
   return (
     <div
       ref={containerRef}
-      style={{
-        flex: 1,
-        position: 'relative',
-        overflow: 'hidden',
-      }}
+      className="w-full h-full"
+      style={{ minHeight: 200 }}
     />
   )
 }

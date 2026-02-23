@@ -87,16 +87,14 @@ public class PlayerController
             // Only allow boost jumping if the player was already in the air before this frame began
             if (jumpTriggered && !wasGrounded)
             {
-                if (!IsHovering && Boosts != null && Boosts.BoostCount > 0)
+                if (!IsHovering && Boosts != null && Boosts.ActivateBoost())
                 {
                     IsHovering = true;
-                    Boosts.UseBoost(1);
                     _hoverTime = _hoverDuration;
                     _verticalVelocity = 0f; // Perfect levitation on first tap
                 }
-                else if (IsHovering && Boosts != null && Boosts.BoostCount > 0)
+                else if (IsHovering && Boosts != null && Boosts.ActivateBoost())
                 {
-                    Boosts.UseBoost(1);
                     _hoverTime += _hoverDuration;
                     _verticalVelocity = _hoverRiseSpeed; // Rocket upwards on second tap
                 }

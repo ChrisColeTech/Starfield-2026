@@ -37,22 +37,27 @@ export default function ToolsPage() {
 
   // Load persisted settings on mount
   useEffect(() => {
-    window.electronAPI.storeGetAll().then((all) => {
-      if (all.manifestInputDir) setInputDir(all.manifestInputDir as string)
-      if (all.manifestOutputDir) setOutputDir(all.manifestOutputDir as string)
-      if (all.manifestSameAsInput !== undefined) setSameAsInput(all.manifestSameAsInput as boolean)
-      if (all.manifestOverwrite !== undefined) setOverwrite(all.manifestOverwrite as boolean)
-      if (all.manifestFormats) setFormats(all.manifestFormats as Record<string, boolean>)
+    const api = (window as any).electronAPI
+    if (api?.storeGetAll) {
+      api.storeGetAll().then((all: any) => {
+        if (all.manifestInputDir) setInputDir(all.manifestInputDir as string)
+        if (all.manifestOutputDir) setOutputDir(all.manifestOutputDir as string)
+        if (all.manifestSameAsInput !== undefined) setSameAsInput(all.manifestSameAsInput as boolean)
+        if (all.manifestOverwrite !== undefined) setOverwrite(all.manifestOverwrite as boolean)
+        if (all.manifestFormats) setFormats(all.manifestFormats as Record<string, boolean>)
+        setSettingsLoaded(true)
+      })
+    } else {
       setSettingsLoaded(true)
-    })
+    }
   }, [])
 
   // Persist settings on change (skip until initial load completes)
-  useEffect(() => { if (!settingsLoaded) return; window.electronAPI.storeSet('manifestInputDir', inputDir) }, [inputDir, settingsLoaded])
-  useEffect(() => { if (!settingsLoaded) return; window.electronAPI.storeSet('manifestOutputDir', outputDir) }, [outputDir, settingsLoaded])
-  useEffect(() => { if (!settingsLoaded) return; window.electronAPI.storeSet('manifestSameAsInput', sameAsInput) }, [sameAsInput, settingsLoaded])
-  useEffect(() => { if (!settingsLoaded) return; window.electronAPI.storeSet('manifestOverwrite', overwrite) }, [overwrite, settingsLoaded])
-  useEffect(() => { if (!settingsLoaded) return; window.electronAPI.storeSet('manifestFormats', formats) }, [formats, settingsLoaded])
+  useEffect(() => { if (!settingsLoaded) return; (window as any).electronAPI?.storeSet?.('manifestInputDir', inputDir) }, [inputDir, settingsLoaded])
+  useEffect(() => { if (!settingsLoaded) return; (window as any).electronAPI?.storeSet?.('manifestOutputDir', outputDir) }, [outputDir, settingsLoaded])
+  useEffect(() => { if (!settingsLoaded) return; (window as any).electronAPI?.storeSet?.('manifestSameAsInput', sameAsInput) }, [sameAsInput, settingsLoaded])
+  useEffect(() => { if (!settingsLoaded) return; (window as any).electronAPI?.storeSet?.('manifestOverwrite', overwrite) }, [overwrite, settingsLoaded])
+  useEffect(() => { if (!settingsLoaded) return; (window as any).electronAPI?.storeSet?.('manifestFormats', formats) }, [formats, settingsLoaded])
 
   const fetchManifests = useCallback(async () => {
     setLoading(true)
@@ -109,12 +114,12 @@ export default function ToolsPage() {
   }
 
   const handleBrowseInput = async () => {
-    const picked = await window.electronAPI.browseFolder(inputDir)
+    const picked = await (window as any).electronAPI?.browseFolder?.(inputDir)
     if (picked) setInputDir(picked)
   }
 
   const handleBrowseOutput = async () => {
-    const picked = await window.electronAPI.browseFolder(outputDir || inputDir)
+    const picked = await (window as any).electronAPI?.browseFolder?.(outputDir || inputDir)
     if (picked) setOutputDir(picked)
   }
 

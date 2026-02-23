@@ -64,7 +64,7 @@ The model loads all meshes, all bone weights map correctly, inverse bind matrice
 ### Suspect 1: Geometry-to-Skin Pairing Is Not Explicit
 **Current approach:** `LoadGeometry()` iterates `<mesh>` elements in document order and accumulates `skinVertexOffset`. `LoadSkinWeights()` iterates `<skin>` elements in document order and concatenates weights. The implicit assumption is that mesh order = skin order.
 
-**Old approach (PokemonGreen):** Explicitly pairs each geometry with its skin controller via the `<skin source="#geometry_id">` attribute. Each geometry/skin pair is processed independently with its own dedup context and bone weight mapping.
+**Old approach (Starfield2026):** Explicitly pairs each geometry with its skin controller via the `<skin source="#geometry_id">` attribute. Each geometry/skin pair is processed independently with its own dedup context and bone weight mapping.
 
 **Why this matters:** If any DAE file has geometries and controllers in different document order, every vertex maps to the wrong bone weights. Even if current files match, the approach is fragile.
 
@@ -99,7 +99,7 @@ Models are T-posing which could mean: (a) idle animation first frame IS the T-po
 3. If bind pose looks wrong, the issue is in geometry loading
 
 ### Phase 2: Port the Old Architecture
-The PokemonGreen code is proven working. Rather than debugging the new code's complex merged approach, port the old architecture:
+The Starfield2026 code is proven working. Rather than debugging the new code's complex merged approach, port the old architecture:
 
 1. **Replace `LoadGeometry` + `LoadSkinWeights`** with the old `ParseGeometries` + `ParseControllers` approach:
    - `ParseGeometries()` returns `Dictionary<geometryId, GeometryData>` — each geometry parsed independently
@@ -157,7 +157,7 @@ dotnet run
 
 ## 6. Issues & New Strategies
 
-### Strategy 1: Port PokemonGreen's SkinnedDaeModel Directly
+### Strategy 1: Port Starfield2026's SkinnedDaeModel Directly
 **Fastest path to working.** The old `SkinnedDaeModel` is self-contained (~705 lines). It handles geometry parsing, skin controller parsing, mesh building, per-mesh texturing, and CPU skinning all in one file. Port it directly, adapting only the constructor/Load signature to match the new project's `SkeletonRig` and `SkeletalAnimationClip` types (which are structurally identical).
 
 **Risk:** Low. The old code is battle-tested.
@@ -170,7 +170,7 @@ Load a character that has only 1 mesh (if any exist) or a Pokemon model. If sing
 Modify the draw code to render each mesh in a distinct solid color (no texture, no skinning). This reveals whether all mesh parts are present and positioned correctly in bind pose, isolating geometry issues from skinning issues.
 
 ### Strategy 4: Binary Comparison of Vertex Data
-Export the vertex positions from both the old (PokemonGreen) and new (Starfield) loaders for the same DAE file. Compare the arrays element-by-element. The first divergence reveals exactly where the loading logic differs.
+Export the vertex positions from both the old (Starfield2026) and new (Starfield) loaders for the same DAE file. Compare the arrays element-by-element. The first divergence reveals exactly where the loading logic differs.
 
 ---
 
@@ -191,13 +191,13 @@ FreeRoamScreen
 `SkinnedDaeModel.Load()` has ~30 lines of diagnostic logging that write to `skinning_debug.log`. `FreeRoamScreen.LoadCharacter()` has ~15 lines that re-parse the DAE for stats. Remove both after the rendering issue is fixed.
 
 ### Quick Win 2: Face Mesh Depth Handling
-Once per-mesh rendering works, add the `LessEqual` depth stencil state for Eye/Mouth meshes (3 lines of code, already proven in PokemonGreen).
+Once per-mesh rendering works, add the `LessEqual` depth stencil state for Eye/Mouth meshes (3 lines of code, already proven in Starfield2026).
 
 ### Quick Win 3: Alpha Test for Textures
-PokemonGreen forces all texture pixels to `Alpha = 255` to avoid transparency issues with cutout-style textures. Add the same 4-line pixel fixup after `Texture2D.FromStream()`.
+Starfield2026 forces all texture pixels to `Alpha = 255` to avoid transparency issues with cutout-style textures. Add the same 4-line pixel fixup after `Texture2D.FromStream()`.
 
 ### Quick Win 4: Per-Mesh Texture Resolution
-The old code resolves textures per-mesh via the COLLADA material chain: `<triangles material="...">` → `<instance_material symbol="..." target="...">` → `<material>` → `<effect>` → `<image>` → file path. This is already implemented in PokemonGreen's `ParseMaterialImageMap()` and `ParseBindMaterialMap()`.
+The old code resolves textures per-mesh via the COLLADA material chain: `<triangles material="...">` → `<instance_material symbol="..." target="...">` → `<material>` → `<effect>` → `<image>` → file path. This is already implemented in Starfield2026's `ParseMaterialImageMap()` and `ParseBindMaterialMap()`.
 
 ---
 
@@ -215,9 +215,9 @@ The old code resolves textures per-mesh via the COLLADA material chain: `<triang
 | `Core/Rendering/Skeletal/ManifestScanner.cs` | Scans Models/ for manifest.json files |
 | `Core/UI/HUDRenderer.cs` | Minimap rendering (bottom-left) |
 | `3D/Starfield2026Game.cs` | Game loop, screen management, HUD wiring |
-| **PokemonGreen reference:** | |
-| `PokemonGreen.Core/Rendering/Skeletal/SkinnedDaeModel.cs` | Working implementation (705 lines) |
-| `PokemonGreen.Core/Rendering/Skeletal/ColladaSkeletalLoader.cs` | Working DAE parser (255 lines) |
+| **Starfield2026 reference:** | |
+| `Starfield2026.Core/Rendering/Skeletal/SkinnedDaeModel.cs` | Working implementation (705 lines) |
+| `Starfield2026.Core/Rendering/Skeletal/ColladaSkeletalLoader.cs` | Working DAE parser (255 lines) |
 
 ---
 
@@ -239,8 +239,8 @@ The old code resolves textures per-mesh via the COLLADA material chain: `<triang
 ### Step 1: Extract Model Loading to New Project
 Create `Starfield2026.3DModelLoader` — a self-contained class library that owns ALL model loading, parsing, manifest scanning, and character database logic. Move the entire `Rendering/Skeletal/` directory from Core. This isolates the broken code, makes it testable independently, and prevents Core from accumulating rendering concerns.
 
-### Step 2: Port PokemonGreen's SkinnedDaeModel
-Inside the new `3DModelLoader` project, replace the current broken `SkinnedDaeModel` with a port of PokemonGreen's working implementation. Key differences to adopt:
+### Step 2: Port Starfield2026's SkinnedDaeModel
+Inside the new `3DModelLoader` project, replace the current broken `SkinnedDaeModel` with a port of Starfield2026's working implementation. Key differences to adopt:
 - Per-geometry/skin explicit pairing via `<skin source="#geometry_id">`
 - Per-mesh `SkinnedMesh` objects with independent dedup and bone weight lookup
 - Per-mesh texture resolution via COLLADA material chain
@@ -259,7 +259,7 @@ Remove diagnostic logging, remove unused inverse bind matrix override code, remo
 
 | Win | Effort | Impact |
 |-----|--------|--------|
-| Port `SkinnedDaeModel` from PokemonGreen | 1-2 hrs | Fixes all geometry rendering |
+| Port `SkinnedDaeModel` from Starfield2026 | 1-2 hrs | Fixes all geometry rendering |
 | Force texture alpha to 255 (cutout fix) | 5 min | Eliminates transparency artifacts |
 | Face mesh `LessEqual` depth | 5 min | Eyes/mouth render correctly on top of body |
 | Per-mesh texturing via material chain | 30 min | Each body part gets correct texture |

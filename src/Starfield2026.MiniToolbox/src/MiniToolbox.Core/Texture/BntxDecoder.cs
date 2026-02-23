@@ -95,6 +95,20 @@ namespace MiniToolbox.Core.Texture
 
             // Deswizzle
             byte[] swizzledData = tex.TextureData[0][0]; // Array 0, Mip 0
+
+            // Pre-calculate expected output size and require the input to be large enough
+            uint expectedSize = TegraSwizzle.DivRoundUp(mipWidth, formatInfo.BlkWidth)
+                              * TegraSwizzle.DivRoundUp(mipHeight, formatInfo.BlkHeight)
+                              * formatInfo.Bpp;
+
+            // tegra_swizzle panics (aborts process) if the input buffer is too small for its expected block footprint.
+            // Check that we have at least *some* plausible amount of data before calling native code.
+            // BNTX can sometimes have truncated mip0 data if it streams the rest, but usually it's fully present.
+            if (swizzledData.Length < expectedSize / 2) // Rough heuristic: if we don't even have half the expected size, it's definitely corrupt/truncated.
+            {
+                 throw new InvalidDataException($"Texture '{tex.Name}' data length ({swizzledData.Length}) is too small compared to expected ({expectedSize}). Skipping to prevent native crash.");
+            }
+
             byte[] deswizzled = TegraSwizzle.Deswizzle(
                 mipWidth, mipHeight, depth,
                 formatInfo.BlkWidth, formatInfo.BlkHeight, 1,
@@ -104,9 +118,6 @@ namespace MiniToolbox.Core.Texture
                 swizzledData);
 
             // Trim to exact size needed
-            uint expectedSize = TegraSwizzle.DivRoundUp(mipWidth, formatInfo.BlkWidth)
-                              * TegraSwizzle.DivRoundUp(mipHeight, formatInfo.BlkHeight)
-                              * formatInfo.Bpp;
             if (deswizzled.Length > expectedSize)
             {
                 var trimmed = new byte[expectedSize];

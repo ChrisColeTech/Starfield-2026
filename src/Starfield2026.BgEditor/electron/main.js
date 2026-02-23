@@ -12,6 +12,7 @@ const store = new Store({
     manifestOverwrite: true,
     manifestFormats: { fbx: true, dae: true, obj: true },
     windowBounds: { width: 1400, height: 900 },
+    lastActivePage: '/',
   },
 })
 
@@ -39,6 +40,7 @@ function createWindow() {
   })
 
   mainWindow.loadURL(FRONTEND_URL)
+  mainWindow.webContents.openDevTools()
 }
 
 // Native folder picker

@@ -12,4 +12,5 @@ export interface MenuItem {
 export interface MenuDefinition {
     label: string;
     items: MenuItem[];
+    active?: boolean;
 }

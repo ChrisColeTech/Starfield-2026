@@ -65,6 +65,12 @@ public class GameState
     }
 
     public float HealthPercent => (float)CurrentHealth / MaxHealth;
+    public bool IsDead => CurrentHealth <= 0;
+
+    public void ResetHealth()
+    {
+        CurrentHealth = MaxHealth;
+    }
 
     public void SetScreen(string screen)
     {

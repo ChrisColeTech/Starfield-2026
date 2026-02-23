@@ -42,7 +42,7 @@
 - Reconstructed `KermFont` to load binary font atlases and draw them as virtual-resolution MonoGame quads.
 - Recovered the `gamedata.db` SQLite database and embedded it into the build output path.
 - Integrated Assimp-net to load Collada (`.dae`) trainer models and background stages, hooking them to `BattleScreen3D`.
-- Unified the `PokemonGreen` input pipelines (`MenuBox.Update`) into the centralized `InputSnapshot` and `BattleMenuBox` components to allow the user to properly escape the battle.
+- Unified the `Starfield2026` input pipelines (`MenuBox.Update`) into the centralized `InputSnapshot` and `BattleMenuBox` components to allow the user to properly escape the battle.
 
 ---
 

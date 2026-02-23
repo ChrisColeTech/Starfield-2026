@@ -1,5 +1,5 @@
 Building SwitchToolboxCli...
-Switch: D:\Projects\PokemonGreen\src\PokemonGreen.SwitchToolboxCli\src\PokemonGreen.SwitchToolboxCli.App\PokemonGreen.SwitchToolboxCli.App.csproj
+Switch: D:\Projects\Starfield2026\src\Starfield2026.SwitchToolboxCli\src\Starfield2026.SwitchToolboxCli.App\Starfield2026.SwitchToolboxCli.App.csproj
 
 Workload updates are available. Run `dotnet workload list` for more information.
 BUILD FAILED

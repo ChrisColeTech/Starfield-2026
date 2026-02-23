@@ -85,7 +85,7 @@ export async function loadScene(manifest: Manifest): Promise<LoadResult> {
     if (manifest.mtlFile) {
       const mtlUrl = `${baseUrl}${manifest.mtlFile}`
       const materials = await loadWithPromise(new MTLLoader(), mtlUrl)
-      ;(materials as MTLLoader.MaterialCreator).preload()
+        ; (materials as MTLLoader.MaterialCreator).preload()
       objLoader.setMaterials(materials as MTLLoader.MaterialCreator)
     }
     scene = await loadWithPromise(objLoader, modelUrl)
@@ -166,6 +166,7 @@ function loadFbxWithManager(modelUrl: string): Promise<THREE.Group> {
 interface ColladaResult {
   scene: THREE.Group
   animations: THREE.AnimationClip[]
+  xmlText: string
 }
 
 async function loadDaeWithManager(modelUrl: string): Promise<ColladaResult> {
@@ -238,6 +239,7 @@ async function loadDaeWithManager(modelUrl: string): Promise<ColladaResult> {
       colladaResult = {
         scene: collada.scene as unknown as THREE.Group,
         animations: anims,
+        xmlText: text,
       }
       // If manager already finished (no sub-resources), resolve now
       tryResolve()
@@ -253,7 +255,7 @@ async function loadDaeWithManager(modelUrl: string): Promise<ColladaResult> {
         managerDone = true
         tryResolve()
       }
-    }, 5000)
+    }, 15000)
   })
 }
 
@@ -347,7 +349,7 @@ function fixMaterials(scene: THREE.Group): void {
       const tex = (mat as THREE.MeshPhongMaterial).map
       if (tex) {
         tex.colorSpace = THREE.SRGBColorSpace
-        tex.needsUpdate = true
+        if (tex.image) tex.needsUpdate = true
       }
       const basic = new THREE.MeshBasicMaterial({
         map: tex || null,
@@ -463,20 +465,85 @@ export async function loadModelOnly(dir: string, modelFile: string): Promise<THR
 }
 
 /**
+ * Load a clip by asking the backend to bake the clip's animations into the model DAE.
+ * Returns the full scene (mesh+skeleton+textures) with animations already wired.
+ * This avoids all client-side bone retargeting issues.
+ */
+export async function loadBakedClip(
+  dir: string,
+  modelFile: string,
+  clipFile: string,
+): Promise<{ scene: THREE.Group; animations: THREE.AnimationClip[] }> {
+  const dirToken = encodeDirToken(dir)
+  const baseUrl = `${API_BASE}/serve/${dirToken}/`
+
+  // Fetch merged DAE from backend
+  const bakeUrl = `${API_BASE}/api/clips/bake?dir=${encodeURIComponent(dir)}&clip=${encodeURIComponent(clipFile)}&model=${encodeURIComponent(modelFile)}`
+  const res = await fetch(bakeUrl)
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }))
+    throw new Error(err.error || `Bake failed: HTTP ${res.status}`)
+  }
+  const mergedDaeText = await res.text()
+
+  // Parse with ColladaLoader — animations are already wired to the correct bones
+  const manager = new THREE.LoadingManager()
+  const loader = new ColladaLoader(manager)
+  loader.setCrossOrigin('anonymous')
+  loader.setResourcePath(baseUrl)
+
+  const collada = loader.parse(mergedDaeText, baseUrl)
+  const scene = collada.scene as unknown as THREE.Group
+  const animations = (collada as any).animations || []
+
+  console.log(`[SceneService] Baked clip loaded: ${animations.length} animation(s), ${animations[0]?.tracks?.length ?? 0} tracks`)
+
+  fixSkeletonFromInverseBindMatrices(scene)
+  fixMaterials(scene)
+
+  return { scene, animations }
+}
+
+/**
+ * Build a map from node id → node name by parsing the DAE XML.
+ * COLLADA animation channels reference bones by 'id', but Three.js
+ * ColladaLoader names Object3D nodes by the 'name' attribute.
+ */
+function buildIdToNameMap(xmlText: string): Map<string, string> {
+  const map = new Map<string, string>()
+  // Match: <node id="chara_root_id" name="chara_root" ... type="JOINT">
+  // Attribute order may vary, so use a broad match then extract id/name
+  const nodeRegex = /<node\s[^>]*type="JOINT"[^>]*>/g
+  let match
+  while ((match = nodeRegex.exec(xmlText)) !== null) {
+    const tag = match[0]
+    const idMatch = tag.match(/\bid="([^"]+)"/)
+    const nameMatch = tag.match(/\bname="([^"]+)"/)
+    if (idMatch && nameMatch && idMatch[1] !== nameMatch[1]) {
+      map.set(idMatch[1], nameMatch[1])
+    }
+  }
+  return map
+}
+
+/**
  * Load a single clip DAE and parse its animations against an existing scene.
- * Returns the parsed AnimationClip(s).
+ * Returns the parsed AnimationClip(s) with tracks retargeted to the model's bone names.
+ *
+ * Key insight: COLLADA animation channels target bones by node 'id' attribute
+ * (e.g. "chara_root_id/transform"), but Three.js ColladaLoader names bones by
+ * the 'name' attribute (e.g. "chara_root"). We parse the XML to build an
+ * id→name map and remap all tracks accordingly.
  */
 export async function loadClipDae(dir: string, clipFile: string, scene: THREE.Group): Promise<THREE.AnimationClip[]> {
   const dirToken = encodeDirToken(dir)
   const baseUrl = `${API_BASE}/serve/${dirToken}/`
   const clipUrl = `${baseUrl}${clipFile}`
 
-  // First try ColladaLoader
   const collada = await loadDaeWithManager(clipUrl)
   let animations = collada.animations
 
   if (animations.length === 0 || (animations.length === 1 && animations[0].tracks.length === 0)) {
-    // Fall back to custom parser which handles per-axis Euler channels
     try {
       const customAnims = await parseColladaAnimations(clipUrl, scene)
       if (customAnims.length > 0) {
@@ -484,6 +551,30 @@ export async function loadClipDae(dir: string, clipFile: string, scene: THREE.Gr
       }
     } catch (err) {
       console.warn('[SceneService] Custom animation parser failed for clip:', err)
+    }
+  }
+
+  // Remap animation track targets from node id → node name
+  if (animations.length > 0) {
+    const idToName = buildIdToNameMap(collada.xmlText)
+
+    if (idToName.size > 0) {
+      let remapped = 0
+      for (const clip of animations) {
+        for (const track of clip.tracks) {
+          // Track name format: "boneId.property" (e.g. "chara_root_id.quaternion")
+          const dotIdx = track.name.indexOf('.')
+          if (dotIdx < 0) continue
+          const boneId = track.name.substring(0, dotIdx)
+          const prop = track.name.substring(dotIdx)
+          const boneName = idToName.get(boneId)
+          if (boneName) {
+            track.name = boneName + prop
+            remapped++
+          }
+        }
+      }
+      console.log(`[SceneService] Retargeted ${remapped} tracks: id→name (${idToName.size} bone mappings)`)
     }
   }
 

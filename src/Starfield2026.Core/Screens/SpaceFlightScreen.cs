@@ -19,11 +19,14 @@ public class SpaceFlightScreen : IGameScreen
     private CoinCollectibleSystem _coinSystem = null!;
     private ProjectileSystem _projectiles = null!;
     private BossSystem _boss = null!;
-    
     public AmmoSystem? Ammo { get; set; }
     public BoostSystem? Boosts { get; set; }
+    public EnemySystem? Enemies { get; set; }
+    public Color PlayerTint { get; set; } = new Color(100, 255, 100);
     public CoinCollectibleSystem CoinSystem => _coinSystem;
     public float CurrentSpeed => _ship.CurrentSpeed;
+    public Vector3 Position => _ship.Position;
+    public float Yaw => 0f;
     public event Action? OnLandRequested;
     private Vector2 _cameraOffset;
     
@@ -42,6 +45,7 @@ public class SpaceFlightScreen : IGameScreen
     public void Initialize(GraphicsDevice device)
     {
         _ship = new ShipController();
+        _ship.Boosts = Boosts;
         _ship.Initialize(new Vector3(0, 4f, 0));
         _cameraOffset = Vector2.Zero;
         
@@ -92,6 +96,7 @@ public class SpaceFlightScreen : IGameScreen
         
         _boss = new BossSystem();
         _boss.Initialize(device);
+
     }
     
     public void Update(GameTime gameTime, InputSnapshot input)
@@ -143,9 +148,11 @@ public class SpaceFlightScreen : IGameScreen
             }
         }
         _projectiles.Update(dt);
-        
-        if (input.IsKeyJustPressed(Microsoft.Xna.Framework.Input.Keys.LeftShift) && Boosts != null && Boosts.TryActivate())
-            _ship.ActivateBoost(10f);
+
+        Enemies?.Update(dt, _ship.Position, _projectiles);
+
+        if (input.IsKeyJustPressed(Microsoft.Xna.Framework.Input.Keys.LeftShift))
+            _ship.ActivateBoost();
         
         if (_boss.Active)
         {
@@ -190,15 +197,17 @@ public class SpaceFlightScreen : IGameScreen
         _gridCeiling.Draw(device, view, proj);
         _coinSystem.Draw(device, view, proj);
         _projectiles.Draw(device, view, proj);
+        Enemies?.Draw(device, view, proj);
         _boss.Draw(device, view, proj);
         
         float roll = -_ship.Position.X * 0.015f;
-        _cubeRenderer.Draw(device, view, proj, _ship.Position + _ship.BobOffset, roll, 1.8f, new Color(100, 255, 100));
+        _cubeRenderer.Draw(device, view, proj, _ship.Position + _ship.BobOffset, roll, 1.8f, PlayerTint);
     }
     
     public void OnEnter()
     {
         _projectiles.Clear();
+        Enemies?.Clear();
         _boss.Active = false;
     }
     
