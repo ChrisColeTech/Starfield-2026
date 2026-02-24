@@ -31,6 +31,7 @@ public sealed class OverworldCharacter : IDisposable
     private Vector3 _followVelocity;
     private bool _pendingRedeploy;
     private float _facingOverrideVelocity;
+    private bool _wasMovingBeforeRecall;
 
     private const float FollowDistance = 3f;
     private const float LeashDistance = 4f;
@@ -187,6 +188,7 @@ else if (_animState == AnimState.Deployed && HasClip("BallRecall"))
                 float targetYaw = (float)Math.Atan2(dx, dz);
                 FacingOverride = rotationY;
                 _facingOverrideVelocity = 0f;
+                _wasMovingBeforeRecall = isMoving;
 
                 _animState = AnimState.RecallAnim;
                 _party?.StartRecall();
@@ -217,10 +219,11 @@ else if (_animState == AnimState.Deployed && HasClip("BallRecall"))
             return;
         }
 
-        if (_animState == AnimState.RecallAnim)
+if (_animState == AnimState.RecallAnim)
         {
-            // Skip recall animation if player moves or jumps — still recall the Pokemon
-            if (isMoving || !isGrounded)
+            // Skip recall animation if player starts moving (was stationary, now moving) or jumps
+            bool startedMoving = !_wasMovingBeforeRecall && isMoving;
+            if (startedMoving || !isGrounded)
             {
                 FacingOverride = null;
                 _party?.Recall();
