@@ -85,7 +85,7 @@ public sealed class OverworldCharacter : IDisposable
             {
                 _ballState = BallState.Throwing;
                 Play("BallThrow", loop: false);
-                _player.Speed = 1f;
+                _player.Speed = 1.25f;
                 _player.Update(dt);
                 return;
             }
@@ -93,7 +93,7 @@ public sealed class OverworldCharacter : IDisposable
             {
                 _ballState = BallState.Recalling;
                 Play("BallRecall", loop: false);
-                _player.Speed = 1f;
+                _player.Speed = 1.25f;
                 _player.Update(dt);
                 return;
             }
