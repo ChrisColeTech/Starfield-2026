@@ -15,21 +15,15 @@ public static class TrainerGender
         if (folderName.Length >= 6 && folderName.StartsWith("tr", StringComparison.OrdinalIgnoreCase))
         {
             string numPart = folderName.Substring(2, 4);
-            if (int.TryParse(numPart, out int id) && BodyTypeTable.TryGetValue(id, out var bodyType))
-                return bodyType;
-        }
-
-        // Fallback: check model.dae for skirt bones to detect female
-        string modelPath = Path.Combine(characterFolderPath, "model.dae");
-        if (File.Exists(modelPath))
-        {
-            try
+            if (int.TryParse(numPart, out int id))
             {
-                string content = File.ReadAllText(modelPath);
-                bool hasSkirt = content.Contains("skirt", StringComparison.OrdinalIgnoreCase);
-                return hasSkirt ? BodyType.Woman : BodyType.Man;
+                // Scarlet characters use a separate table for IDs that overlap with PLZA
+                bool isScarlet = characterFolderPath.Contains("scarlet", StringComparison.OrdinalIgnoreCase);
+                if (isScarlet && ScarletBodyTypeTable.TryGetValue(id, out var scarletType))
+                    return scarletType;
+                if (BodyTypeTable.TryGetValue(id, out var bodyType))
+                    return bodyType;
             }
-            catch { }
         }
 
         return BodyType.Unknown;
@@ -59,6 +53,7 @@ public static class TrainerGender
 
     public static readonly Dictionary<int, BodyType> BodyTypeTable = new()
     {
+        // PLZA / sun-moon (IDs 1-122)
         [1]  = BodyType.Girl,   [2]  = BodyType.Girl,
         [3]  = BodyType.Boy,    [4]  = BodyType.Girl,
         [5]  = BodyType.Man,    [6]  = BodyType.Woman,
@@ -121,11 +116,111 @@ public static class TrainerGender
         [205] = BodyType.Man,   [206] = BodyType.Woman,
         [207] = BodyType.Man,   [208] = BodyType.Man,
         [213] = BodyType.Man,
+
+        // sun-moon high IDs
         [1000] = BodyType.Man,  [1001] = BodyType.Man,
         [1002] = BodyType.Woman,[1003] = BodyType.Man,
         [1004] = BodyType.Man,  [1005] = BodyType.Woman,
         [1006] = BodyType.Man,  [1007] = BodyType.Man,
         [1008] = BodyType.Man,  [1009] = BodyType.Woman,
         [1010] = BodyType.Man,
+    };
+
+    // Scarlet characters — separate table to avoid ID collisions with PLZA/sun-moon.
+    // Data from trtype FlatBuffer sex enum + archive folder body labels.
+    public static readonly Dictionary<int, BodyType> ScarletBodyTypeTable = new()
+    {
+        // Unique characters (model_uq)
+        [0]   = BodyType.Boy,    // player (primitive)
+        [20]  = BodyType.Man,    // Professor Sada/Turo (future)
+        [40]  = BodyType.Girl,   // Nemona (rival/friend)
+        [50]  = BodyType.Girl,   // Penny (junior)
+        [70]  = BodyType.Boy,    // Arven (senior)
+        [80]  = BodyType.Man,    // Director Clavell
+        [81]  = BodyType.Man,    // Director Clavell (alt)
+        [90]  = BodyType.Woman,  // Ms. Dendra (battle teacher)
+        [100] = BodyType.Woman,  // Ms. Tyme (math teacher)
+        [110] = BodyType.Woman,  // Ms. Raifort (history)
+        [120] = BodyType.Woman,  // Ms. Miriam (nursing)
+        [130] = BodyType.Man,    // Mr. Saguaro (home ec)
+        [140] = BodyType.Man,    // Mr. Jacq (biology)
+        [150] = BodyType.Man,    // Mr. Salvatore (languages)
+        [160] = BodyType.Man,    // Hassel (Dragon, E4)
+        [170] = BodyType.Woman,  // Rika (Ground, E4)
+        [180] = BodyType.Woman,  // Poppy (Steel, E4)
+        [190] = BodyType.Woman,  // Geeta (Champion)
+        [200] = BodyType.Man,    // Larry (Normal GL / E4)
+        [210] = BodyType.Woman,  // Katy (Bug GL)
+        [220] = BodyType.Man,    // Kofu (Water GL)
+        [230] = BodyType.Man,    // Brassius (Grass GL)
+        [240] = BodyType.Girl,   // Iono (Electric GL)
+        [241] = BodyType.Girl,   // Iono (Electric GL alt)
+        [250] = BodyType.Man,    // Grusha (Ice GL)
+        [260] = BodyType.Woman,  // Tulip (Psychic GL)
+        [270] = BodyType.Woman,  // Ryme (Ghost GL)
+        [280] = BodyType.Woman,  // Mela (Fire, Team Star)
+        [290] = BodyType.Woman,  // Eri (Fighting, Team Star)
+        [300] = BodyType.Man,    // Atticus (Poison, Team Star)
+        [310] = BodyType.Man,    // Ortega (Fairy, Team Star)
+        [320] = BodyType.Man,    // Giacomo (Dark, Team Star)
+
+        // Trainer classes (model_tr)
+        [330] = BodyType.Man,    // karate
+        [340] = BodyType.Man,    // artist
+        [350] = BodyType.Woman,  // researcher
+        [360] = BodyType.Man,    // tanpan (youngster)
+        [370] = BodyType.Man,    // worker
+        [380] = BodyType.Man,    // musician
+        [390] = BodyType.Man,    // businessman
+        [400] = BodyType.Woman,  // ol (office lady)
+        [410] = BodyType.Man,    // mania
+        [420] = BodyType.Man,    // mountain
+        [430] = BodyType.Woman,  // chef
+        [440] = BodyType.Man,    // backpacker
+        [450] = BodyType.Man,    // waiter
+        [460] = BodyType.Woman,  // waitress
+        [470] = BodyType.Man,    // cleaning
+        [480] = BodyType.Man,    // dragontamer
+        [490] = BodyType.Woman,  // model
+        [500] = BodyType.Man,    // taxidriver
+        [510] = BodyType.Woman,  // pc (pokecenter nurse)
+        [520] = BodyType.Man,    // fs (shop clerk)
+        [600] = BodyType.Man,    // tribem (Team Star male)
+        [601] = BodyType.Man,    // tribemvat
+        [610] = BodyType.Woman,  // tribef (Team Star female)
+        [611] = BodyType.Woman,  // tribefvat
+        [880] = BodyType.Woman,  // mother
+        [890] = BodyType.Man,    // deliverer
+        [900] = BodyType.Man,    // richm
+        [910] = BodyType.Woman,  // richf
+        [920] = BodyType.Man,    // staffm
+        [930] = BodyType.Woman,  // stafff
+
+        // Variation NPCs (model_vr)
+        [620] = BodyType.Boy,    // schildm
+        [630] = BodyType.Boy,    // syouthm
+        [640] = BodyType.Man,    // sadultm
+        [641] = BodyType.Man,    // smiddlem
+        [650] = BodyType.Man,    // soldm
+        [660] = BodyType.Boy,    // sinfantm
+        [670] = BodyType.Girl,   // schildf
+        [680] = BodyType.Girl,   // syouthf
+        [690] = BodyType.Woman,  // sadultf
+        [691] = BodyType.Woman,  // smiddlef
+        [692] = BodyType.Woman,  // soldf
+        [720] = BodyType.Boy,    // infantm
+        [730] = BodyType.Girl,   // infantf
+        [740] = BodyType.Boy,    // childm
+        [750] = BodyType.Girl,   // childf
+        [760] = BodyType.Boy,    // youthm
+        [770] = BodyType.Girl,   // youthf
+        [780] = BodyType.Man,    // adultm
+        [790] = BodyType.Woman,  // adultf
+        [800] = BodyType.Man,    // middlem
+        [810] = BodyType.Woman,  // middlef
+        [840] = BodyType.Man,    // oldm
+        [850] = BodyType.Woman,  // oldf
+        [860] = BodyType.Man,    // hunkm
+        [870] = BodyType.Woman,  // hunkf
     };
 }

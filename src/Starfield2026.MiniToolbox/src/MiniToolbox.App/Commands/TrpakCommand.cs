@@ -24,6 +24,7 @@ public static class TrpakCommand
         string? outputDir = null;
         string? convertDir = null;
         string? rebakeDir = null;
+        string? dumpPack = null;
         int skip = 0;
         int limit = int.MaxValue;
         bool listMode = false;
@@ -80,6 +81,9 @@ public static class TrpakCommand
                     break;
                 case "--rebake":
                     rebakeDir = args[++i];
+                    break;
+                case "--dump-pack":
+                    dumpPack = args[++i];
                     break;
                 case "--skip":
                     skip = int.Parse(args[++i]);
@@ -141,6 +145,12 @@ public static class TrpakCommand
             foreach (var name in loader.PackNames)
                 Console.WriteLine($"  {name}");
             return 0;
+        }
+
+        // Dump-pack mode: extract raw files from a named pack
+        if (!string.IsNullOrWhiteSpace(dumpPack))
+        {
+            return RunDumpPack(loader, dumpPack, outputDir ?? "dump_pack_output");
         }
 
         // Generate hash list mode - build hash list from archive structure
@@ -234,6 +244,90 @@ public static class TrpakCommand
             count++;
         }
         Console.WriteLine($"\n{count} model(s) found.");
+        return 0;
+    }
+
+    /// <summary>
+    /// Dump all raw files from a pack matching a name substring.
+    /// </summary>
+    private static int RunDumpPack(TrpfsLoader loader, string packFilter, string outputDir)
+    {
+        Console.WriteLine($"\nDumping packs matching: {packFilter}");
+        Console.WriteLine($"Output: {outputDir}");
+        Directory.CreateDirectory(outputDir);
+
+        var matchingPacks = new List<(int index, string name)>();
+        for (int i = 0; i < loader.PackNames.Count; i++)
+        {
+            if (loader.PackNames[i].Contains(packFilter, StringComparison.OrdinalIgnoreCase))
+                matchingPacks.Add((i, loader.PackNames[i]));
+        }
+
+        if (matchingPacks.Count == 0)
+        {
+            Console.Error.WriteLine($"  No packs matching '{packFilter}' found.");
+            return 1;
+        }
+
+        Console.WriteLine($"  Found {matchingPacks.Count} matching pack(s).");
+
+        int totalFiles = 0;
+        foreach (var (packIdx, packName) in matchingPacks)
+        {
+            Console.WriteLine($"\n  Pack [{packIdx}]: {packName}");
+
+            // Get all file hashes in this pack
+            var fileHashes = loader.GetFilesInPack(packIdx);
+            Console.WriteLine($"    {fileHashes.Count} file(s) in pack.");
+
+            string safeName = packName
+                .Replace("arc/", "")
+                .Replace(".trpak", "")
+                .Replace('/', '_')
+                .Replace('\\', '_');
+
+            string packDir = Path.Combine(outputDir, safeName);
+            Directory.CreateDirectory(packDir);
+
+            int fileIdx = 0;
+            foreach (var hash in fileHashes)
+            {
+                try
+                {
+                    var data = loader.ExtractFile(hash);
+                    if (data == null)
+                    {
+                        Console.WriteLine($"    [{fileIdx}] 0x{hash:X16}: extraction failed (null)");
+                        fileIdx++;
+                        continue;
+                    }
+
+                    // Detect extension from content
+                    string ext = ".bin";
+                    if (data.Length >= 4)
+                    {
+                        string magic = System.Text.Encoding.ASCII.GetString(data, 0, Math.Min(4, data.Length));
+                        if (magic.StartsWith("BFBS")) ext = ".bfbs";
+                        else if (magic.StartsWith("BNTX")) ext = ".bntx";
+                        else if (magic.StartsWith("BCSV")) ext = ".bcsv";
+                    }
+
+                    string fileName = $"file_{fileIdx:D3}{ext}";
+                    string filePath = Path.Combine(packDir, fileName);
+                    File.WriteAllBytes(filePath, data);
+
+                    Console.WriteLine($"    [{fileIdx}] 0x{hash:X16}: {data.Length} bytes → {fileName}");
+                    totalFiles++;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"    [{fileIdx}] 0x{hash:X16}: ERROR - {ex.Message}");
+                }
+                fileIdx++;
+            }
+        }
+
+        Console.WriteLine($"\n  Done. {totalFiles} file(s) written to {outputDir}");
         return 0;
     }
 

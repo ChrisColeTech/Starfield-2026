@@ -123,7 +123,7 @@ public void Update(GameTime gameTime, InputSnapshot input)
             _player.SetFacingCamera(_camSmoothedYaw);
         }
 
-        _character?.Update(dt, _player.IsMoving, _player.IsRunning, _player.IsGrounded);
+        _character?.Update(dt, _player.IsMoving, _player.IsRunning, _player.IsGrounded, input);
         UpdateCamera(dt);
     }
 

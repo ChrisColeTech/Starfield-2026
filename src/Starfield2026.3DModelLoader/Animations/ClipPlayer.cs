@@ -12,6 +12,7 @@ public sealed class ClipPlayer
     public bool Loop { get; private set; }
     public float CurrentTime { get; private set; }
     public float Speed { get; set; } = 1f;
+    public bool IsFinished => ActiveClip is not null && !Loop && CurrentTime >= ActiveClip.Duration;
 
     public Matrix[] LocalPose { get; }
     public Matrix[] WorldPose { get; }
@@ -61,7 +62,7 @@ public sealed class ClipPlayer
                 CurrentTime = clip.Duration;
         }
 
-        ClipSampler.Sample(clip, CurrentTime, LocalPose, _skeleton.BindLocalTransforms);
+        ClipSampler.Sample(clip, CurrentTime, LocalPose, _skeleton.BindLocalTransforms, _skeleton);
         PoseResolver.Resolve(_skeleton, LocalPose, WorldPose, SkinPose);
     }
 

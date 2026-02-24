@@ -2,7 +2,9 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using Starfield2026.ModelLoader.Animations;
+using Starfield2026.ModelLoader.Input;
 using Starfield2026.ModelLoader.Rendering;
 
 namespace Starfield2026.ModelLoader.Helpers;
@@ -15,6 +17,9 @@ public sealed class OverworldCharacter : IDisposable
     private BasicEffect? _effect;
     private string? _activeTag;
     private float _fitScale = 1f;
+
+    private enum BallState { None, Throwing, Deployed, Recalling }
+    private BallState _ballState = BallState.None;
 
     private const float TargetHumanHeight = 2.0f;
     private const float SunMoonRefHeight = 170f;
@@ -35,19 +40,9 @@ public sealed class OverworldCharacter : IDisposable
 
         _effect = new BasicEffect(device)
         {
-            LightingEnabled = true,
-            PreferPerPixelLighting = true,
+            LightingEnabled = false,
             VertexColorEnabled = false,
-            DiffuseColor = Vector3.One,
-            AmbientLightColor = new Vector3(0.6f, 0.6f, 0.6f),
-            EmissiveColor = Vector3.Zero,
         };
-        _effect.DirectionalLight0.Enabled = true;
-        _effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-0.5f, -1f, -0.5f));
-        _effect.DirectionalLight0.DiffuseColor = new Vector3(0.6f, 0.6f, 0.6f);
-        _effect.DirectionalLight0.SpecularColor = Vector3.Zero;
-        _effect.DirectionalLight1.Enabled = false;
-        _effect.DirectionalLight2.Enabled = false;
 
         Play("Idle");
         _player.Update(0f);
@@ -79,10 +74,54 @@ public sealed class OverworldCharacter : IDisposable
 
     public bool HasClip(string tag) => _animSet?.HasTag(tag) ?? false;
 
-    public void Update(float dt, bool isMoving, bool isRunning, bool isGrounded)
+    public void Update(float dt, bool isMoving, bool isRunning, bool isGrounded, InputSnapshot? input = null)
     {
         if (_player is null) return;
 
+        // Ball throw/recall state machine
+        if (input != null && input.IsKeyJustPressed(Keys.LeftAlt))
+        {
+            if (_ballState == BallState.None && HasClip("BallThrow"))
+            {
+                _ballState = BallState.Throwing;
+                Play("BallThrow", loop: false);
+                _player.Speed = 1f;
+                _player.Update(dt);
+                return;
+            }
+            else if (_ballState == BallState.Deployed && HasClip("BallRecall"))
+            {
+                _ballState = BallState.Recalling;
+                Play("BallRecall", loop: false);
+                _player.Speed = 1f;
+                _player.Update(dt);
+                return;
+            }
+        }
+
+        if (_ballState == BallState.Throwing)
+        {
+            if (_player.IsFinished)
+                _ballState = BallState.Deployed;
+            else
+            {
+                _player.Update(dt);
+                return;
+            }
+        }
+
+        if (_ballState == BallState.Recalling)
+        {
+            if (_player.IsFinished)
+                _ballState = BallState.None;
+            else
+            {
+                _player.Update(dt);
+                return;
+            }
+        }
+
+        // Normal locomotion
         string desiredTag;
         if (!isGrounded && HasClip("Jump"))
             desiredTag = "Jump";

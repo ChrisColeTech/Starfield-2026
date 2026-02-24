@@ -30,12 +30,12 @@ public class MapViewerScreen
     private const float CamZoomSpeed = 15f;
     private const float CamPanSpeed = 10f;
     private const float CamMinDist = 1f;
-    private const float CamMaxDist = 200f;
+    private const float CamMaxDist = 2000f;
     private const float CamMinPitch = -1.5f;
     private const float CamMaxPitch = -0.05f;
     private const float Fov = MathHelper.PiOver4;
     private const float NearPlane = 0.1f;
-    private const float FarPlane = 1000f;
+    private const float FarPlane = 10000f;
 
     private Matrix _view;
     private Matrix _projection;
@@ -117,7 +117,10 @@ public class MapViewerScreen
         if (input.CameraPitch != 0)
             _camPitch = MathHelper.Clamp(_camPitch + input.CameraPitch * CamPitchSpeed * dt, CamMinPitch, CamMaxPitch);
         if (input.CameraZoom != 0)
-            _camDist = MathHelper.Clamp(_camDist + input.CameraZoom * CamZoomSpeed * dt, CamMinDist, CamMaxDist);
+        {
+            float zoomScale = Math.Max(1f, _camDist * 0.2f);
+            _camDist = MathHelper.Clamp(_camDist + input.CameraZoom * CamZoomSpeed * zoomScale * dt, CamMinDist, CamMaxDist);
+        }
 
         // Pan with WASD/arrows (negate Z so W moves forward from camera's perspective)
         float panX = input.MoveX;
