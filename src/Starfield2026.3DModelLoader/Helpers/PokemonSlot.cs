@@ -1,5 +1,8 @@
 #nullable enable
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Starfield2026.ModelLoader.Animations;
@@ -15,11 +18,23 @@ public sealed class PokemonSlot : IDisposable
     private BasicEffect? _effect;
     private float _fitScale = 1f;
 
-    private const float TargetPokemonHeight = 0.8f;
+    private static Dictionary<string, float>? _heightCache;
+    private const float DefaultHeight = 1.0f;
 
     public bool IsLoaded { get; private set; }
     public string FolderPath { get; private set; } = "";
     public string DisplayName { get; private set; } = "";
+
+    public static void LoadHeightConfig(string jsonPath)
+    {
+        if (!File.Exists(jsonPath)) return;
+        try
+        {
+            string json = File.ReadAllText(jsonPath);
+            _heightCache = JsonSerializer.Deserialize<Dictionary<string, float>>(json);
+        }
+        catch { _heightCache = null; }
+    }
 
     public void Load(GraphicsDevice device, string folderPath)
     {
@@ -49,11 +64,36 @@ public sealed class PokemonSlot : IDisposable
         _model.ComputeSkinnedBounds(_player.SkinPose);
 
         float modelHeight = _model.BoundsMax.Y - _model.BoundsMin.Y;
+        float targetHeight = GetTargetHeight(DisplayName);
+        
         if (modelHeight > 0.001f)
-            _fitScale = TargetPokemonHeight / modelHeight;
+            _fitScale = targetHeight / modelHeight;
 
         IsLoaded = true;
-        ModelLoaderLog.Info($"[Pokemon] Loaded: {DisplayName}, height={modelHeight:F3}, fitScale={_fitScale:F6}");
+        ModelLoaderLog.Info($"[Pokemon] Loaded: {DisplayName}, modelHeight={modelHeight:F3}, targetHeight={targetHeight:F2}, scale={_fitScale:F3}");
+    }
+
+    private float GetTargetHeight(string folderName)
+    {
+        if (_heightCache == null) return DefaultHeight;
+
+        string? speciesId = ExtractSpeciesId(folderName);
+        if (speciesId != null && _heightCache.TryGetValue(speciesId, out float height))
+            return height;
+
+        if (_heightCache.TryGetValue("default", out float defaultHeight))
+            return defaultHeight;
+
+        return DefaultHeight;
+    }
+
+    private static string? ExtractSpeciesId(string folderName)
+    {
+        if (folderName.Length >= 7 && folderName.StartsWith("pm"))
+        {
+            return folderName.Substring(0, 7);
+        }
+        return null;
     }
 
     public void Update(float dt)

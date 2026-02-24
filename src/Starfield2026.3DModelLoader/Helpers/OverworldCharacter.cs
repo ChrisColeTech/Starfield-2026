@@ -161,12 +161,12 @@ public sealed class OverworldCharacter : IDisposable
             }
         }
 
-        // Ctrl cycles Pokemon slot
-        if (input != null && _party != null && input.IsKeyJustPressed(Keys.LeftControl))
+// Ctrl cycles Pokemon slot
+        if (input != null && _party != null && input.CyclePokemon)
             _party.CycleNext();
 
         // Alt key triggers
-        if (input != null && input.IsKeyJustPressed(Keys.LeftAlt))
+        if (input != null && input.ThrowRecall)
         {
             if (_animState == AnimState.Normal && HasClip("BallThrow"))
             {

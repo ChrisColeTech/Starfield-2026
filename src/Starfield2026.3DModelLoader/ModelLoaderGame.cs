@@ -122,12 +122,17 @@ public class ModelLoaderGame : Game
         foreach (var kvp in _freeRoam.SharedAnimationFolders)
             ModelLoaderLog.Info($"  {kvp.Key} -> {kvp.Value}");
 
-        // Load trainer party assignments
+// Load trainer party assignments
         string pokemonRoot = Path.Combine(assetsRoot, "Models", "Pokemon");
         string partyJsonPath = Path.Combine(assetsRoot, "trainer_parties.json");
         _freeRoam.PokemonRoot = pokemonRoot;
         _freeRoam.TrainerParties = Helpers.TrainerPartyAssignment.LoadFromJson(partyJsonPath);
         ModelLoaderLog.Info($"Trainer parties: {_freeRoam.TrainerParties.Count} entries from {partyJsonPath}");
+
+        // Load Pokemon height config
+        string heightConfigPath = Path.Combine(assetsRoot, "pokemon_heights.json");
+        Helpers.PokemonSlot.LoadHeightConfig(heightConfigPath);
+        ModelLoaderLog.Info($"Pokemon height config loaded from {heightConfigPath}");
 
         // Restore animation settings
         string? savedMode = _database.GetSetting("animation_mode");
@@ -279,8 +284,8 @@ public class ModelLoaderGame : Game
             return;
         }
 
-        // Escape = switch between character and map mode
-        if (snap.CancelPressed)
+// Escape/Create button = switch between character and map mode
+        if (snap.SwitchModePressed)
         {
             _inMapMode = !_inMapMode;
             ModelLoaderLog.Info($"Switched to {(_inMapMode ? "Map" : "Character")} mode");
@@ -315,7 +320,7 @@ public class ModelLoaderGame : Game
 
             string mapName = _mapIndex >= 0 && _mapIndex < _maps.Count
                 ? _maps[_mapIndex].Name : "None";
-            string status = $"[Esc] Characters  [Tab] Select  |  {mapName} ({_mapIndex + 1}/{_maps.Count})  |  {_mapViewer.StatusText}";
+            string status = $"[F1] Characters  [Tab] Select  |  {mapName} ({_mapIndex + 1}/{_maps.Count})  |  {_mapViewer.StatusText}";
             Window.Title = $"Map Viewer  |  {status}";
 
             _hud.Draw(GraphicsDevice, Vector3.Zero, 0f, status);
@@ -326,7 +331,7 @@ public class ModelLoaderGame : Game
 
             string charName = _characterIndex >= 0 && _characterIndex < _characters.Count
                 ? _characters[_characterIndex].Name : "None";
-            string status = $"[Esc] Maps  [Tab] Select  |  {charName} ({_characterIndex + 1}/{_characters.Count})  |  {_freeRoam.StatusText}";
+            string status = $"[F1] Maps  [Tab] Select  |  {charName} ({_characterIndex + 1}/{_characters.Count})  |  {_freeRoam.StatusText}";
             Window.Title = $"3D Model Loader  |  {status}";
 
             _hud.Draw(GraphicsDevice, _freeRoam.Position, _freeRoam.Yaw, status);
