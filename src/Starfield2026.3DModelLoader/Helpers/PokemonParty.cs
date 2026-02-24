@@ -98,6 +98,12 @@ public sealed class PokemonParty : IDisposable
         _isScalingUp = false;
     }
 
+    public void CancelRecall()
+    {
+        _isScalingDown = false;
+        _isScalingUp = true;
+    }
+
     public void Recall()
     {
         DeployedIndex = null;

@@ -184,6 +184,18 @@ public sealed class OverworldCharacter : IDisposable
 
         if (_animState == AnimState.RecallAnim)
         {
+            // Cancel recall if player moves or jumps
+            if (isMoving || !isGrounded)
+            {
+                _pendingRedeploy = false;
+                _animState = AnimState.Deployed;
+                _party?.CancelRecall();
+                _pokeballCtrl?.Reset();
+                Play("Walk");
+                _player.Update(dt);
+                return;
+            }
+
             _player.Update(dt);
             if (_player.IsFinished)
             {
