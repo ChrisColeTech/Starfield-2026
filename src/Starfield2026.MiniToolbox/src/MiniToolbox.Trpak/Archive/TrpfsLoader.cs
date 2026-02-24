@@ -17,8 +17,9 @@ namespace MiniToolbox.Trpak.Archive
         private readonly string _trpfsPath;
         private readonly TrpakHashCache _hashCache;
 
-        // Pack cache: packHash → deserialized PackedArchive
+        // Pack cache: packHash → deserialized PackedArchive (thread-safe for parallel extraction)
         private readonly Dictionary<ulong, PackedArchive> _packCache = new();
+        private readonly object _packCacheLock = new();
 
         // O(1) lookup indexes — replaces Array.IndexOf which was O(n)
         private readonly Dictionary<ulong, int> _fdHashIndex;
@@ -240,8 +241,11 @@ namespace MiniToolbox.Trpak.Archive
 
         private bool TryGetPack(ulong packHash, long packSize, out PackedArchive pack)
         {
-            if (_packCache.TryGetValue(packHash, out pack!))
-                return true;
+            lock (_packCacheLock)
+            {
+                if (_packCache.TryGetValue(packHash, out pack!))
+                    return true;
+            }
 
             if (!_fsHashIndex.TryGetValue(packHash, out int fileIndex))
             {
@@ -254,18 +258,29 @@ namespace MiniToolbox.Trpak.Archive
             br.BaseStream.Position = (long)_fs.FileOffsets[fileIndex];
             byte[] packBytes = br.ReadBytes((int)packSize);
 
-            pack = FlatBufferConverter.DeserializeFrom<PackedArchive>(packBytes);
+            var decoded = FlatBufferConverter.DeserializeFrom<PackedArchive>(packBytes);
 
-            // Evict oldest if cache is full
-            if (_packCache.Count >= MaxPackCacheSize)
-                _packCache.Remove(_packCache.Keys.First());
+            lock (_packCacheLock)
+            {
+                // Double-check: another thread may have inserted while we were reading
+                if (_packCache.TryGetValue(packHash, out pack!))
+                    return true;
 
-            _packCache[packHash] = pack;
+                // Evict oldest if cache is full
+                if (_packCache.Count >= MaxPackCacheSize)
+                    _packCache.Remove(_packCache.Keys.First());
+
+                _packCache[packHash] = decoded;
+                pack = decoded;
+            }
             return true;
         }
 
         /// <summary>Clear the pack cache to free memory.</summary>
-        public void ClearPackCache() => _packCache.Clear();
+        public void ClearPackCache()
+        {
+            lock (_packCacheLock) { _packCache.Clear(); }
+        }
 
         private static int FindEntryIndex(PackedArchive pack, ulong fileHash)
         {

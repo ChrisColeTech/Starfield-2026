@@ -94,6 +94,12 @@ public class FreeRoamScreen
 
             _character ??= new OverworldCharacter();
             _character.Load(_device, animSet);
+
+            // Load pokeball model if available
+            string? pokeballPath = FindPokeballModel(folderPath);
+            if (pokeballPath != null)
+                _character.LoadPokeball(_device, pokeballPath);
+
             StatusText = $"Loaded: {System.IO.Path.GetFileName(folderPath)} ({animSet.ClipsByTag.Count} tags)";
         }
         catch (Exception ex)
@@ -123,7 +129,8 @@ public void Update(GameTime gameTime, InputSnapshot input)
             _player.SetFacingCamera(_camSmoothedYaw);
         }
 
-        _character?.Update(dt, _player.IsMoving, _player.IsRunning, _player.IsGrounded, input);
+        _character?.Update(dt, _player.IsMoving, _player.IsRunning, _player.IsGrounded, input,
+            _player.Position, _player.Yaw);
         UpdateCamera(dt);
     }
 
@@ -230,5 +237,20 @@ private void UpdateCamera(float dt)
             var cubePos = new Vector3(pos.X, pos.Y + 0.75f, pos.Z);
             _cubeRenderer.Draw(device, _view, _projection, cubePos, yaw, 1.5f, new Color(0, 220, 255));
         }
+    }
+
+    private static string? FindPokeballModel(string characterFolderPath)
+    {
+        // Walk up from character folder to find Models/Items/Pokeballs/ob0201_00/model.dae
+        string? dir = characterFolderPath;
+        for (int i = 0; i < 10 && dir != null; i++)
+        {
+            dir = System.IO.Path.GetDirectoryName(dir);
+            if (dir == null) break;
+            string candidate = System.IO.Path.Combine(dir, "Items", "Pokeballs", "ob0201_00", "model.dae");
+            if (System.IO.File.Exists(candidate))
+                return candidate;
+        }
+        return null;
     }
 }

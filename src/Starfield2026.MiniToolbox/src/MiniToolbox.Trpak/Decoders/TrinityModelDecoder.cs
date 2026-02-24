@@ -505,16 +505,21 @@ namespace MiniToolbox.Trpak.Decoders
             {
                 int indsize = (1 << (int)polyType);
                 long currPos = start * indsize;
-                indBuf.BaseStream.Position = currPos;
-                while (currPos < (start + count) * indsize)
+                long endPos = (start + count) * indsize;
+                long bufLen = indexBuf.Bytes.Length;
+                if (currPos < bufLen)
                 {
-                    switch (polyType)
+                    indBuf.BaseStream.Position = currPos;
+                    while (currPos < endPos && currPos + indsize <= bufLen)
                     {
-                        case TRIndexFormat.BYTE: indices.Add(indBuf.ReadByte()); break;
-                        case TRIndexFormat.SHORT: indices.Add(indBuf.ReadUInt16()); break;
-                        case TRIndexFormat.INT: indices.Add(indBuf.ReadUInt32()); break;
+                        switch (polyType)
+                        {
+                            case TRIndexFormat.BYTE: indices.Add(indBuf.ReadByte()); break;
+                            case TRIndexFormat.SHORT: indices.Add(indBuf.ReadUInt16()); break;
+                            case TRIndexFormat.INT: indices.Add(indBuf.ReadUInt32()); break;
+                        }
+                        currPos += indsize;
                     }
-                    currPos += indsize;
                 }
                 Indices.Add(indices.ToArray());
             }
@@ -675,6 +680,15 @@ namespace MiniToolbox.Trpak.Decoders
             List<Vector4[]> indexStreams, List<Vector4[]> weightStreams, int streamCount,
             out Vector4[] collapsedIndices, out Vector4[] collapsedWeights)
         {
+            // Clamp stream count to actual available streams
+            streamCount = Math.Min(streamCount, Math.Min(indexStreams.Count, weightStreams.Count));
+            if (streamCount == 0 || indexStreams[0].Length == 0)
+            {
+                collapsedIndices = Array.Empty<Vector4>();
+                collapsedWeights = Array.Empty<Vector4>();
+                return;
+            }
+
             int vertexCount = indexStreams[0].Length;
             collapsedIndices = new Vector4[vertexCount];
             collapsedWeights = new Vector4[vertexCount];
@@ -684,6 +698,8 @@ namespace MiniToolbox.Trpak.Decoders
                 var totals = new Dictionary<int, float>();
                 for (int s = 0; s < streamCount; s++)
                 {
+                    if (v >= indexStreams[s].Length || v >= weightStreams[s].Length)
+                        continue;
                     var idx = indexStreams[s][v];
                     var w = weightStreams[s][v];
                     AccumulateInfluence(totals, (int)MathF.Round(idx.X), w.X);
@@ -1024,27 +1040,27 @@ namespace MiniToolbox.Trpak.Decoders
                     if (mode == BlendIndexRemapMode.JointInfo)
                     {
                         mapped[v] = new Vector4(
-                            (int)MathF.Round(idx.X) >= 0 && (int)MathF.Round(idx.X) < _armature.JointInfoCount ? _armature.MapJointInfoIndex((int)MathF.Round(idx.X)) : idx.X,
-                            (int)MathF.Round(idx.Y) >= 0 && (int)MathF.Round(idx.Y) < _armature.JointInfoCount ? _armature.MapJointInfoIndex((int)MathF.Round(idx.Y)) : idx.Y,
-                            (int)MathF.Round(idx.Z) >= 0 && (int)MathF.Round(idx.Z) < _armature.JointInfoCount ? _armature.MapJointInfoIndex((int)MathF.Round(idx.Z)) : idx.Z,
-                            (int)MathF.Round(idx.W) >= 0 && (int)MathF.Round(idx.W) < _armature.JointInfoCount ? _armature.MapJointInfoIndex((int)MathF.Round(idx.W)) : idx.W);
+                            (int)MathF.Round(idx.X) >= 0 && (int)MathF.Round(idx.X) < _armature.JointInfoCount ? _armature.MapJointInfoIndex((int)MathF.Round(idx.X)) : 0,
+                            (int)MathF.Round(idx.Y) >= 0 && (int)MathF.Round(idx.Y) < _armature.JointInfoCount ? _armature.MapJointInfoIndex((int)MathF.Round(idx.Y)) : 0,
+                            (int)MathF.Round(idx.Z) >= 0 && (int)MathF.Round(idx.Z) < _armature.JointInfoCount ? _armature.MapJointInfoIndex((int)MathF.Round(idx.Z)) : 0,
+                            (int)MathF.Round(idx.W) >= 0 && (int)MathF.Round(idx.W) < _armature.JointInfoCount ? _armature.MapJointInfoIndex((int)MathF.Round(idx.W)) : 0);
                     }
                     else if (mode == BlendIndexRemapMode.SkinningPalette)
                     {
                         int ix = (int)MathF.Round(idx.X), iy = (int)MathF.Round(idx.Y), iz = (int)MathF.Round(idx.Z), iw = (int)MathF.Round(idx.W);
                         mapped[v] = new Vector4(
-                            ix >= 0 && ix < skinPalette.Length ? skinPalette[ix] : idx.X,
-                            iy >= 0 && iy < skinPalette.Length ? skinPalette[iy] : idx.Y,
-                            iz >= 0 && iz < skinPalette.Length ? skinPalette[iz] : idx.Z,
-                            iw >= 0 && iw < skinPalette.Length ? skinPalette[iw] : idx.W);
+                            ix >= 0 && ix < skinPalette.Length ? skinPalette[ix] : 0,
+                            iy >= 0 && iy < skinPalette.Length ? skinPalette[iy] : 0,
+                            iz >= 0 && iz < skinPalette.Length ? skinPalette[iz] : 0,
+                            iw >= 0 && iw < skinPalette.Length ? skinPalette[iw] : 0);
                     }
                     else if (mode == BlendIndexRemapMode.BoneMeta)
                     {
                         mapped[v] = new Vector4(
-                            (int)MathF.Round(idx.X) >= 0 && (int)MathF.Round(idx.X) < _armature.BoneMetaCount ? _armature.MapBoneMetaIndex((int)MathF.Round(idx.X)) : idx.X,
-                            (int)MathF.Round(idx.Y) >= 0 && (int)MathF.Round(idx.Y) < _armature.BoneMetaCount ? _armature.MapBoneMetaIndex((int)MathF.Round(idx.Y)) : idx.Y,
-                            (int)MathF.Round(idx.Z) >= 0 && (int)MathF.Round(idx.Z) < _armature.BoneMetaCount ? _armature.MapBoneMetaIndex((int)MathF.Round(idx.Z)) : idx.Z,
-                            (int)MathF.Round(idx.W) >= 0 && (int)MathF.Round(idx.W) < _armature.BoneMetaCount ? _armature.MapBoneMetaIndex((int)MathF.Round(idx.W)) : idx.W);
+                            (int)MathF.Round(idx.X) >= 0 && (int)MathF.Round(idx.X) < _armature.BoneMetaCount ? _armature.MapBoneMetaIndex((int)MathF.Round(idx.X)) : 0,
+                            (int)MathF.Round(idx.Y) >= 0 && (int)MathF.Round(idx.Y) < _armature.BoneMetaCount ? _armature.MapBoneMetaIndex((int)MathF.Round(idx.Y)) : 0,
+                            (int)MathF.Round(idx.Z) >= 0 && (int)MathF.Round(idx.Z) < _armature.BoneMetaCount ? _armature.MapBoneMetaIndex((int)MathF.Round(idx.Z)) : 0,
+                            (int)MathF.Round(idx.W) >= 0 && (int)MathF.Round(idx.W) < _armature.BoneMetaCount ? _armature.MapBoneMetaIndex((int)MathF.Round(idx.W)) : 0);
                     }
                     else
                     {
