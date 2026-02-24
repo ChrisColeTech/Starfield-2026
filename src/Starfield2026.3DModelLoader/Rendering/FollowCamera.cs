@@ -28,6 +28,7 @@ public class FollowCamera
     private const float MaxDist = 40f;
     private const float WalkDist = 7f;
     private const float RunDist = 12f;
+    private const float DeployDist = 3f;
     private const float MinPitch = -1.4f;
     private const float MaxPitch = -0.1f;
     private const float Fov = MathHelper.PiOver4;
@@ -47,7 +48,7 @@ public class FollowCamera
 
     public void Update(float dt, float viewportAspect,
         Vector3 targetPos, float targetYaw, float targetSpeed,
-        bool isRunning, bool isMovingBackward,
+        bool isRunning, bool isMovingBackward, bool isPokemonDeployed,
         float inputYaw, float inputPitch, float inputZoom)
     {
         if (inputYaw != 0)
@@ -83,7 +84,8 @@ public class FollowCamera
         }
 
         float runDistOffset = isRunning ? (RunDist - WalkDist) : 0f;
-        float desiredDist = _dist + runDistOffset;
+        float deployOffset = isPokemonDeployed ? DeployDist : 0f;
+        float desiredDist = _dist + runDistOffset + deployOffset;
         desiredDist = MathHelper.Clamp(desiredDist, MinDist, MaxDist);
         _smoothedDist = SmoothDamp(_smoothedDist, desiredDist, ref _distVelocity, DistSmoothTime, dt);
 

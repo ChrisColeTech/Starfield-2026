@@ -1,8 +1,8 @@
 # 25 - Pokemon Party System & SRP Refactor: Lessons Learned Handoff
 
 **Date:** 2026-02-24
-**Scope:** Pokemon party loading/deploy/recall, pokeball throw mechanics, red recall beam, deploy scale animation, folder-based body type classification, root motion stripping fix, SRP refactor of OverworldCharacter and FreeRoamScreen
-**Status:** Compiles clean (0 warnings, 0 errors). All features functional. No runtime crashes observed. Pokemon scaling, deploy timing, recall-cancel-on-movement all working.
+**Scope:** Pokemon party loading/deploy/recall, pokeball throw mechanics, red recall beam, deploy scale animation, folder-based body type classification, root motion stripping fix, SRP refactor of OverworldCharacter and FreeRoamScreen, unified character scaling, camera deploy zoom, Pokemon lazy follow
+**Status:** Compiles clean (0 warnings, 0 errors). All features functional. No runtime crashes observed. Pokemon scaling, deploy timing, recall-cancel-on-movement, lazy follow, camera zoom all working.
 
 ---
 
@@ -36,6 +36,24 @@
 - Fixed by computing `Skeleton.RootChain` at construction — walks single-child nodes from root to first branch, includes branch children
 - `ClipSampler` now iterates `skeleton.RootChain` to lock translation to bind pose
 
+### Unified Character Scaling
+- Old code used a two-tier reference height system: `SunMoonRefHeight = 170`, `ScarletRefHeight = 1.2`, with a `GroupThreshold = 10` to pick which one to use. This produced inconsistent sizes across generations — Sun-Moon characters were noticeably smaller than Scarlet
+- Replaced with direct normalization: `fitScale = TargetHumanHeight / modelHeight` — same approach already used for Pokemon. All characters now render at the same height regardless of raw model units
+- `TargetHumanHeight` tuned to 2.5m for good overworld presence
+
+### Camera Deploy Zoom
+- Camera smoothly zooms out by 3 extra units when a Pokemon is deployed, giving a wider view of both trainer and Pokemon
+- Uses the existing distance smooth damping — no pop, smooth transition in and out
+- `FollowCamera.Update()` takes a `isPokemonDeployed` bool, adds `DeployDist` offset to desired distance
+- FreeRoamScreen passes `_character?.Party is { IsDeployed: true }` through to the camera
+
+### Pokemon Lazy Follow
+- Deployed Pokemon smoothly follows behind the trainer instead of standing at the ball landing spot
+- Follow target is computed as `FollowDistance (3m)` behind the trainer based on facing direction
+- Position is smooth-damped with `FollowSmoothTime = 0.5s` — Pokemon trails behind naturally when walking/running
+- Pokemon always faces the trainer (yaw computed from Pokemon-to-trainer direction in Draw)
+- On initial deploy, Pokemon starts at the ball landing position and then begins following
+
 ### SRP Refactor
 - **FollowCamera.cs** (~130 lines) — Extracted from FreeRoamScreen: all camera state, orbit math, smooth damping, view/projection computation
 - **PokeballController.cs** (~230 lines) — Extracted from OverworldCharacter: flight state machine, hand bone detection, ball loading/sizing, ball drawing, ball world position query
@@ -52,8 +70,7 @@
 - **More trainer_parties.json entries** — Only 4 trainers assigned. Need to populate for all trainers that should have Pokemon
 
 ### Should-Have
-- **Pokemon follow/walk behavior** — Deployed Pokemon currently stand stationary at the ball landing position. They should follow the trainer at a distance or at least face the trainer as they move
-- **Pokemon deploy position update** — If you walk far away from the deploy point, the Pokemon stays behind. Consider a leash distance where the Pokemon teleports or walks to catch up
+- **Pokemon walk animation while following** — Pokemon uses Idle animation even while following. Should switch to Walk when moving, Idle when stationary
 - **Transition polish** — Deploy pop-in could use a white flash or particle burst. Recall shrink could fade to red tint before disappearing
 
 ### Nice-to-Have
@@ -257,12 +274,14 @@ ModelLoaderGame (orchestrator)
 - **Party loads with character** — all 6 slots loaded upfront, not on-demand, to avoid mid-gameplay hitches
 - **trainer_parties.json** is hand-edited — no UI for assignment. Keeps the tool simple
 - **Recall cancel skips animation, still recalls** — preserves gameplay momentum without leaving Pokemon stranded
+- **Unified scaling via actual model height** — `fitScale = TargetHeight / modelHeight` for both trainers and Pokemon. No generation-specific reference heights. Simple and correct
+- **Lazy follow via SmoothDamp** — Same damping function used by camera, player movement, and Pokemon follow. Consistent feel across all smoothed motion in the app
 
 ### Quick Wins
 
 1. **Pre-allocate skinning buffers** — Change `RebuildBuffers()` to reuse arrays. ~30 min, eliminates biggest per-frame GC source. Edit `SkinnedModel.cs` to allocate `VertexPositionNormalTexture[]` and `int[]` at load time, `SetData()` to update.
 
-2. **Pokemon follow trainer** — In `OverworldCharacter.Update()`, when deployed, lerp `_deployPosition` toward a point behind the trainer. ~20 lines of code. Use same smooth damp as camera.
+2. **Pokemon walk/idle animation switching** — Check `_followVelocity.Length()` in the party Update. If above threshold, play Walk clip; below, play Idle. ~15 lines in `PokemonParty.Update()` and `PokemonSlot`.
 
 3. **Texture atlas per model** — Many models have 5-10 small textures. Bake into a single atlas at pipeline time to reduce draw calls from ~8 to 1 per model.
 
@@ -275,18 +294,18 @@ ModelLoaderGame (orchestrator)
 ### New Files This Session
 | File | Lines | Purpose |
 |------|-------|---------|
-| `Controllers/PokeballController.cs` | ~230 | Ball flight, hand bone, throw/recall mechanics |
-| `Rendering/FollowCamera.cs` | ~130 | Third-person orbit camera with smooth damping |
-| `Helpers/PokemonSlot.cs` | ~100 | Single Pokemon model: load, animate, draw |
-| `Helpers/PokemonParty.cs` | ~120 | 6 slots, cycling, deploy/recall, scale animation |
+| `Controllers/PokeballController.cs` | ~240 | Ball flight, hand bone, throw/recall mechanics, ball world position query |
+| `Rendering/FollowCamera.cs` | ~135 | Third-person orbit camera with smooth damping, deploy zoom |
+| `Helpers/PokemonSlot.cs` | ~100 | Single Pokemon model: load, animate, draw with deploy scale |
+| `Helpers/PokemonParty.cs` | ~115 | 6 slots, cycling, deploy/recall, scale animation |
 | `Helpers/TrainerPartyAssignment.cs` | ~60 | JSON-based trainer-to-Pokemon mapping |
 | `Starfield2026.Assets/trainer_parties.json` | ~35 | Party data for 4 test trainers |
 
 ### Modified Files This Session
 | File | Before | After | Key Changes |
 |------|--------|-------|-------------|
-| `Helpers/OverworldCharacter.cs` | 432 | ~220 | Extracted pokeball to controller, added party integration, red beam, recall cancel |
-| `Screens/FreeRoamScreen.cs` | 267 | ~140 | Extracted camera, added party/pokemon root config |
+| `Helpers/OverworldCharacter.cs` | 432 | ~280 | Extracted pokeball, party integration, red beam, recall cancel, lazy follow, unified scaling, SmoothDamp helpers |
+| `Screens/FreeRoamScreen.cs` | 267 | ~140 | Extracted camera, party/pokemon config, passes deploy state to camera |
 | `ModelLoaderGame.cs` | 377 | ~390 | Added trainer party JSON loading, Pokemon root path |
 | `Helpers/TrainerGender.cs` | ~130 | ~70 | Replaced lookup tables with folder-path detection |
 | `DTOs/Skeleton.cs` | - | +30 | Added RootChain property + BuildRootChain |

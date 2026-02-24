@@ -28,7 +28,11 @@ public sealed class OverworldCharacter : IDisposable
     // Pokemon party
     private PokemonParty? _party;
     private Vector3 _deployPosition;
+    private Vector3 _followVelocity;
     private bool _pendingRedeploy;
+
+    private const float FollowDistance = 3f;
+    private const float FollowSmoothTime = 0.5f;
 
     private const float ThrowAnimSpeed = 1.125f;
     private const float RecallAnimSpeed = 0.9375f;
@@ -38,10 +42,7 @@ public sealed class OverworldCharacter : IDisposable
     private VertexPositionColor[]? _beamVerts;
     private static readonly short[] BeamIndices = { 0,1,2, 0,2,3, 4,5,6, 4,6,7 };
 
-    private const float TargetHumanHeight = 2.0f;
-    private const float SunMoonRefHeight = 170f;
-    private const float ScarletRefHeight = 1.2f;
-    private const float GroupThreshold = 10f;
+    private const float TargetHumanHeight = 2.5f;
 
     public bool IsLoaded { get; private set; }
     public AnimationSet? AnimationSet => _animSet;
@@ -76,10 +77,7 @@ public sealed class OverworldCharacter : IDisposable
 
         float modelHeight = _model.BoundsMax.Y - _model.BoundsMin.Y;
         if (modelHeight > 0.001f)
-        {
-            float refHeight = modelHeight > GroupThreshold ? SunMoonRefHeight : ScarletRefHeight;
-            _fitScale = TargetHumanHeight / refHeight;
-        }
+            _fitScale = TargetHumanHeight / modelHeight;
 
         var bodyType = TrainerGender.Classify(animSet.ModelPath);
         _pokeballCtrl.Configure(_fitScale, bodyType, animSet.ModelPath);
@@ -128,9 +126,17 @@ public sealed class OverworldCharacter : IDisposable
             _party?.Deploy();
         }
 
-        // Update deployed Pokemon animation
+        // Update deployed Pokemon animation + lazy follow
         if (_party is { IsDeployed: true })
+        {
             _party.Update(dt);
+
+            // Pokemon lazily follows behind the trainer
+            float behindX = position.X - (float)Math.Sin(rotationY) * FollowDistance;
+            float behindZ = position.Z - (float)Math.Cos(rotationY) * FollowDistance;
+            var followTarget = new Vector3(behindX, 0f, behindZ);
+            _deployPosition = SmoothDamp3(_deployPosition, followTarget, ref _followVelocity, FollowSmoothTime, dt);
+        }
 
         // Ctrl cycles Pokemon slot
         if (input != null && _party != null && input.IsKeyJustPressed(Keys.LeftControl))
@@ -350,6 +356,25 @@ public sealed class OverworldCharacter : IDisposable
         _effect.VertexColorEnabled = false;
         device.BlendState = prevBlend;
         device.DepthStencilState = prevDepth;
+    }
+
+    private static float SmoothDamp(float current, float target, ref float velocity, float smoothTime, float dt)
+    {
+        float omega = 2f / smoothTime;
+        float x = omega * dt;
+        float exp = 1f / (1f + x + 0.48f * x * x + 0.235f * x * x * x);
+        float change = current - target;
+        float temp = (velocity + omega * change) * dt;
+        velocity = (velocity - omega * temp) * exp;
+        return target + (change + temp) * exp;
+    }
+
+    private static Vector3 SmoothDamp3(Vector3 current, Vector3 target, ref Vector3 velocity, float smoothTime, float dt)
+    {
+        return new Vector3(
+            SmoothDamp(current.X, target.X, ref velocity.X, smoothTime, dt),
+            SmoothDamp(current.Y, target.Y, ref velocity.Y, smoothTime, dt),
+            SmoothDamp(current.Z, target.Z, ref velocity.Z, smoothTime, dt));
     }
 
     private Matrix BuildCharacterWorld(Vector3 position, float rotationY)

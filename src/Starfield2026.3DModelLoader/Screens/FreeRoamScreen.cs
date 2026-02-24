@@ -103,8 +103,9 @@ public class FreeRoamScreen
             _player.Position, _player.Yaw);
 
         float aspect = _device.Viewport.Width / (float)_device.Viewport.Height;
+        bool pokemonOut = _character?.Party is { IsDeployed: true };
         _camera.Update(dt, aspect, _player.Position, _player.Yaw, _player.Speed,
-            _player.IsRunning, _player.IsMovingBackward,
+            _player.IsRunning, _player.IsMovingBackward, pokemonOut,
             input.CameraYaw, input.CameraPitch, input.CameraZoom);
     }
 
