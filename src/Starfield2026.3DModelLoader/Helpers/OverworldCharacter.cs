@@ -56,10 +56,11 @@ public sealed class OverworldCharacter : IDisposable
     private const float PokeballDiameterDefault = 0.15f; // Scarlet
     private static readonly string[] HandBoneNames =
     {
-        "EffBall",           // Sun-Moon / PLZA — dedicated ball attachment bone
+        "EffBall",           // Sun-Moon — dedicated ball attachment bone
         "right_attach_on",   // Scarlet — right hand attachment point
-        "RHand",             // Sun-Moon / PLZA — right hand
-        "right_hand",        // Scarlet — right hand
+        "right_attach",      // PZLA — right hand attachment point
+        "RHand",             // Sun-Moon — right hand
+        "right_hand",        // Scarlet / PZLA — right hand fallback
     };
 
     public bool IsLoaded { get; private set; }
