@@ -25,14 +25,19 @@ public sealed class OverworldCharacter : IDisposable
 
     private PokeballController? _pokeballCtrl;
 
-    // Pokemon party
+// Pokemon party
     private PokemonParty? _party;
     private Vector3 _deployPosition;
     private Vector3 _followVelocity;
     private bool _pendingRedeploy;
+    private float _facingOverrideVelocity;
 
     private const float FollowDistance = 3f;
+    private const float LeashDistance = 4f;
     private const float FollowSmoothTime = 0.5f;
+    private const float FaceSmoothTime = 0.2f;
+    private float _pokemonYaw;
+    private float _pokemonYawVelocity;
 
     private const float ThrowAnimSpeed = 1.125f;
     private const float RecallAnimSpeed = 0.9375f;
@@ -47,6 +52,7 @@ public sealed class OverworldCharacter : IDisposable
     public bool IsLoaded { get; private set; }
     public AnimationSet? AnimationSet => _animSet;
     public PokemonParty? Party => _party;
+    public float? FacingOverride { get; private set; }
     public string PartyStatusText => _party != null
         ? $"[{_party.ActiveIndex + 1}/{_party.SlotCount}: {_party.ActiveDisplayName}]"
         : "";
@@ -118,24 +124,40 @@ public sealed class OverworldCharacter : IDisposable
     {
         if (_player is null) return;
 
-        // Update ball flight — deploy Pokemon the frame the ball lands
+// Update ball flight — deploy Pokemon the frame the ball lands
         bool ballLanded = _pokeballCtrl?.UpdateFlight(dt, position, rotationY) ?? false;
         if (ballLanded && _animState == AnimState.ThrowAnim)
         {
             _deployPosition = _pokeballCtrl?.LandPosition ?? position;
+            _pokemonYaw = rotationY;
+            _followVelocity = Vector3.Zero;
+            _pokemonYawVelocity = 0f;
             _party?.Deploy();
         }
 
-        // Update deployed Pokemon animation + lazy follow
+// Update deployed Pokemon animation + lazy follow
         if (_party is { IsDeployed: true })
         {
             _party.Update(dt);
 
-            // Pokemon lazily follows behind the trainer
-            float behindX = position.X - (float)Math.Sin(rotationY) * FollowDistance;
-            float behindZ = position.Z - (float)Math.Cos(rotationY) * FollowDistance;
-            var followTarget = new Vector3(behindX, 0f, behindZ);
-            _deployPosition = SmoothDamp3(_deployPosition, followTarget, ref _followVelocity, FollowSmoothTime, dt);
+            float distToTrainer = Vector3.Distance(_deployPosition, position);
+            
+            if (distToTrainer > LeashDistance)
+            {
+                var followTarget = new Vector3(position.X, 0f, position.Z);
+                _deployPosition = SmoothDamp3(_deployPosition, followTarget, ref _followVelocity, FollowSmoothTime, dt);
+
+                float speedSq = _followVelocity.LengthSquared();
+                if (speedSq > 0.01f)
+                {
+                    float targetYaw = (float)Math.Atan2(_followVelocity.X, _followVelocity.Z);
+                    _pokemonYaw = SmoothDampAngle(_pokemonYaw, targetYaw, ref _pokemonYawVelocity, 0.3f, dt);
+                }
+            }
+            else
+            {
+                _followVelocity *= 0.9f;
+            }
         }
 
         // Ctrl cycles Pokemon slot
@@ -155,9 +177,16 @@ public sealed class OverworldCharacter : IDisposable
                 _player.Update(dt);
                 return;
             }
-            else if (_animState == AnimState.Deployed && HasClip("BallRecall"))
+else if (_animState == AnimState.Deployed && HasClip("BallRecall"))
             {
                 _pendingRedeploy = _party != null && _party.NeedsRecallFirst;
+
+                // Start smooth turn to face the Pokemon
+                float dx = _deployPosition.X - position.X;
+                float dz = _deployPosition.Z - position.Z;
+                float targetYaw = (float)Math.Atan2(dx, dz);
+                FacingOverride = rotationY;
+                _facingOverrideVelocity = 0f;
 
                 _animState = AnimState.RecallAnim;
                 _party?.StartRecall();
@@ -193,6 +222,7 @@ public sealed class OverworldCharacter : IDisposable
             // Skip recall animation if player moves or jumps — still recall the Pokemon
             if (isMoving || !isGrounded)
             {
+                FacingOverride = null;
                 _party?.Recall();
                 _pokeballCtrl?.Reset();
 
@@ -214,9 +244,17 @@ public sealed class OverworldCharacter : IDisposable
                 return;
             }
 
-            _player.Update(dt);
+_player.Update(dt);
+
+            // Smooth turn to face Pokemon during recall
+            float rdx = _deployPosition.X - position.X;
+            float rdz = _deployPosition.Z - position.Z;
+            float targetRecallYaw = (float)Math.Atan2(rdx, rdz);
+            FacingOverride = SmoothDampAngle(FacingOverride ?? rotationY, targetRecallYaw, ref _facingOverrideVelocity, FaceSmoothTime, dt);
+
             if (_player.IsFinished)
             {
+                FacingOverride = null;
                 _party?.Recall();
                 _pokeballCtrl?.Reset();
 
@@ -278,12 +316,17 @@ public sealed class OverworldCharacter : IDisposable
         if (_pokeballCtrl is { HasPokeball: true })
             _pokeballCtrl.Draw(device, _effect, characterWorld, _player, position, rotationY, _fitScale);
 
-        // Draw deployed Pokemon at landing position, facing trainer
+// Draw deployed Pokemon at landing position
         if (_party is { IsDeployed: true })
         {
-            float dx = position.X - _deployPosition.X;
-            float dz = position.Z - _deployPosition.Z;
-            float pokemonYaw = (float)Math.Atan2(dx, dz);
+            // Face trainer during recall, otherwise use movement yaw
+            float pokemonYaw = _pokemonYaw;
+            if (_party.IsRecalling)
+            {
+                float dx = position.X - _deployPosition.X;
+                float dz = position.Z - _deployPosition.Z;
+                pokemonYaw = (float)Math.Atan2(dx, dz);
+            }
             _party.Draw(device, view, projection, _deployPosition, pokemonYaw);
 
             // Red beam from Pokemon to pokeball while Pokemon is shrinking
@@ -369,12 +412,20 @@ public sealed class OverworldCharacter : IDisposable
         return target + (change + temp) * exp;
     }
 
-    private static Vector3 SmoothDamp3(Vector3 current, Vector3 target, ref Vector3 velocity, float smoothTime, float dt)
+private static Vector3 SmoothDamp3(Vector3 current, Vector3 target, ref Vector3 velocity, float smoothTime, float dt)
     {
         return new Vector3(
             SmoothDamp(current.X, target.X, ref velocity.X, smoothTime, dt),
             SmoothDamp(current.Y, target.Y, ref velocity.Y, smoothTime, dt),
             SmoothDamp(current.Z, target.Z, ref velocity.Z, smoothTime, dt));
+    }
+
+    private static float SmoothDampAngle(float current, float target, ref float velocity, float smoothTime, float dt)
+    {
+        float diff = target - current;
+        while (diff > MathHelper.Pi) diff -= MathHelper.TwoPi;
+        while (diff < -MathHelper.Pi) diff += MathHelper.TwoPi;
+        return current + SmoothDamp(0f, diff, ref velocity, smoothTime, dt);
     }
 
     private Matrix BuildCharacterWorld(Vector3 position, float rotationY)

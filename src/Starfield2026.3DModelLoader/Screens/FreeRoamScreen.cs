@@ -96,7 +96,9 @@ public class FreeRoamScreen
 
         _player.Update(dt, input);
 
-        if (_player.IsMovingBackward)
+        if (_character?.FacingOverride is float facing)
+            _player.SetFacingCamera(facing);
+        else if (_player.IsMovingBackward)
             _player.SetFacingCamera(_camera.SmoothedYaw);
 
         _character?.Update(dt, _player.IsMoving, _player.IsRunning, _player.IsGrounded, input,
