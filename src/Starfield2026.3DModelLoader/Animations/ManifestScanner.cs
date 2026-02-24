@@ -8,9 +8,9 @@ namespace Starfield2026.ModelLoader.Animations;
 
 public static class ManifestScanner
 {
-    public static List<(string name, string category, string manifestPath)> Scan(string modelsRoot)
+    public static List<(string name, string category, string subfolder, string manifestPath)> Scan(string modelsRoot)
     {
-        var entries = new List<(string name, string category, string manifestPath)>();
+        var entries = new List<(string name, string category, string subfolder, string manifestPath)>();
         if (!Directory.Exists(modelsRoot))
             return entries;
 
@@ -31,13 +31,14 @@ public static class ManifestScanner
             string relative = Path.GetRelativePath(modelsRoot, folder).Replace('\\', '/');
             string[] parts = relative.Split('/');
             string category = parts.Length >= 1 ? parts[0] : "Default";
+            string subfolder = parts.Length >= 3 ? parts[1] : "";
 
             if (string.Equals(category, "Maps", StringComparison.OrdinalIgnoreCase))
                 continue;
             if (string.Equals(category, "SharedAnimations", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            entries.Add((name, category, path));
+            entries.Add((name, category, subfolder, path));
         }
 
         return entries;
@@ -50,25 +51,23 @@ public static class ManifestScanner
             using var stream = File.OpenRead(manifestPath);
             using var doc = JsonDocument.Parse(stream);
 
-            if (!doc.RootElement.TryGetProperty("clips", out var clips) &&
-                !doc.RootElement.TryGetProperty("Clips", out clips))
-                return FolderName(manifestPath);
+            if (doc.RootElement.TryGetProperty("name", out var nameProp) ||
+                doc.RootElement.TryGetProperty("Name", out nameProp))
+            {
+                string? name = nameProp.GetString();
+                if (!string.IsNullOrEmpty(name))
+                    return name;
+            }
 
-            if (clips.GetArrayLength() == 0)
-                return FolderName(manifestPath);
+            if (doc.RootElement.TryGetProperty("id", out var idProp) ||
+                doc.RootElement.TryGetProperty("Id", out idProp))
+            {
+                string? id = idProp.GetString();
+                if (!string.IsNullOrEmpty(id))
+                    return id;
+            }
 
-            var first = clips[0];
-            string? sourceName = null;
-            if (first.TryGetProperty("sourceName", out var sn))
-                sourceName = sn.GetString();
-            else if (first.TryGetProperty("SourceName", out sn))
-                sourceName = sn.GetString();
-
-            if (string.IsNullOrEmpty(sourceName))
-                return FolderName(manifestPath);
-
-            string[] segments = sourceName.Split('_');
-            return segments.Length >= 2 ? segments[0] + "_" + segments[1] : segments[0];
+            return FolderName(manifestPath);
         }
         catch
         {

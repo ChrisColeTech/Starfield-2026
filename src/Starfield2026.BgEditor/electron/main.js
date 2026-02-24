@@ -41,6 +41,11 @@ function createWindow() {
 
   mainWindow.loadURL(FRONTEND_URL)
   mainWindow.webContents.openDevTools()
+
+  // Forward renderer console to terminal
+  mainWindow.webContents.on('console-message', (_e, _level, message) => {
+    console.log(`[renderer] ${message}`)
+  })
 }
 
 // Native folder picker
@@ -48,6 +53,17 @@ ipcMain.handle('browse-folder', async (_event, defaultPath) => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openDirectory'],
     defaultPath: defaultPath || undefined,
+  })
+  if (result.canceled) return null
+  return result.filePaths[0].replace(/\\/g, '/')
+})
+
+// Native file picker
+ipcMain.handle('browse-file', async (_event, defaultPath, filters) => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile'],
+    defaultPath: defaultPath || undefined,
+    filters: filters || [{ name: 'JSON', extensions: ['json'] }],
   })
   if (result.canceled) return null
   return result.filePaths[0].replace(/\\/g, '/')

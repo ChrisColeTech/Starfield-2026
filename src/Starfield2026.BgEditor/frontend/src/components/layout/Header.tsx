@@ -59,9 +59,10 @@ export function Header() {
             items: [
                 {
                     label: 'Open Manifest...',
-                    onClick: () => {
+                    onClick: async () => {
                         navigate('/');
-                        fileInputRef.current?.click();
+                        const filePath = await (window as any).electronAPI?.browseFile?.();
+                        if (filePath) useEditorStore.getState().loadManifestFromPath(filePath);
                     },
                 },
                 { separator: true, label: '' },

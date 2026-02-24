@@ -23,6 +23,7 @@ interface EditorState {
 
   // Actions
   loadManifest: (file: File) => Promise<void>
+  loadManifestFromPath: (filePath: string) => Promise<void>
   selectTexture: (index: number) => void
   setAdjustment: (index: number, adj: Partial<TextureAdjustment>) => void
   resetTexture: (index: number) => void
@@ -60,6 +61,12 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   activeClipIndex: 0,
 
   loadManifest: async (file: File) => {
+    // If Electron provides file.path, use loadManifestFromPath
+    const filePath = (file as any).path as string | undefined
+    if (filePath) {
+      return get().loadManifestFromPath(filePath)
+    }
+    // Fallback: read the File directly (e.g. drag & drop, non-Electron)
     set({ loading: true, error: null })
     try {
       const text = await file.text()
@@ -77,6 +84,40 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
         activeClipIndex: 0,
       })
     } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Failed to load scene',
+        loading: false,
+      })
+    }
+  },
+
+  loadManifestFromPath: async (filePath: string) => {
+    set({ loading: true, error: null })
+    try {
+      // Derive dir from path (strip filename)
+      const dir = filePath.replace(/[\\/][^\\/]+$/, '').replace(/\\/g, '/')
+      console.log(`[EditorStore] loadManifestFromPath: dir="${dir}"`)
+
+      // Read manifest via backend which normalises the data
+      const res = await fetch(`http://localhost:3001/api/manifests/read?dir=${encodeURIComponent(dir)}`)
+      if (!res.ok) throw new Error(`Failed to read manifest: HTTP ${res.status}`)
+      const manifest: Manifest = await res.json()
+      manifest.dir = dir  // ensure dir is the actual path
+
+      const result = await loadScene(manifest)
+      set({
+        scene: result.scene,
+        animations: result.animations,
+        textures: result.textures,
+        sceneName: manifest.name,
+        manifest,
+        selectedTextureIndex: 0,
+        loading: false,
+        animationPlaying: true,
+        activeClipIndex: 0,
+      })
+    } catch (err) {
+      console.error('[EditorStore] loadManifestFromPath failed:', err)
       set({
         error: err instanceof Error ? err.message : 'Failed to load scene',
         loading: false,

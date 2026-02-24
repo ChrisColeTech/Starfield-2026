@@ -13,18 +13,14 @@ using Starfield2026.ModelLoader.Save;
 
 namespace Starfield2026.ModelLoader.Screens;
 
-/// <summary>
-/// Full-screen character select with animation mode controls.
-/// Left column: categories / item list.
-/// Right column: animation mode + fill tag settings.
-/// </summary>
 public class CharacterSelectOverlay
 {
-    private enum Level { Category, Items }
+    private enum Level { Category, Subfolder, Items }
 
     private readonly CategoryGroup[] _categories;
     private Level _level = Level.Category;
     private int _catIndex;
+    private int _subIndex;
     private int _itemIndex;
     private int _scrollOffset;
     private bool _finished;
@@ -38,7 +34,7 @@ public class CharacterSelectOverlay
     private const float SlowRepeat = 0.12f;
     private const float AccelTime = 1.5f;
 
-    // Animation settings (read/written by overlay, owned by FreeRoamScreen)
+    // Animation settings
     private AnimationLoadMode _loadMode;
     private HashSet<string> _fillTags;
 
@@ -50,20 +46,30 @@ public class CharacterSelectOverlay
 
     public CharacterSelectOverlay(List<CharacterRecord> characters, AnimationLoadMode loadMode, HashSet<string> fillTags)
     {
-        var groups = new Dictionary<string, List<CharacterRecord>>(StringComparer.OrdinalIgnoreCase);
+        var catMap = new Dictionary<string, Dictionary<string, List<CharacterRecord>>>(StringComparer.OrdinalIgnoreCase);
         foreach (var c in characters)
         {
-            if (!groups.TryGetValue(c.Category, out var list))
+            if (!catMap.TryGetValue(c.Category, out var subs))
+            {
+                subs = new Dictionary<string, List<CharacterRecord>>(StringComparer.OrdinalIgnoreCase);
+                catMap[c.Category] = subs;
+            }
+            string sub = string.IsNullOrEmpty(c.Subfolder) ? "(all)" : c.Subfolder;
+            if (!subs.TryGetValue(sub, out var list))
             {
                 list = new List<CharacterRecord>();
-                groups[c.Category] = list;
+                subs[sub] = list;
             }
             list.Add(c);
         }
 
-        _categories = groups
+        _categories = catMap
             .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
-            .Select(g => new CategoryGroup(g.Key, g.Value.ToArray()))
+            .Select(g => new CategoryGroup(
+                g.Key,
+                g.Value.OrderBy(s => s.Key, StringComparer.OrdinalIgnoreCase)
+                    .Select(s => new SubfolderGroup(s.Key, s.Value.ToArray()))
+                    .ToArray()))
             .ToArray();
 
         _loadMode = loadMode;
@@ -74,18 +80,22 @@ public class CharacterSelectOverlay
     {
         if (_finished) return;
 
-        // Animation mode hotkeys
         if (input.IsKeyJustPressed(Keys.D1)) SetMode(AnimationLoadMode.Own);
         if (input.IsKeyJustPressed(Keys.D2)) SetMode(AnimationLoadMode.FillMissing);
         if (input.IsKeyJustPressed(Keys.D3)) SetMode(AnimationLoadMode.SharedOnly);
 
-        // --- Navigation ---
         if (input.Cancel)
         {
             if (_level == Level.Items)
             {
-                _level = Level.Category;
+                _level = Level.Subfolder;
                 _itemIndex = 0;
+                _scrollOffset = 0;
+            }
+            else if (_level == Level.Subfolder)
+            {
+                _level = Level.Category;
+                _subIndex = 0;
                 _scrollOffset = 0;
             }
             else
@@ -103,6 +113,30 @@ public class CharacterSelectOverlay
 
             if (input.Confirm && _categories.Length > 0)
             {
+                var cat = _categories[_catIndex];
+                if (cat.Subfolders.Length == 1)
+                {
+                    // Skip subfolder level if only one
+                    _subIndex = 0;
+                    _level = Level.Items;
+                }
+                else
+                {
+                    _subIndex = 0;
+                    _level = Level.Subfolder;
+                }
+                _itemIndex = 0;
+                _scrollOffset = 0;
+            }
+        }
+        else if (_level == Level.Subfolder)
+        {
+            var cat = _categories[_catIndex];
+            if (input.Up && _subIndex > 0) _subIndex--;
+            if (input.Down && _subIndex < cat.Subfolders.Length - 1) _subIndex++;
+
+            if (input.Confirm && cat.Subfolders.Length > 0)
+            {
                 _level = Level.Items;
                 _itemIndex = 0;
                 _scrollOffset = 0;
@@ -110,8 +144,8 @@ public class CharacterSelectOverlay
         }
         else
         {
-            var cat = _categories[_catIndex];
-            int count = cat.Characters.Length;
+            var chars = _categories[_catIndex].Subfolders[_subIndex].Characters;
+            int count = chars.Length;
 
             bool upHeld = input.IsKeyHeld(Keys.Up) || input.IsKeyHeld(Keys.W);
             bool downHeld = input.IsKeyHeld(Keys.Down) || input.IsKeyHeld(Keys.S);
@@ -149,7 +183,7 @@ public class CharacterSelectOverlay
 
             if (input.Confirm && count > 0)
             {
-                var ch = cat.Characters[_itemIndex];
+                var ch = chars[_itemIndex];
                 SelectedFolder = System.IO.Path.GetDirectoryName(ch.ManifestPath);
                 _finished = true;
             }
@@ -172,10 +206,8 @@ public class CharacterSelectOverlay
         int lineH = font.CharHeight + 4 * scale;
         int pad = 6 * scale;
 
-        // Full-screen dim
         sb.Draw(pixel, new Rectangle(0, 0, screenW, screenH), Color.Black * 0.80f);
 
-        // Layout: two columns with margin
         int margin = 12 * scale;
         int totalW = screenW - margin * 2;
         int totalH = screenH - margin * 2;
@@ -185,7 +217,6 @@ public class CharacterSelectOverlay
         int rightX = margin + leftW + pad;
         int topY = margin;
 
-        // ===== LEFT COLUMN: character list =====
         sb.Draw(pixel, new Rectangle(leftX, topY, leftW, totalH), new Color(20, 22, 32, 240));
         DrawBorder(sb, pixel, leftX, topY, leftW, totalH, new Color(120, 60, 220));
 
@@ -196,10 +227,11 @@ public class CharacterSelectOverlay
 
         if (_level == Level.Category)
             DrawCategories(sb, pixel, font, lx, ly, lw, lh, lineH, scale);
+        else if (_level == Level.Subfolder)
+            DrawSubfolders(sb, pixel, font, lx, ly, lw, lh, lineH, scale);
         else
             DrawItems(sb, pixel, font, lx, ly, lw, lh, lineH, scale);
 
-        // ===== RIGHT COLUMN: animation settings =====
         sb.Draw(pixel, new Rectangle(rightX, topY, rightW, totalH), new Color(20, 22, 32, 240));
         DrawBorder(sb, pixel, rightX, topY, rightW, totalH, new Color(80, 80, 140));
 
@@ -216,7 +248,6 @@ public class CharacterSelectOverlay
         font.Scale = Math.Max(1, scale - 1);
         int smallLineH = font.CharHeight + 3 * scale;
 
-        // --- Mode section ---
         y += smallLineH / 2;
         font.Draw("MODE", x, y, new Color(140, 140, 180));
         y += smallLineH;
@@ -229,17 +260,16 @@ public class CharacterSelectOverlay
             y += smallLineH;
         }
 
-        // --- Body type info for selected character ---
         y += smallLineH;
         font.Draw("SELECTED", x, y, new Color(140, 140, 180));
         y += smallLineH;
 
         if (_level == Level.Items && _categories.Length > 0)
         {
-            var cat = _categories[_catIndex];
-            if (_itemIndex < cat.Characters.Length)
+            var chars = _categories[_catIndex].Subfolders[_subIndex].Characters;
+            if (_itemIndex < chars.Length)
             {
-                var ch = cat.Characters[_itemIndex];
+                var ch = chars[_itemIndex];
                 string? chFolder = System.IO.Path.GetDirectoryName(ch.ManifestPath);
                 var bodyType = chFolder != null ? TrainerGender.Classify(chFolder) : TrainerGender.BodyType.Unknown;
                 font.Draw(ch.Name, x, y, Color.White);
@@ -289,7 +319,38 @@ public class CharacterSelectOverlay
             if (sel)
                 sb.Draw(pixel, new Rectangle(x, ry, w, lineH - 2), new Color(120, 60, 220, 100));
 
-            string label = $"{_categories[i].Label}  ({_categories[i].Characters.Length})";
+            int totalChars = 0;
+            foreach (var sub in _categories[i].Subfolders)
+                totalChars += sub.Characters.Length;
+            string label = $"{_categories[i].Label}  ({totalChars})";
+            font.Draw(label, x + 4 * scale, ry + 2 * scale,
+                sel ? Color.White : new Color(200, 200, 210));
+        }
+    }
+
+    private void DrawSubfolders(SpriteBatch sb, Texture2D pixel, PixelFont font,
+        int x, int y, int w, int h, int lineH, int scale)
+    {
+        var cat = _categories[_catIndex];
+        font.Draw(cat.Label.ToUpperInvariant(), x, y, Color.White);
+        y += lineH;
+
+        font.Scale = Math.Max(1, scale - 1);
+        font.Draw("Up/Down  Enter  Esc:Back", x, y, Color.Gray);
+        font.Scale = scale;
+        y += lineH;
+
+        for (int i = 0; i < cat.Subfolders.Length; i++)
+        {
+            int ry = y + i * lineH;
+            if (ry + lineH > y + h - lineH) break;
+
+            bool sel = i == _subIndex;
+            if (sel)
+                sb.Draw(pixel, new Rectangle(x, ry, w, lineH - 2), new Color(120, 60, 220, 100));
+
+            var sub = cat.Subfolders[i];
+            string label = $"{sub.Label}  ({sub.Characters.Length})";
             font.Draw(label, x + 4 * scale, ry + 2 * scale,
                 sel ? Color.White : new Color(200, 200, 210));
         }
@@ -299,8 +360,12 @@ public class CharacterSelectOverlay
         int x, int y, int w, int h, int lineH, int scale)
     {
         var cat = _categories[_catIndex];
+        var sub = cat.Subfolders[_subIndex];
 
-        font.Draw(cat.Label.ToUpperInvariant(), x, y, Color.White);
+        string header = cat.Subfolders.Length > 1
+            ? $"{cat.Label}/{sub.Label}".ToUpperInvariant()
+            : cat.Label.ToUpperInvariant();
+        font.Draw(header, x, y, Color.White);
         y += lineH;
 
         font.Scale = Math.Max(1, scale - 1);
@@ -312,9 +377,9 @@ public class CharacterSelectOverlay
 
         if (_itemIndex < _scrollOffset) _scrollOffset = _itemIndex;
         if (_itemIndex >= _scrollOffset + visibleRows) _scrollOffset = _itemIndex - visibleRows + 1;
-        _scrollOffset = Math.Clamp(_scrollOffset, 0, Math.Max(0, cat.Characters.Length - visibleRows));
+        _scrollOffset = Math.Clamp(_scrollOffset, 0, Math.Max(0, sub.Characters.Length - visibleRows));
 
-        for (int vi = 0; vi < visibleRows && _scrollOffset + vi < cat.Characters.Length; vi++)
+        for (int vi = 0; vi < visibleRows && _scrollOffset + vi < sub.Characters.Length; vi++)
         {
             int idx = _scrollOffset + vi;
             int ry = y + vi * lineH;
@@ -323,56 +388,17 @@ public class CharacterSelectOverlay
             if (sel)
                 sb.Draw(pixel, new Rectangle(x, ry, w, lineH - 2), new Color(120, 60, 220, 100));
 
-            var ch = cat.Characters[idx];
-            string itemLabel = GetShortPath(ch.ManifestPath, ch.Name);
-            font.Draw(itemLabel, x + 4 * scale, ry + 2 * scale,
+            var ch = sub.Characters[idx];
+            font.Draw(ch.Name, x + 4 * scale, ry + 2 * scale,
                 sel ? Color.White : new Color(200, 200, 210));
         }
 
-        if (cat.Characters.Length > visibleRows)
+        if (sub.Characters.Length > visibleRows)
         {
-            string info = $"{_itemIndex + 1}/{cat.Characters.Length}";
+            string info = $"{_itemIndex + 1}/{sub.Characters.Length}";
             int infoW = font.MeasureWidth(info);
             font.Draw(info, x + w - infoW, y - lineH, Color.Gray);
         }
-    }
-
-    private static List<string> WordWrap(string text, int maxWidth, PixelFont font)
-    {
-        var lines = new List<string>();
-        var words = text.Split(' ');
-        string current = "";
-
-        foreach (var word in words)
-        {
-            string test = current.Length == 0 ? word : current + " " + word;
-            if (font.MeasureWidth(test) > maxWidth && current.Length > 0)
-            {
-                lines.Add(current);
-                current = word;
-            }
-            else
-            {
-                current = test;
-            }
-        }
-        if (current.Length > 0) lines.Add(current);
-        return lines;
-    }
-
-    private static string GetShortPath(string manifestPath, string fallbackName)
-    {
-        try
-        {
-            string? dir = System.IO.Path.GetDirectoryName(manifestPath);
-            if (dir == null) return fallbackName;
-            string folder1 = System.IO.Path.GetFileName(dir);
-            string? parent = System.IO.Path.GetDirectoryName(dir);
-            if (parent == null) return $"{folder1}/{fallbackName}";
-            string folder2 = System.IO.Path.GetFileName(parent);
-            return $"{folder2}/{folder1}/{fallbackName}";
-        }
-        catch { return fallbackName; }
     }
 
     private static void DrawBorder(SpriteBatch sb, Texture2D pixel,
@@ -385,14 +411,25 @@ public class CharacterSelectOverlay
         sb.Draw(pixel, new Rectangle(x + w - t, y, t, h), color);
     }
 
-    private sealed class CategoryGroup
+    private sealed class SubfolderGroup
     {
         public readonly string Label;
         public readonly CharacterRecord[] Characters;
-        public CategoryGroup(string label, CharacterRecord[] characters)
+        public SubfolderGroup(string label, CharacterRecord[] characters)
         {
             Label = label;
             Characters = characters;
+        }
+    }
+
+    private sealed class CategoryGroup
+    {
+        public readonly string Label;
+        public readonly SubfolderGroup[] Subfolders;
+        public CategoryGroup(string label, SubfolderGroup[] subfolders)
+        {
+            Label = label;
+            Subfolders = subfolders;
         }
     }
 }

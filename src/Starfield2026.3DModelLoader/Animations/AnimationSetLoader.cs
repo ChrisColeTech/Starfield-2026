@@ -71,7 +71,9 @@ public static class AnimationSetLoader
             var clip = ClipLoader.Load(clipPath, skeleton, sourceName);
             clipsById[clipId] = clip;
 
-            string? tag = ResolveTag(entry, sourceName);
+            string? tag = entry.SemanticName;
+            if (string.IsNullOrWhiteSpace(tag))
+                tag = TagResolver.FromName(sourceName);
             if (tag != null && !clipsByTag.ContainsKey(tag))
                 clipsByTag[tag] = clip;
         }
@@ -101,38 +103,66 @@ public static class AnimationSetLoader
             string? tag = TagResolver.FromName(fileName);
             if (tag == null)
             {
-                int slot = TagResolver.ParseSlotFromName(fileName, -1);
-                if (slot >= 0) tag = TagResolver.FromSlot(slot);
+                int underscoreIdx = fileName.LastIndexOf('_');
+                if (underscoreIdx >= 0 && int.TryParse(fileName.AsSpan(underscoreIdx + 1), out int slot))
+                    tag = TagResolver.FromSlot(slot);
             }
             if (tag == null || clipsByTag.ContainsKey(tag)) continue;
             if (tagsToFill != null && !tagsToFill.Contains(tag)) continue;
 
+            var sourceSkeletonForRetarget = SkeletonLoader.Load(clipPath);
             var clip = ClipLoader.Load(clipPath, skeleton, fileName);
-            clip = RetargetTranslations(clip, skeleton);
+            clip = Retarget(clip, sourceSkeletonForRetarget, skeleton);
             clipsById[$"shared_{tag.ToLowerInvariant()}"] = clip;
             clipsByTag[tag] = clip;
         }
     }
 
-    private static AnimationClip RetargetTranslations(AnimationClip clip, Skeleton skeleton)
+    private static AnimationClip Retarget(AnimationClip clip, Skeleton source, Skeleton target)
     {
         var newTracks = new List<BoneTrack>(clip.Tracks.Count);
         foreach (var track in clip.Tracks)
         {
-            if (track.BoneIndex < 0 || track.BoneIndex >= skeleton.Bones.Count)
+            if (track.BoneIndex < 0 || track.BoneIndex >= target.Bones.Count)
             {
                 newTracks.Add(track);
                 continue;
             }
 
-            var bindTranslation = skeleton.BindLocalTransforms[track.BoneIndex].Translation;
+            string boneName = target.Bones[track.BoneIndex].Name;
+            if (!source.TryGetBoneIndex(boneName, out int srcIdx))
+            {
+                newTracks.Add(track);
+                continue;
+            }
+
+            // Build rotation-only correction matrix: tgtBindRot * inverse(srcBindRot)
+            var srcBind = source.BindLocalTransforms[srcIdx];
+            var tgtBind = target.BindLocalTransforms[track.BoneIndex];
+
+            var srcRotOnly = srcBind;
+            srcRotOnly.M41 = 0; srcRotOnly.M42 = 0; srcRotOnly.M43 = 0;
+            var tgtRotOnly = tgtBind;
+            tgtRotOnly.M41 = 0; tgtRotOnly.M42 = 0; tgtRotOnly.M43 = 0;
+
+            Matrix.Invert(ref srcRotOnly, out var srcRotInv);
+            var correction = srcRotInv * tgtRotOnly;
+
+            var tgtTranslation = tgtBind.Translation;
+
             var newFrames = new List<Keyframe>(track.Keyframes.Count);
             foreach (var kf in track.Keyframes)
             {
-                kf.Transform.Decompose(out var scale, out var rotation, out _);
-                var retargeted = Matrix.CreateScale(scale)
-                               * Matrix.CreateFromQuaternion(rotation)
-                               * Matrix.CreateTranslation(bindTranslation);
+                // Strip translation from clip frame
+                var clipRotOnly = kf.Transform;
+                clipRotOnly.M41 = 0; clipRotOnly.M42 = 0; clipRotOnly.M43 = 0;
+
+                // Apply correction: clip rotation remapped to target bind space
+                var retargeted = clipRotOnly * correction;
+                retargeted.M41 = tgtTranslation.X;
+                retargeted.M42 = tgtTranslation.Y;
+                retargeted.M43 = tgtTranslation.Z;
+
                 newFrames.Add(new Keyframe(kf.Time, retargeted));
             }
             newTracks.Add(new BoneTrack(track.BoneIndex, newFrames));
@@ -140,16 +170,4 @@ public static class AnimationSetLoader
         return new AnimationClip(clip.Name, clip.Duration, newTracks);
     }
 
-    private static string? ResolveTag(ClipEntry entry, string sourceName)
-    {
-        string? tag = entry.SemanticName;
-        if (string.IsNullOrWhiteSpace(tag))
-            tag = TagResolver.FromName(sourceName);
-        if (string.IsNullOrWhiteSpace(tag))
-        {
-            int slot = TagResolver.ParseSlotFromName(entry.Name, entry.Index);
-            tag = TagResolver.FromSlot(slot);
-        }
-        return tag;
-    }
 }

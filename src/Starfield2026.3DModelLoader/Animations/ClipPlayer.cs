@@ -11,6 +11,7 @@ public sealed class ClipPlayer
     public AnimationClip? ActiveClip { get; private set; }
     public bool Loop { get; private set; }
     public float CurrentTime { get; private set; }
+    public float Speed { get; set; } = 1f;
 
     public Matrix[] LocalPose { get; }
     public Matrix[] WorldPose { get; }
@@ -47,7 +48,7 @@ public sealed class ClipPlayer
         if (clip is null || clip.Duration <= 0f)
             return;
 
-        CurrentTime += deltaSeconds;
+        CurrentTime += deltaSeconds * Speed;
 
         if (Loop)
         {

@@ -34,39 +34,29 @@ public static class TagResolver
 
     public static string? FromSlot(int slot) => slot switch
     {
-        0   => "Idle",
-        1   => "Walk",
-        2   => "Run",
-        4   => "Jump",
-        5   => "Land",
-        7   => "ShortAction1",
-        8   => "LongAction1",
-        9   => "ShortAction2",
-        17  => "MediumAction",
-        20  => "Action",
-        23  => "Action2",
-        30  => "ShortAction3",
-        31  => "ShortAction4",
-        52  => "IdleVariant",
-        54  => "ShortAction5",
-        55  => "LongAction2",
-        56  => "ShortAction6",
-        72  => "Action5",
-        123 => "LongAction3",
-        124 => "Action6",
-        125 => "Action7",
-        126 => "Action8",
-        127 => "Action9",
-        _   => null
+        0  => "Idle",
+        1  => "Walk",
+        2  => "Run",
+        3  => "Jump",
+        4  => "Land",
+        5  => "ShortAction1",
+        6  => "LongAction1",
+        7  => "ShortAction2",
+        8  => "MediumAction",
+        9  => "Action",
+        10 => "Action2",
+        11 => "ShortAction3",
+        12 => "ShortAction4",
+        13 => "IdleVariant",
+        14 => "ShortAction5",
+        15 => "LongAction2",
+        16 => "ShortAction6",
+        17 => "Action5",
+        18 => "LongAction3",
+        19 => "Action6",
+        20 => "Action7",
+        21 => "Action8",
+        22 => "Action9",
+        _  => null
     };
-
-    public static int ParseSlotFromName(string? name, int fallback)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return fallback;
-        int lastUnderscore = name.LastIndexOf('_');
-        if (lastUnderscore >= 0 && lastUnderscore < name.Length - 1)
-            if (int.TryParse(name.Substring(lastUnderscore + 1), out int slot))
-                return slot;
-        return fallback;
-    }
 }

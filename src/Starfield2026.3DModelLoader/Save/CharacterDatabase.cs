@@ -5,7 +5,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Starfield2026.ModelLoader.Save;
 
-public record CharacterRecord(int Id, string Name, string Category, string ManifestPath);
+public record CharacterRecord(int Id, string Name, string Category, string Subfolder, string ManifestPath);
 
 public class CharacterDatabase : IDisposable
 {
@@ -25,10 +25,12 @@ public class CharacterDatabase : IDisposable
 
         using var cmd = _connection.CreateCommand();
         cmd.CommandText = @"
-            CREATE TABLE IF NOT EXISTS characters (
+            DROP TABLE IF EXISTS characters;
+            CREATE TABLE characters (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 category TEXT NOT NULL DEFAULT 'Default',
+                subfolder TEXT NOT NULL DEFAULT '',
                 manifest_path TEXT NOT NULL UNIQUE
             );
             CREATE TABLE IF NOT EXISTS settings (
@@ -46,7 +48,7 @@ public class CharacterDatabase : IDisposable
         return Convert.ToInt32(cmd.ExecuteScalar());
     }
 
-    public void RebuildCharacters(List<(string name, string category, string manifestPath)> entries)
+    public void RebuildCharacters(List<(string name, string category, string subfolder, string manifestPath)> entries)
     {
         using var tx = _connection.BeginTransaction();
 
@@ -54,12 +56,13 @@ public class CharacterDatabase : IDisposable
         del.CommandText = "DELETE FROM characters;";
         del.ExecuteNonQuery();
 
-        foreach (var (name, category, manifestPath) in entries)
+        foreach (var (name, category, subfolder, manifestPath) in entries)
         {
             using var ins = _connection.CreateCommand();
-            ins.CommandText = "INSERT INTO characters (name, category, manifest_path) VALUES (@name, @cat, @path);";
+            ins.CommandText = "INSERT INTO characters (name, category, subfolder, manifest_path) VALUES (@name, @cat, @sub, @path);";
             ins.Parameters.AddWithValue("@name", name);
             ins.Parameters.AddWithValue("@cat", category);
+            ins.Parameters.AddWithValue("@sub", subfolder);
             ins.Parameters.AddWithValue("@path", manifestPath);
             ins.ExecuteNonQuery();
         }
@@ -71,7 +74,7 @@ public class CharacterDatabase : IDisposable
     {
         var results = new List<CharacterRecord>();
         using var cmd = _connection.CreateCommand();
-        cmd.CommandText = "SELECT id, name, category, manifest_path FROM characters ORDER BY category, name;";
+        cmd.CommandText = "SELECT id, name, category, subfolder, manifest_path FROM characters ORDER BY category, subfolder, name;";
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
         {
@@ -79,7 +82,8 @@ public class CharacterDatabase : IDisposable
                 reader.GetInt32(0),
                 reader.GetString(1),
                 reader.GetString(2),
-                reader.GetString(3)));
+                reader.GetString(3),
+                reader.GetString(4)));
         }
         return results;
     }
@@ -87,7 +91,7 @@ public class CharacterDatabase : IDisposable
     public CharacterRecord? GetCharacter(int id)
     {
         using var cmd = _connection.CreateCommand();
-        cmd.CommandText = "SELECT id, name, category, manifest_path FROM characters WHERE id = @id;";
+        cmd.CommandText = "SELECT id, name, category, subfolder, manifest_path FROM characters WHERE id = @id;";
         cmd.Parameters.AddWithValue("@id", id);
         using var reader = cmd.ExecuteReader();
         if (!reader.Read()) return null;
@@ -95,7 +99,8 @@ public class CharacterDatabase : IDisposable
             reader.GetInt32(0),
             reader.GetString(1),
             reader.GetString(2),
-            reader.GetString(3));
+            reader.GetString(3),
+            reader.GetString(4));
     }
 
     public string? GetSetting(string key)

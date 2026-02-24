@@ -96,6 +96,7 @@ public sealed class OverworldCharacter : IDisposable
         if (_activeTag != desiredTag)
             Play(desiredTag);
 
+        _player.Speed = desiredTag == "Jump" ? 0.5f : 1f;
         _player.Update(dt);
     }
 

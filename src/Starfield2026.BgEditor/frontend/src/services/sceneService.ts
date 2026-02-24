@@ -484,25 +484,88 @@ export async function loadBakedClip(
     const err = await res.json().catch(() => ({ error: res.statusText }))
     throw new Error(err.error || `Bake failed: HTTP ${res.status}`)
   }
-  const mergedDaeText = await res.text()
+  let text = await res.text()
 
-  // Parse with ColladaLoader — animations are already wired to the correct bones
-  const manager = new THREE.LoadingManager()
-  const loader = new ColladaLoader(manager)
-  loader.setCrossOrigin('anonymous')
-  loader.setResourcePath(baseUrl)
+  // Sanitize: remove animations targeting non-existent nodes (same as loadDaeWithManager)
+  const xmlDoc = new DOMParser().parseFromString(text, 'text/xml')
+  const nodeIds = new Set<string>()
+  xmlDoc.querySelectorAll('node[id]').forEach(el => nodeIds.add(el.getAttribute('id')!))
+  const animEls = xmlDoc.querySelectorAll('library_animations > animation')
+  let removed = 0
+  animEls.forEach(anim => {
+    const channel = anim.querySelector('channel')
+    if (!channel) return
+    const target = channel.getAttribute('target') || ''
+    const targetId = target.split('/')[0]
+    if (targetId && !nodeIds.has(targetId)) {
+      anim.parentNode?.removeChild(anim)
+      removed++
+    }
+  })
+  if (removed > 0) {
+    console.warn(`[SceneService] Bake: removed ${removed} animation(s) targeting non-existent bones`)
+    text = new XMLSerializer().serializeToString(xmlDoc)
+  }
 
-  const collada = loader.parse(mergedDaeText, baseUrl)
-  const scene = collada.scene as unknown as THREE.Group
-  const animations = (collada as any).animations || []
+  // Parse with LoadingManager that waits for all textures
+  return new Promise((resolve, reject) => {
+    const manager = new THREE.LoadingManager()
+    const loader = new ColladaLoader(manager)
+    loader.setCrossOrigin('anonymous')
+    loader.setResourcePath(baseUrl)
 
-  console.log(`[SceneService] Baked clip loaded: ${animations.length} animation(s), ${animations[0]?.tracks?.length ?? 0} tracks`)
+    let result: { scene: THREE.Group; animations: THREE.AnimationClip[] } | null = null
+    let managerDone = false
 
-  fixSkeletonFromInverseBindMatrices(scene)
-  fixMaterials(scene)
+    function tryResolve() {
+      if (result && managerDone) resolve(result)
+    }
 
-  return { scene, animations }
+    manager.onLoad = () => {
+      console.log('[SceneService] Bake: all textures loaded')
+      managerDone = true
+      tryResolve()
+    }
+
+    manager.onError = (url) => {
+      console.warn(`[SceneService] Bake: failed to load ${url}`)
+    }
+
+    try {
+      const collada = loader.parse(text, baseUrl)
+      const scene = collada.scene as unknown as THREE.Group
+
+      // Debug: log all properties to find where animations live
+      const colladaKeys = Object.keys(collada)
+      const sceneAnimCount = (collada.scene as any).animations?.length ?? 0
+      const topAnimCount = (collada as any).animations?.length ?? 0
+      console.log(`[SceneService] Bake parse result: keys=[${colladaKeys.join(',')}], topAnims=${topAnimCount}, sceneAnims=${sceneAnimCount}`)
+
+      const animations = (collada as any).animations || collada.scene.animations || []
+
+      console.log(`[SceneService] Baked clip parsed: ${animations.length} animation(s), ${animations[0]?.tracks?.length ?? 0} tracks`)
+
+      fixSkeletonFromInverseBindMatrices(scene)
+      fixMaterials(scene)
+
+      result = { scene, animations }
+      tryResolve()
+    } catch (err) {
+      reject(err)
+      return
+    }
+
+    // Safety timeout
+    setTimeout(() => {
+      if (!managerDone && result) {
+        console.warn('[SceneService] Bake: texture loading timeout — resolving with partial textures')
+        managerDone = true
+        tryResolve()
+      }
+    }, 15000)
+  })
 }
+
 
 /**
  * Build a map from node id → node name by parsing the DAE XML.

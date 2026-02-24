@@ -12,6 +12,7 @@ public class PlayerController
     public bool IsMoving { get; private set; }
     public bool IsRunning { get; private set; }
     public bool IsGrounded { get; private set; } = true;
+    public bool IsMovingBackward { get; private set; }
 
     private float _walkSpeed = 6f;
     private float _runSpeed = 12f;
@@ -23,6 +24,7 @@ public class PlayerController
     private bool _runningToggled;
     private float _currentSpeed;
     private float _currentTurnSpeed;
+    private float _baseYaw;
 
     public float WorldHalfSize
     {
@@ -30,23 +32,31 @@ public class PlayerController
         set => _worldHalfSize = value;
     }
 
-    public void Initialize(Vector3 position, float yaw = 0f)
+public void Initialize(Vector3 position, float yaw = 0f)
     {
         Position = position;
         Yaw = yaw;
+        _baseYaw = yaw;
         IsGrounded = true;
         IsMoving = false;
         IsRunning = false;
         _runningToggled = false;
     }
 
-    public void SetPosition(Vector3 position, float yaw)
+public void SetPosition(Vector3 position, float yaw)
     {
         Position = position;
         Yaw = yaw;
+        _baseYaw = yaw;
         IsMoving = false;
         _verticalVelocity = 0f;
         IsGrounded = true;
+    }
+
+    public void SetFacingCamera(float cameraYaw)
+    {
+        Yaw = cameraYaw;
+        _baseYaw = cameraYaw;
     }
 
     public void Update(float dt, InputSnapshot input)
@@ -77,8 +87,10 @@ public class PlayerController
             IsGrounded = true;
         }
 
-        float moveX = input.MoveX;
+float moveX = input.MoveX;
         float moveZ = input.MoveZ;
+
+        IsMovingBackward = moveZ < 0;
 
         IsMoving = (Math.Abs(_currentSpeed) > 0.1f) || (moveZ != 0);
         IsRunning = _runningToggled && IsMoving;
@@ -86,12 +98,18 @@ public class PlayerController
         float targetTurnSpeed = moveX != 0 ? -moveX * _rotationSpeed : 0f;
         float turnBlend = 1f - (float)Math.Exp(-10f * dt);
         _currentTurnSpeed = MathHelper.Lerp(_currentTurnSpeed, targetTurnSpeed, turnBlend);
-        Yaw += _currentTurnSpeed * dt;
+
+        if (!IsMovingBackward)
+        {
+            Yaw += _currentTurnSpeed * dt;
+            _baseYaw = Yaw;
+        }
 
         float targetSpeed = 0f;
         if (moveZ != 0)
         {
-            targetSpeed = (IsRunning ? _runSpeed : _walkSpeed) * Math.Sign(moveZ);
+            float speedMagnitude = IsRunning ? _runSpeed : _walkSpeed;
+            targetSpeed = speedMagnitude * Math.Abs(moveZ);
         }
 
         float accelRate = moveZ != 0 ? 8f : 12f;
