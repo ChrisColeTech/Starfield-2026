@@ -1,0 +1,34 @@
+{
+  "tr0007_00": [
+    "PZLA/pm0025_00_00",
+    "PZLA/pm0006_00_00",
+    "PZLA/pm0003_00_00",
+    "PZLA/pm0001_00_00",
+    "PZLA/pm0004_00_00",
+    "PZLA/pm0005_00_00"
+  ],
+  "tr0003_00": [
+    "PZLA/pm0000_00_00",
+    "PZLA/pm0002_00_00",
+    "PZLA/pm0006_00_00",
+    null,
+    null,
+    null
+  ],
+  "tr0002_00": [
+    "sun-moon/pokemon/pm0025_00",
+    "sun-moon/pokemon/pm0006_00",
+    "sun-moon/pokemon/pm0003_00",
+    "sun-moon/pokemon/pm0001_00",
+    null,
+    null
+  ],
+  "tr0000_00": [
+    "scarlet/pokemon/pm0025_00_00",
+    "scarlet/pokemon/pm0006_00_00",
+    "scarlet/pokemon/pm0000_00_00",
+    null,
+    null,
+    null
+  ]
+}

@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Starfield2026.ModelLoader.Animations;
+using Starfield2026.ModelLoader.Controllers;
 using Starfield2026.ModelLoader.Input;
 using Starfield2026.ModelLoader.Rendering;
 
@@ -22,49 +23,32 @@ public sealed class OverworldCharacter : IDisposable
     private enum AnimState { Normal, ThrowAnim, Deployed, RecallAnim }
     private AnimState _animState = AnimState.Normal;
 
-    private StaticModel? _pokeball;
-    private int _handBoneIndex = -1;
-    private float _pokeballScale;
+    private PokeballController? _pokeballCtrl;
 
-    // Ball flight runs independently of character animation
-    private enum FlightPhase { None, InHand, FlyingOut, FlyingBack }
-    private FlightPhase _flight = FlightPhase.None;
-    private Vector3 _ballStartPos;
-    private Vector3 _ballLandPos;
-    private float _ballFlightElapsed;
+    // Pokemon party
+    private PokemonParty? _party;
+    private Vector3 _deployPosition;
+    private bool _pendingRedeploy;
 
-    private const float ThrowReleasePointSunMoon = 0.75f;
-    private const float ThrowReleasePointDefault = 0.47f;
-    private const float ThrowDistanceBase = 4f;
-    private const float ThrowDistanceMan = 5.5f;
-    private const float ThrowArcHeight = 1.5f;
-    private const float OutFlightDuration = 0.35f;
-    private const float ReturnFlightDuration = 0.3f;
-    private const float ThrowAnimSpeed = 1.125f;   // 10% slower than 1.25
-    private const float RecallAnimSpeed = 0.9375f;  // 25% slower than 1.25
+    private const float ThrowAnimSpeed = 1.125f;
+    private const float RecallAnimSpeed = 0.9375f;
+    private const float BeamThickness = 0.015f;
 
-    private float _throwDistance = ThrowDistanceBase;
-    private float _throwReleasePoint = ThrowReleasePointDefault;
-    private bool _isSunMoon;
+    private static readonly Color BeamColor = new Color(255, 50, 50) * 0.4f;
+    private VertexPositionColor[]? _beamVerts;
+    private static readonly short[] BeamIndices = { 0,1,2, 0,2,3, 4,5,6, 4,6,7 };
 
     private const float TargetHumanHeight = 2.0f;
     private const float SunMoonRefHeight = 170f;
     private const float ScarletRefHeight = 1.2f;
     private const float GroupThreshold = 10f;
-    private const float PokeballDiameterSunMoon = 0.15f;
-    private const float PokeballDiameterPLZA = 0.17f;
-    private const float PokeballDiameterDefault = 0.15f; // Scarlet
-    private static readonly string[] HandBoneNames =
-    {
-        "EffBall",           // Sun-Moon — dedicated ball attachment bone
-        "right_attach_on",   // Scarlet — right hand attachment point
-        "right_attach",      // PZLA — right hand attachment point
-        "RHand",             // Sun-Moon — right hand
-        "right_hand",        // Scarlet / PZLA — right hand fallback
-    };
 
     public bool IsLoaded { get; private set; }
     public AnimationSet? AnimationSet => _animSet;
+    public PokemonParty? Party => _party;
+    public string PartyStatusText => _party != null
+        ? $"[{_party.ActiveIndex + 1}/{_party.SlotCount}: {_party.ActiveDisplayName}]"
+        : "";
 
     public void Load(GraphicsDevice device, AnimationSet animSet)
     {
@@ -81,15 +65,9 @@ public sealed class OverworldCharacter : IDisposable
             VertexColorEnabled = false,
         };
 
-        _handBoneIndex = -1;
-        foreach (var name in HandBoneNames)
-        {
-            if (animSet.Skeleton.TryGetBoneIndex(name, out int idx))
-            {
-                _handBoneIndex = idx;
-                break;
-            }
-        }
+        // Setup pokeball controller
+        _pokeballCtrl = new PokeballController();
+        _pokeballCtrl.DetectHandBone(animSet.Skeleton);
 
         Play("Idle");
         _player.Update(0f);
@@ -103,42 +81,23 @@ public sealed class OverworldCharacter : IDisposable
             _fitScale = TargetHumanHeight / refHeight;
         }
 
-        // Gen-specific tuning
-        _isSunMoon = _fitScale < 0.1f;
-        _throwReleasePoint = _isSunMoon ? ThrowReleasePointSunMoon : ThrowReleasePointDefault;
-
         var bodyType = TrainerGender.Classify(animSet.ModelPath);
-        _throwDistance = (bodyType == TrainerGender.BodyType.Man)
-            ? ThrowDistanceMan
-            : ThrowDistanceBase;
+        _pokeballCtrl.Configure(_fitScale, bodyType, animSet.ModelPath);
 
         IsLoaded = true;
     }
 
     public void LoadPokeball(GraphicsDevice device, string pokeballDaePath)
     {
-        _pokeball?.Dispose();
-        _pokeball = new StaticModel();
-        _pokeball.Load(device, pokeballDaePath);
+        _pokeballCtrl?.Load(device, pokeballDaePath, _fitScale, _animSet?.ModelPath ?? "");
+    }
 
-        float modelDiameter = Math.Max(
-            _pokeball.BoundsMax.X - _pokeball.BoundsMin.X,
-            Math.Max(_pokeball.BoundsMax.Y - _pokeball.BoundsMin.Y,
-                     _pokeball.BoundsMax.Z - _pokeball.BoundsMin.Z));
-
-        // Size pokeball per generation
-        string modelPath = _animSet?.ModelPath ?? "";
-        bool isPLZA = modelPath.Contains("PZLA", StringComparison.OrdinalIgnoreCase);
-        float targetDiameter = _isSunMoon ? PokeballDiameterSunMoon
-            : isPLZA ? PokeballDiameterPLZA
-            : PokeballDiameterDefault;
-
-        if (modelDiameter > 0.001f && _fitScale > 0.0001f)
-            _pokeballScale = targetDiameter / (modelDiameter * _fitScale);
-        else
-            _pokeballScale = 1f;
-
-        ModelLoaderLog.Info($"[Pokeball] Loaded: diameter={modelDiameter:F3}, fitScale={_fitScale:F6}, pokeballScale={_pokeballScale:F6}, handBone={_handBoneIndex}");
+    public void LoadParty(GraphicsDevice device, string[] pokemonFolderPaths)
+    {
+        _party?.Dispose();
+        _party = new PokemonParty();
+        _party.LoadAll(device, pokemonFolderPaths);
+        ModelLoaderLog.Info($"[Party] Loaded {_party.SlotCount} Pokemon for trainer");
     }
 
     public bool Play(string tag, bool loop = true, bool resetTime = true)
@@ -161,8 +120,21 @@ public sealed class OverworldCharacter : IDisposable
     {
         if (_player is null) return;
 
-        // Update ball flight independently
-        UpdateBallFlight(dt, position, rotationY);
+        // Update ball flight — deploy Pokemon the frame the ball lands
+        bool ballLanded = _pokeballCtrl?.UpdateFlight(dt, position, rotationY) ?? false;
+        if (ballLanded && _animState == AnimState.ThrowAnim)
+        {
+            _deployPosition = _pokeballCtrl?.LandPosition ?? position;
+            _party?.Deploy();
+        }
+
+        // Update deployed Pokemon animation
+        if (_party is { IsDeployed: true })
+            _party.Update(dt);
+
+        // Ctrl cycles Pokemon slot
+        if (input != null && _party != null && input.IsKeyJustPressed(Keys.LeftControl))
+            _party.CycleNext();
 
         // Alt key triggers
         if (input != null && input.IsKeyJustPressed(Keys.LeftAlt))
@@ -170,7 +142,8 @@ public sealed class OverworldCharacter : IDisposable
             if (_animState == AnimState.Normal && HasClip("BallThrow"))
             {
                 _animState = AnimState.ThrowAnim;
-                _flight = FlightPhase.InHand;
+                _pokeballCtrl?.StartThrow();
+                _pendingRedeploy = false;
                 Play("BallThrow", loop: false);
                 _player.Speed = ThrowAnimSpeed;
                 _player.Update(dt);
@@ -178,11 +151,13 @@ public sealed class OverworldCharacter : IDisposable
             }
             else if (_animState == AnimState.Deployed && HasClip("BallRecall"))
             {
+                _pendingRedeploy = _party != null && _party.NeedsRecallFirst;
+
                 _animState = AnimState.RecallAnim;
-                _flight = FlightPhase.InHand;
+                _party?.StartRecall();
+                _pokeballCtrl?.StartThrow();
                 Play("BallRecall", loop: false);
                 _player.Speed = RecallAnimSpeed;
-                ModelLoaderLog.Info($"[Ball] Recall started — flight={_flight}, handBone={_handBoneIndex}, pokeball={_pokeball != null}");
                 _player.Update(dt);
                 return;
             }
@@ -191,23 +166,14 @@ public sealed class OverworldCharacter : IDisposable
         if (_animState == AnimState.ThrowAnim)
         {
             // Check for release point
-            if (_flight == FlightPhase.InHand && _player.ActiveClip != null)
+            if (_pokeballCtrl != null && _pokeballCtrl.CheckRelease(_player))
             {
-                float progress = _player.CurrentTime / _player.ActiveClip.Duration;
-                if (progress >= _throwReleasePoint)
-                {
-                    _flight = FlightPhase.FlyingOut;
-                    _ballFlightElapsed = 0f;
-                    _ballStartPos = GetBallHandPosition(position, rotationY);
-                    float fx = (float)Math.Sin(rotationY);
-                    float fz = (float)Math.Cos(rotationY);
-                    _ballLandPos = position + new Vector3(fx * _throwDistance, 0f, fz * _throwDistance);
-                }
+                var charWorld = BuildCharacterWorld(position, rotationY);
+                _pokeballCtrl.LaunchBall(position, rotationY, _player, charWorld);
             }
 
             if (_player.IsFinished)
             {
-                // Throw anim done → go to Deployed, resume normal locomotion
                 _animState = AnimState.Deployed;
                 Play("Idle");
             }
@@ -221,14 +187,28 @@ public sealed class OverworldCharacter : IDisposable
             _player.Update(dt);
             if (_player.IsFinished)
             {
-                _animState = AnimState.Normal;
-                _flight = FlightPhase.None;
-                Play("Idle");
+                _party?.Recall();
+                _pokeballCtrl?.Reset();
+
+                if (_pendingRedeploy && HasClip("BallThrow"))
+                {
+                    _pendingRedeploy = false;
+                    _animState = AnimState.ThrowAnim;
+                    _pokeballCtrl?.StartThrow();
+                    Play("BallThrow", loop: false);
+                    _player.Speed = ThrowAnimSpeed;
+                }
+                else
+                {
+                    _pendingRedeploy = false;
+                    _animState = AnimState.Normal;
+                    Play("Idle");
+                }
             }
             return;
         }
 
-        // Normal locomotion (Normal or Deployed — same movement, just tracks whether pokemon is out)
+        // Normal locomotion (Normal or Deployed — same movement)
         string desiredTag;
         if (!isGrounded && HasClip("Jump"))
             desiredTag = "Jump";
@@ -246,43 +226,6 @@ public sealed class OverworldCharacter : IDisposable
         _player.Update(dt);
     }
 
-    private void UpdateBallFlight(float dt, Vector3 position, float rotationY)
-    {
-        if (_flight == FlightPhase.FlyingOut)
-        {
-            _ballFlightElapsed += dt;
-            if (_ballFlightElapsed >= OutFlightDuration)
-            {
-                // Ball landed → fly back to hand
-                _flight = FlightPhase.FlyingBack;
-                _ballFlightElapsed = 0f;
-                _ballStartPos = _ballLandPos;
-            }
-        }
-        else if (_flight == FlightPhase.FlyingBack)
-        {
-            _ballFlightElapsed += dt;
-            if (_ballFlightElapsed >= ReturnFlightDuration)
-                _flight = FlightPhase.None;
-        }
-    }
-
-    private Vector3 GetBallHandPosition(Vector3 characterPos, float rotationY)
-    {
-        if (_player is null || _model is null || _handBoneIndex < 0)
-            return characterPos + Vector3.Up * 1.5f;
-
-        float baseY = _model.BoundsMin.Y * _fitScale;
-        var characterWorld = Matrix.CreateScale(_fitScale)
-            * Matrix.CreateRotationY(rotationY)
-            * Matrix.CreateTranslation(characterPos.X, characterPos.Y - baseY, characterPos.Z);
-
-        var ballWorld = Matrix.CreateScale(_pokeballScale)
-            * _player.WorldPose[_handBoneIndex]
-            * characterWorld;
-        return ballWorld.Translation;
-    }
-
     public void Draw(GraphicsDevice device, Matrix view, Matrix projection,
         Vector3 position, float rotationY)
     {
@@ -290,11 +233,7 @@ public sealed class OverworldCharacter : IDisposable
 
         _model.UpdatePose(device, _player.SkinPose);
 
-        float baseY = _model.BoundsMin.Y * _fitScale;
-
-        var characterWorld = Matrix.CreateScale(_fitScale)
-            * Matrix.CreateRotationY(rotationY)
-            * Matrix.CreateTranslation(position.X, position.Y - baseY, position.Z);
+        var characterWorld = BuildCharacterWorld(position, rotationY);
 
         _effect.World = characterWorld;
         _effect.View = view;
@@ -306,70 +245,112 @@ public sealed class OverworldCharacter : IDisposable
 
         _model.Draw(device, _effect);
 
-        if (_pokeball != null && _handBoneIndex >= 0)
-            DrawPokeball(device, characterWorld, position, rotationY);
+        if (_pokeballCtrl is { HasPokeball: true })
+            _pokeballCtrl.Draw(device, _effect, characterWorld, _player, position, rotationY, _fitScale);
+
+        // Draw deployed Pokemon at landing position, facing trainer
+        if (_party is { IsDeployed: true })
+        {
+            float dx = position.X - _deployPosition.X;
+            float dz = position.Z - _deployPosition.Z;
+            float pokemonYaw = (float)Math.Atan2(dx, dz);
+            _party.Draw(device, view, projection, _deployPosition, pokemonYaw);
+
+            // Red beam from Pokemon to pokeball while Pokemon is shrinking
+            if (_party.IsRecalling && _party.DeployScale > 0f && _pokeballCtrl != null)
+            {
+                var ballPos = _pokeballCtrl.GetBallWorldPosition(
+                    position, rotationY, _player, characterWorld);
+                var pokemonCenter = _deployPosition + Vector3.Up * (0.3f * _party.DeployScale);
+                DrawBeam(device, view, projection, pokemonCenter, ballPos);
+            }
+        }
     }
 
-    private void DrawPokeball(GraphicsDevice device, Matrix characterWorld,
-        Vector3 position, float rotationY)
+    private void DrawBeam(GraphicsDevice device, Matrix view, Matrix projection,
+        Vector3 from, Vector3 to)
     {
-        if (_pokeball is null || _effect is null || _player is null) return;
+        if (_effect is null) return;
 
-        Matrix ballWorld;
-        float worldScale = _pokeballScale * _fitScale;
+        // Build a camera-facing quad strip between from and to
+        var dir = to - from;
+        float length = dir.Length();
+        if (length < 0.001f) return;
 
-        switch (_flight)
+        var forward = dir / length;
+        var camRight = Vector3.Cross(forward, Vector3.Up);
+        if (camRight.LengthSquared() < 0.001f)
+            camRight = Vector3.Right;
+        else
+            camRight.Normalize();
+        var camUp = Vector3.Cross(camRight, forward);
+        camUp.Normalize();
+
+        float half = BeamThickness * 0.5f;
+        var rOff = camRight * half;
+        var uOff = camUp * half;
+
+        _beamVerts ??= new VertexPositionColor[8];
+        // Horizontal quad
+        _beamVerts[0] = new VertexPositionColor(from - rOff, BeamColor);
+        _beamVerts[1] = new VertexPositionColor(from + rOff, BeamColor);
+        _beamVerts[2] = new VertexPositionColor(to + rOff, BeamColor);
+        _beamVerts[3] = new VertexPositionColor(to - rOff, BeamColor);
+        // Vertical quad
+        _beamVerts[4] = new VertexPositionColor(from - uOff, BeamColor);
+        _beamVerts[5] = new VertexPositionColor(from + uOff, BeamColor);
+        _beamVerts[6] = new VertexPositionColor(to + uOff, BeamColor);
+        _beamVerts[7] = new VertexPositionColor(to - uOff, BeamColor);
+
+        var prevBlend = device.BlendState;
+        var prevDepth = device.DepthStencilState;
+        device.BlendState = BlendState.AlphaBlend;
+        device.DepthStencilState = DepthStencilState.DepthRead;
+
+        _effect.World = Matrix.Identity;
+        _effect.View = view;
+        _effect.Projection = projection;
+        _effect.TextureEnabled = false;
+        _effect.VertexColorEnabled = true;
+
+        foreach (var pass in _effect.CurrentTechnique.Passes)
         {
-            case FlightPhase.InHand:
-                // Ball attached to hand bone
-                ballWorld = Matrix.CreateScale(_pokeballScale)
-                    * _player.WorldPose[_handBoneIndex]
-                    * characterWorld;
-                break;
-
-            case FlightPhase.FlyingOut:
-            {
-                float t = MathHelper.Clamp(_ballFlightElapsed / OutFlightDuration, 0f, 1f);
-                var ballPos = Vector3.Lerp(_ballStartPos, _ballLandPos, t);
-                // Parabolic arc: rises then falls
-                ballPos.Y += ThrowArcHeight * 4f * t * (1f - t);
-                ballWorld = Matrix.CreateScale(worldScale) * Matrix.CreateTranslation(ballPos);
-                break;
-            }
-
-            case FlightPhase.FlyingBack:
-            {
-                float t = MathHelper.Clamp(_ballFlightElapsed / ReturnFlightDuration, 0f, 1f);
-                var handPos = GetBallHandPosition(position, rotationY);
-                var ballPos = Vector3.Lerp(_ballStartPos, handPos, t);
-                // Lower arc on return
-                ballPos.Y += ThrowArcHeight * 0.3f * 4f * t * (1f - t);
-                ballWorld = Matrix.CreateScale(worldScale) * Matrix.CreateTranslation(ballPos);
-                break;
-            }
-
-            default:
-                return;
+            pass.Apply();
+            device.DrawUserIndexedPrimitives(
+                PrimitiveType.TriangleList,
+                _beamVerts, 0, 8,
+                BeamIndices, 0, 4);
         }
 
-        _effect.World = ballWorld;
-        _pokeball.Draw(device, _effect);
+        // Restore
+        _effect.VertexColorEnabled = false;
+        device.BlendState = prevBlend;
+        device.DepthStencilState = prevDepth;
+    }
+
+    private Matrix BuildCharacterWorld(Vector3 position, float rotationY)
+    {
+        float baseY = (_model?.BoundsMin.Y ?? 0f) * _fitScale;
+        return Matrix.CreateScale(_fitScale)
+            * Matrix.CreateRotationY(rotationY)
+            * Matrix.CreateTranslation(position.X, position.Y - baseY, position.Z);
     }
 
     public void Dispose()
     {
+        _party?.Dispose();
+        _pokeballCtrl?.Dispose();
         _model?.Dispose();
         _effect?.Dispose();
-        _pokeball?.Dispose();
+        _party = null;
+        _pokeballCtrl = null;
         _model = null;
         _effect = null;
-        _pokeball = null;
         _player = null;
         _animSet = null;
         _activeTag = null;
-        _handBoneIndex = -1;
         _animState = AnimState.Normal;
-        _flight = FlightPhase.None;
+        _pendingRedeploy = false;
         IsLoaded = false;
     }
 }

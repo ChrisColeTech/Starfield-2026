@@ -122,6 +122,13 @@ public class ModelLoaderGame : Game
         foreach (var kvp in _freeRoam.SharedAnimationFolders)
             ModelLoaderLog.Info($"  {kvp.Key} -> {kvp.Value}");
 
+        // Load trainer party assignments
+        string pokemonRoot = Path.Combine(assetsRoot, "Models", "Pokemon");
+        string partyJsonPath = Path.Combine(assetsRoot, "trainer_parties.json");
+        _freeRoam.PokemonRoot = pokemonRoot;
+        _freeRoam.TrainerParties = Helpers.TrainerPartyAssignment.LoadFromJson(partyJsonPath);
+        ModelLoaderLog.Info($"Trainer parties: {_freeRoam.TrainerParties.Count} entries from {partyJsonPath}");
+
         // Restore animation settings
         string? savedMode = _database.GetSetting("animation_mode");
         if (savedMode != null && Enum.TryParse<AnimationLoadMode>(savedMode, out var mode))
