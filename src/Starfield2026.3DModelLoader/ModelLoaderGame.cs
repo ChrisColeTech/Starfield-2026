@@ -31,6 +31,13 @@ public class ModelLoaderGame : Game
 
     private CharacterSelectOverlay? _charSelect;
 
+    // Map viewer
+    private MapViewerScreen _mapViewer = new();
+    private List<MapRecord> _maps = new();
+    private int _mapIndex = -1;
+    private MapSelectOverlay? _mapSelect;
+    private bool _inMapMode;
+
     private static string WindowConfigPath =>
         Path.Combine(AppContext.BaseDirectory, "window.json");
 
@@ -123,8 +130,21 @@ public class ModelLoaderGame : Game
         if (savedTags != null)
             _freeRoam.FillTags = new HashSet<string>(savedTags.Split(',', StringSplitOptions.RemoveEmptyEntries));
 
+        // Scan map models
+        string mapsRoot = Path.Combine(assetsRoot, "Models", "Maps");
+        ModelLoaderLog.Info($"Scanning maps: {mapsRoot}");
+        var mapEntries = MapManifestScanner.Scan(mapsRoot);
+        ModelLoaderLog.Info($"Found {mapEntries.Count} map entries");
+        int mapId = 0;
+        foreach (var (name, category, subfolder, manifestPath) in mapEntries)
+            _maps.Add(new MapRecord(++mapId, name, category, subfolder, manifestPath));
+        ModelLoaderLog.Info($"Loaded {_maps.Count} maps");
+
         // Init FreeRoam
         _freeRoam.Initialize(GraphicsDevice);
+
+        // Init MapViewer
+        _mapViewer.Initialize(GraphicsDevice);
 
         // Restore last selected character, or fall back to first
         if (_characters.Count > 0)
@@ -223,43 +243,99 @@ public class ModelLoaderGame : Game
             return;
         }
 
-        // Escape = quit (when no overlay is active)
-        if (snap.CancelPressed)
+        // --- Map select overlay ---
+        if (_mapSelect != null)
         {
-            Exit();
-            return;
-        }
+            _mapSelect.Update(snap, (float)gameTime.ElapsedGameTime.TotalSeconds);
+            if (_mapSelect.IsFinished)
+            {
+                if (_mapSelect.SelectedFolder != null)
+                {
+                    ModelLoaderLog.Info($"Map selected: {_mapSelect.SelectedFolder}");
+                    _mapViewer.LoadMap(_mapSelect.SelectedFolder);
 
-        // Tab = open character select
-        if (snap.PausePressed)
-        {
-            _charSelect = new CharacterSelectOverlay(_characters, _freeRoam.LoadMode, _freeRoam.FillTags);
+                    for (int i = 0; i < _maps.Count; i++)
+                    {
+                        string folder = Path.GetDirectoryName(_maps[i].ManifestPath) ?? "";
+                        if (string.Equals(folder, _mapSelect.SelectedFolder, StringComparison.OrdinalIgnoreCase))
+                        {
+                            _mapIndex = i;
+                            _database.SetSetting("last_map_id", _maps[i].Id.ToString());
+                            break;
+                        }
+                    }
+                }
+
+                _mapSelect = null;
+            }
             base.Update(gameTime);
             return;
         }
 
-        _freeRoam.Update(gameTime, snap);
+        // Escape = switch between character and map mode
+        if (snap.CancelPressed)
+        {
+            _inMapMode = !_inMapMode;
+            ModelLoaderLog.Info($"Switched to {(_inMapMode ? "Map" : "Character")} mode");
+            base.Update(gameTime);
+            return;
+        }
+
+        // Tab = open select overlay (character or map depending on mode)
+        if (snap.PausePressed)
+        {
+            if (_inMapMode)
+                _mapSelect = new MapSelectOverlay(_maps);
+            else
+                _charSelect = new CharacterSelectOverlay(_characters, _freeRoam.LoadMode, _freeRoam.FillTags);
+            base.Update(gameTime);
+            return;
+        }
+
+        if (_inMapMode)
+            _mapViewer.Update(gameTime, snap);
+        else
+            _freeRoam.Update(gameTime, snap);
 
         base.Update(gameTime);
     }
 
     protected override void Draw(GameTime gameTime)
     {
-        _freeRoam.Draw(GraphicsDevice);
+        if (_inMapMode)
+        {
+            _mapViewer.Draw(GraphicsDevice);
 
-        // HUD overlay (minimap + status)
-        string charName = _characterIndex >= 0 && _characterIndex < _characters.Count
-            ? _characters[_characterIndex].Name : "None";
-        string status = $"[Tab] Select  |  {charName} ({_characterIndex + 1}/{_characters.Count})  |  {_freeRoam.StatusText}";
-        Window.Title = $"3D Model Loader  |  {status}";
+            string mapName = _mapIndex >= 0 && _mapIndex < _maps.Count
+                ? _maps[_mapIndex].Name : "None";
+            string status = $"[Esc] Characters  [Tab] Select  |  {mapName} ({_mapIndex + 1}/{_maps.Count})  |  {_mapViewer.StatusText}";
+            Window.Title = $"Map Viewer  |  {status}";
 
-        _hud.Draw(GraphicsDevice, _freeRoam.Position, _freeRoam.Yaw, status);
+            _hud.Draw(GraphicsDevice, Vector3.Zero, 0f, status);
+        }
+        else
+        {
+            _freeRoam.Draw(GraphicsDevice);
 
-        // Character select overlay
+            string charName = _characterIndex >= 0 && _characterIndex < _characters.Count
+                ? _characters[_characterIndex].Name : "None";
+            string status = $"[Esc] Maps  [Tab] Select  |  {charName} ({_characterIndex + 1}/{_characters.Count})  |  {_freeRoam.StatusText}";
+            Window.Title = $"3D Model Loader  |  {status}";
+
+            _hud.Draw(GraphicsDevice, _freeRoam.Position, _freeRoam.Yaw, status);
+        }
+
+        // Select overlays
         if (_charSelect != null)
         {
             _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
             _charSelect.Draw(_spriteBatch, _pixel, _uiFont, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+            _spriteBatch.End();
+        }
+        if (_mapSelect != null)
+        {
+            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+            _mapSelect.Draw(_spriteBatch, _pixel, _uiFont, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
             _spriteBatch.End();
         }
 

@@ -18,6 +18,20 @@ public static class TrainerGender
             if (int.TryParse(numPart, out int id) && BodyTypeTable.TryGetValue(id, out var bodyType))
                 return bodyType;
         }
+
+        // Fallback: check model.dae for skirt bones to detect female
+        string modelPath = Path.Combine(characterFolderPath, "model.dae");
+        if (File.Exists(modelPath))
+        {
+            try
+            {
+                string content = File.ReadAllText(modelPath);
+                bool hasSkirt = content.Contains("skirt", StringComparison.OrdinalIgnoreCase);
+                return hasSkirt ? BodyType.Woman : BodyType.Man;
+            }
+            catch { }
+        }
+
         return BodyType.Unknown;
     }
 

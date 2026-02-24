@@ -20,6 +20,7 @@ public static class TagResolver
         ("Turn",         new[] { "turn" }),
         ("Greet",        new[] { "greet", "hello" }),
         ("BallThrow",    new[] { "ballthrow", "ball_throw" }),
+        ("BallRecall",   new[] { "ballrecall", "ball_recall", "ballreturn", "ball_return" }),
     };
 
     public static string? FromName(string sourceName)
@@ -38,8 +39,8 @@ public static class TagResolver
         1  => "Walk",
         2  => "Run",
         3  => "Jump",
-        4  => "Land",
-        5  => "ShortAction1",
+        4  => "BallThrow",
+        5  => "BallRecall",
         6  => "LongAction1",
         7  => "ShortAction2",
         8  => "MediumAction",
