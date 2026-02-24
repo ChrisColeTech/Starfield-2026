@@ -18,22 +18,19 @@ public static class ClipSampler
                 localPose[track.BoneIndex] = track.Sample(time);
         }
 
-        // Strip root motion: lock translation to bind pose for root chain bones
-        // (root and its direct children) so baked locomotion doesn't shift the model.
+        // Strip root motion: lock translation to bind pose for the root chain.
+        // The root chain is every bone from the root down through single-child
+        // nodes until the first branch (e.g. root → origin → waist in PZLA).
         if (skeleton != null)
         {
-            for (int i = 0; i < skeleton.Bones.Count; i++)
+            foreach (int i in skeleton.RootChain)
             {
-                int parent = skeleton.Bones[i].ParentIndex;
-                if (parent < 0 || skeleton.Bones[parent].ParentIndex < 0)
-                {
-                    var pose = localPose[i];
-                    var bind = bindLocal[i];
-                    pose.M41 = bind.M41;
-                    pose.M42 = bind.M42;
-                    pose.M43 = bind.M43;
-                    localPose[i] = pose;
-                }
+                var pose = localPose[i];
+                var bind = bindLocal[i];
+                pose.M41 = bind.M41;
+                pose.M42 = bind.M42;
+                pose.M43 = bind.M43;
+                localPose[i] = pose;
             }
         }
     }

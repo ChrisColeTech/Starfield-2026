@@ -34,7 +34,7 @@ public sealed class OverworldCharacter : IDisposable
     private float _ballFlightElapsed;
 
     private const float ThrowReleasePointSunMoon = 0.75f;
-    private const float ThrowReleasePointDefault = 0.35f;
+    private const float ThrowReleasePointDefault = 0.47f;
     private const float ThrowDistanceBase = 4f;
     private const float ThrowDistanceMan = 5.5f;
     private const float ThrowArcHeight = 1.5f;
