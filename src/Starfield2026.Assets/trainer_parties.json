@@ -1,34 +1,482 @@
 {
-  "tr0007_00": [
-    "PZLA/pm0025_00_00",
-    "PZLA/pm0006_00_00",
-    "PZLA/pm0003_00_00",
-    "PZLA/pm0001_00_00",
-    "PZLA/pm0004_00_00",
-    "PZLA/pm0005_00_00"
+  "PZLA/tr0003_00": [
+    "sun-moon/pm0539_00",
+    "scarlet/pm0422_12_00",
+    "scarlet/pm0093_00_00",
+    "sun-moon/pm0772_00",
+    "scarlet/pm1024_00_00",
+    "scarlet/pm0953_00_00"
   ],
-  "tr0003_00": [
-    "PZLA/pm0000_00_00",
-    "PZLA/pm0002_00_00",
-    "PZLA/pm0006_00_00",
-    null,
-    null,
-    null
+  "PZLA/tr0005_00": [
+    "scarlet/pm0843_00_41",
+    "scarlet/pm0484_12_00",
+    "sun-moon/pm0763_00",
+    "scarlet/pm0401_01_00",
+    "sun-moon/pm0608_00",
+    "sun-moon/pm0770_12"
   ],
-  "tr0002_00": [
-    "sun-moon/pokemon/pm0025_00",
-    "sun-moon/pokemon/pm0006_00",
-    "sun-moon/pokemon/pm0003_00",
-    "sun-moon/pokemon/pm0001_00",
-    null,
-    null
+  "PZLA/tr0006_00": [
+    "sun-moon/pm0385_00",
+    "scarlet/pm0325_00_00",
+    "sun-moon/pm0466_00",
+    "sun-moon/pm0166_00",
+    "scarlet/pm0128_12_51",
+    "scarlet/pm0123_00_00"
   ],
-  "tr0000_00": [
-    "scarlet/pokemon/pm0025_00_00",
-    "scarlet/pokemon/pm0006_00_00",
-    "scarlet/pokemon/pm0000_00_00",
-    null,
-    null,
-    null
+  "PZLA/tr0007_00": [
+    "scarlet/pm0354_00_00",
+    "scarlet/pm0828_00_00",
+    "scarlet/pm0922_12_00",
+    "sun-moon/pm0319_00",
+    "sun-moon/pm0483_00",
+    "scarlet/pm0097_00_00"
+  ],
+  "PZLA/tr0013_00": [
+    "sun-moon/pm0415_00",
+    "scarlet/pm0751_00_41",
+    "sun-moon/pm0722_00",
+    "sun-moon/pm0558_00",
+    "sun-moon/pm0701_13",
+    "sun-moon/pm0385_00"
+  ],
+  "PZLA/tr0020_00": [
+    "sun-moon/pm0161_00",
+    "scarlet/pm0839_00_00",
+    "sun-moon/pm0216_00",
+    "sun-moon/pm0463_00",
+    "scarlet/pm1030_00_00",
+    "scarlet/pm0025_18_00"
+  ],
+  "PZLA/tr0022_00": [
+    "sun-moon/pm0828_00",
+    "scarlet/pm0611_00_00",
+    "sun-moon/pm0647_11",
+    "sun-moon/pm0167_00",
+    "sun-moon/pm0024_00",
+    "scarlet/pm1030_00_00"
+  ],
+  "PZLA/tr0030_00": [
+    "scarlet/pm0586_14_00",
+    "scarlet/pm0823_00_00",
+    "sun-moon/pm0835_00",
+    "sun-moon/pm0019_00",
+    "scarlet/pm0401_01_00",
+    "scarlet/pm0340_00_00"
+  ],
+  "PZLA/tr0031_00": [
+    "sun-moon/pm0089_61",
+    "scarlet/pm0373_00_00",
+    "sun-moon/pm0053_61",
+    "sun-moon/pm0028_61",
+    "sun-moon/pm0487_11",
+    "scarlet/pm1005_00_41"
+  ],
+  "PZLA/tr1000_00": [
+    "scarlet/pm0151_00_00",
+    "sun-moon/pm0748_00",
+    "sun-moon/pm0236_00",
+    "sun-moon/pm0373_51",
+    "scarlet/pm0453_01_00",
+    "sun-moon/pm0088_00"
+  ],
+  "scarlet/tr0000_00": [
+    "scarlet/pm0296_00_00",
+    "sun-moon/pm0396_00",
+    "scarlet/pm1056_13_00",
+    "sun-moon/pm0519_00",
+    "sun-moon/pm0498_00",
+    "sun-moon/pm0058_00"
+  ],
+  "scarlet/tr0020_00": [
+    "sun-moon/pm0444_00",
+    "scarlet/pm0717_00_00",
+    "sun-moon/pm0701_19",
+    "scarlet/pm0232_00_00",
+    "scarlet/pm0172_00_00",
+    "sun-moon/pm0582_00"
+  ],
+  "scarlet/tr0040_00": [
+    "scarlet/pm0904_00_00",
+    "sun-moon/pm0855_00",
+    "scarlet/pm1050_12_00",
+    "scarlet/pm0298_00_00",
+    "scarlet/pm0922_12_00",
+    "scarlet/pm0398_00_00"
+  ],
+  "scarlet/tr0080_00": [
+    "sun-moon/pm0089_61",
+    "scarlet/pm1030_00_00",
+    "sun-moon/pm0225_00",
+    "sun-moon/pm0531_51",
+    "sun-moon/pm0065_00",
+    "scarlet/pm0627_00_00"
+  ],
+  "scarlet/tr0090_00": [
+    "sun-moon/pm0074_61",
+    "sun-moon/pm0049_00",
+    "scarlet/pm0805_00_00",
+    "sun-moon/pm0595_00",
+    "scarlet/pm1011_00_00",
+    "sun-moon/pm0701_14"
+  ],
+  "scarlet/tr0150_00": [
+    "sun-moon/pm0622_00",
+    "sun-moon/pm0555_12",
+    "scarlet/pm0246_00_00",
+    "sun-moon/pm0493_14",
+    "sun-moon/pm0531_00",
+    "scarlet/pm0704_00_00"
+  ],
+  "scarlet/tr0190_00": [
+    "sun-moon/pm0369_00",
+    "sun-moon/pm0747_00",
+    "scarlet/pm0953_00_00",
+    "scarlet/pm0628_00_00",
+    "sun-moon/pm0242_00",
+    "sun-moon/pm0089_00"
+  ],
+  "scarlet/tr0200_00": [
+    "scarlet/pm1017_00_00",
+    "sun-moon/pm0540_00",
+    "sun-moon/pm0632_00",
+    "sun-moon/pm0406_00",
+    "scarlet/pm0829_12_00",
+    "sun-moon/pm0625_00"
+  ],
+  "scarlet/tr0210_00": [
+    "sun-moon/pm0000_00",
+    "sun-moon/pm0845_00",
+    "sun-moon/pm0861_00",
+    "scarlet/pm0198_00_00",
+    "scarlet/pm0913_00_00",
+    "scarlet/pm0128_12_51"
+  ],
+  "scarlet/tr0240_00": [
+    "scarlet/pm1101_00_00",
+    "sun-moon/pm0127_51",
+    "scarlet/pm1013_00_00",
+    "scarlet/pm0217_00_00",
+    "scarlet/pm0811_00_00",
+    "sun-moon/pm0424_00"
+  ],
+  "scarlet/tr0260_00": [
+    "sun-moon/pm0725_13",
+    "scarlet/pm1099_00_00",
+    "scarlet/pm0814_00_00",
+    "sun-moon/pm0570_00",
+    "sun-moon/pm0308_51",
+    "sun-moon/pm0117_00"
+  ],
+  "scarlet/tr0280_00": [
+    "sun-moon/pm0546_00",
+    "sun-moon/pm0235_00",
+    "scarlet/pm0502_00_00",
+    "scarlet/pm1006_11_41",
+    "scarlet/pm0484_12_00",
+    "scarlet/pm0957_00_00"
+  ],
+  "scarlet/tr0290_00": [
+    "sun-moon/pm0803_00",
+    "sun-moon/pm0415_00",
+    "sun-moon/pm0377_00",
+    "scarlet/pm1003_00_41",
+    "sun-moon/pm0807_00",
+    "sun-moon/pm0456_00"
+  ],
+  "scarlet/tr0300_00": [
+    "sun-moon/pm0180_00",
+    "sun-moon/pm0454_00",
+    "sun-moon/pm0124_00",
+    "sun-moon/pm0059_00",
+    "scarlet/pm0829_12_00",
+    "scarlet/pm0483_12_00"
+  ],
+  "scarlet/tr0340_00": [
+    "sun-moon/pm0326_00",
+    "sun-moon/pm0300_00",
+    "scarlet/pm0335_00_00",
+    "sun-moon/pm0824_11",
+    "scarlet/pm0180_00_00",
+    "scarlet/pm0418_01_00"
+  ],
+  "scarlet/tr0480_00": [
+    "scarlet/pm0585_13_00",
+    "sun-moon/pm0517_00",
+    "scarlet/pm0612_00_00",
+    "sun-moon/pm0616_00",
+    "sun-moon/pm0166_00",
+    "sun-moon/pm0477_00"
+  ],
+  "scarlet/tr0490_00": [
+    "scarlet/pm0215_00_00",
+    "sun-moon/pm0098_00",
+    "sun-moon/pm0092_00",
+    "sun-moon/pm0476_00",
+    "sun-moon/pm0253_00",
+    "sun-moon/pm0360_00"
+  ],
+  "sun-moon/tr0002_00": [
+    "scarlet/pm0972_11_00",
+    "sun-moon/pm0399_00",
+    "scarlet/pm0051_00_00",
+    "sun-moon/pm0616_00",
+    "sun-moon/pm0731_00",
+    "scarlet/pm0430_00_00"
+  ],
+  "sun-moon/tr0006_00": [
+    "sun-moon/pm0619_00",
+    "sun-moon/pm0374_00",
+    "sun-moon/pm0815_00",
+    "scarlet/pm1011_00_00",
+    "sun-moon/pm0846_00",
+    "sun-moon/pm0542_00"
+  ],
+  "sun-moon/tr0008_00": [
+    "sun-moon/pm0024_00",
+    "scarlet/pm0422_12_00",
+    "scarlet/pm1057_00_00",
+    "sun-moon/pm0191_00",
+    "scarlet/pm0603_00_00",
+    "sun-moon/pm0226_00"
+  ],
+  "sun-moon/tr0009_00": [
+    "scarlet/pm0025_11_00",
+    "sun-moon/pm0733_00",
+    "sun-moon/pm0728_00",
+    "scarlet/pm1004_11_00",
+    "sun-moon/pm0310_51",
+    "sun-moon/pm0832_00"
+  ],
+  "sun-moon/tr0010_00": [
+    "scarlet/pm0708_21_00",
+    "sun-moon/pm0323_00",
+    "scarlet/pm0405_01_00",
+    "sun-moon/pm0512_00",
+    "scarlet/pm1067_00_00",
+    "sun-moon/pm0538_00"
+  ],
+  "sun-moon/tr0010_01": [
+    "sun-moon/pm0323_00",
+    "sun-moon/pm0493_14",
+    "scarlet/pm0751_00_41",
+    "scarlet/pm0585_13_00",
+    "sun-moon/pm0079_00",
+    "sun-moon/pm0833_00"
+  ],
+  "sun-moon/tr0011_00": [
+    "scarlet/pm0615_00_00",
+    "sun-moon/pm0378_00",
+    "sun-moon/pm0865_13",
+    "sun-moon/pm0362_51",
+    "scarlet/pm0004_00_00",
+    "sun-moon/pm0479_14"
+  ],
+  "sun-moon/tr0011_01": [
+    "scarlet/pm9999_00_00",
+    "sun-moon/pm0290_00",
+    "scarlet/pm0079_00_31",
+    "scarlet/pm0423_11_00",
+    "sun-moon/pm0061_00",
+    "scarlet/pm1084_00_00"
+  ],
+  "sun-moon/tr0012_00": [
+    "scarlet/pm0942_00_00",
+    "scarlet/pm0200_00_00",
+    "scarlet/pm0944_00_00",
+    "sun-moon/pm0424_00",
+    "scarlet/pm0296_00_00",
+    "scarlet/pm0323_00_00"
+  ],
+  "sun-moon/tr0013_00": [
+    "sun-moon/pm0753_00",
+    "sun-moon/pm0285_00",
+    "scarlet/pm0231_00_00",
+    "sun-moon/pm0829_13",
+    "sun-moon/pm0366_00",
+    "sun-moon/pm0840_00"
+  ],
+  "sun-moon/tr0014_00": [
+    "scarlet/pm0454_01_00",
+    "scarlet/pm0459_00_00",
+    "sun-moon/pm0579_00",
+    "sun-moon/pm0264_00",
+    "sun-moon/pm0391_00",
+    "scarlet/pm0635_00_00"
+  ],
+  "sun-moon/tr0015_00": [
+    "scarlet/pm1006_11_41",
+    "sun-moon/pm0358_00",
+    "sun-moon/pm0492_11",
+    "sun-moon/pm0168_00",
+    "scarlet/pm0812_00_00",
+    "sun-moon/pm0378_00"
+  ],
+  "sun-moon/tr0016_00": [
+    "sun-moon/pm0823_00",
+    "sun-moon/pm0748_00",
+    "sun-moon/pm0635_00",
+    "scarlet/pm0756_00_00",
+    "sun-moon/pm0716_00",
+    "scarlet/pm1093_00_00"
+  ],
+  "sun-moon/tr0017_00": [
+    "sun-moon/pm0124_00",
+    "sun-moon/pm0598_00",
+    "sun-moon/pm0558_00",
+    "sun-moon/pm0078_00",
+    "sun-moon/pm0198_00",
+    "sun-moon/pm0341_00"
+  ],
+  "sun-moon/tr0018_00": [
+    "sun-moon/pm0221_00",
+    "scarlet/pm0445_01_00",
+    "scarlet/pm0959_00_00",
+    "scarlet/pm0860_00_00",
+    "scarlet/pm0215_00_41",
+    "sun-moon/pm0020_61"
+  ],
+  "sun-moon/tr0020_00": [
+    "scarlet/pm0082_00_00",
+    "sun-moon/pm0461_00",
+    "sun-moon/pm0400_00",
+    "scarlet/pm0918_00_00",
+    "sun-moon/pm0462_00",
+    "scarlet/pm0839_00_00"
+  ],
+  "sun-moon/tr0022_00": [
+    "scarlet/pm0026_00_00",
+    "scarlet/pm0242_00_00",
+    "sun-moon/pm0706_00",
+    "sun-moon/pm0523_00",
+    "scarlet/pm0203_01_00",
+    "scarlet/pm0910_00_00"
+  ],
+  "sun-moon/tr0027_00": [
+    "scarlet/pm0228_00_00",
+    "scarlet/pm0128_11_51",
+    "sun-moon/pm0009_00",
+    "scarlet/pm0242_00_00",
+    "sun-moon/pm0334_51",
+    "scarlet/pm0939_11_00"
+  ],
+  "sun-moon/tr0030_00": [
+    "scarlet/pm1031_00_00",
+    "sun-moon/pm0593_01",
+    "sun-moon/pm0284_00",
+    "scarlet/pm0819_12_00",
+    "sun-moon/pm0378_00",
+    "scarlet/pm0471_00_00"
+  ],
+  "sun-moon/tr0031_00": [
+    "sun-moon/pm0735_11",
+    "sun-moon/pm0431_00",
+    "sun-moon/pm0442_00",
+    "sun-moon/pm0260_00",
+    "scarlet/pm0949_00_00",
+    "sun-moon/pm0877_00"
+  ],
+  "sun-moon/tr0035_00": [
+    "sun-moon/pm0260_00",
+    "sun-moon/pm0138_00",
+    "scarlet/pm0715_13_00",
+    "scarlet/pm0361_00_00",
+    "scarlet/pm0373_00_00",
+    "sun-moon/pm0577_00"
+  ],
+  "sun-moon/tr0037_00": [
+    "sun-moon/pm0184_00",
+    "sun-moon/pm0047_00",
+    "sun-moon/pm0169_00",
+    "sun-moon/pm0145_00",
+    "sun-moon/pm0251_00",
+    "sun-moon/pm0747_00"
+  ],
+  "sun-moon/tr0051_00": [
+    "scarlet/pm0195_00_00",
+    "sun-moon/pm0602_00",
+    "sun-moon/pm0566_00",
+    "sun-moon/pm0552_00",
+    "scarlet/pm0384_00_00",
+    "scarlet/pm0211_00_00"
+  ],
+  "sun-moon/tr0052_00": [
+    "sun-moon/pm0130_00",
+    "sun-moon/pm0745_00",
+    "sun-moon/pm0022_00",
+    "scarlet/pm0418_00_00",
+    "scarlet/pm0967_00_00",
+    "scarlet/pm0716_00_00"
+  ],
+  "sun-moon/tr0076_00": [
+    "scarlet/pm0715_13_00",
+    "sun-moon/pm0373_51",
+    "sun-moon/pm0215_00",
+    "scarlet/pm0487_11_00",
+    "sun-moon/pm0166_00",
+    "scarlet/pm0709_00_00"
+  ],
+  "sun-moon/tr0090_00": [
+    "scarlet/pm1031_00_00",
+    "sun-moon/pm0243_00",
+    "scarlet/pm0969_00_00",
+    "scarlet/pm0283_00_00",
+    "sun-moon/pm0207_00",
+    "sun-moon/pm0393_00"
+  ],
+  "sun-moon/tr1001_00": [
+    "scarlet/pm0383_00_00",
+    "scarlet/pm0188_00_00",
+    "sun-moon/pm0563_00",
+    "sun-moon/pm0380_51",
+    "scarlet/pm0054_00_00",
+    "scarlet/pm0354_00_00"
+  ],
+  "sun-moon/tr1002_00": [
+    "sun-moon/pm0820_12",
+    "scarlet/pm0937_00_00",
+    "scarlet/pm0636_00_00",
+    "sun-moon/pm0137_00",
+    "sun-moon/pm0284_00",
+    "sun-moon/pm0276_00"
+  ],
+  "sun-moon/tr1003_00": [
+    "scarlet/pm0819_11_00",
+    "sun-moon/pm0127_51",
+    "scarlet/pm0203_01_00",
+    "scarlet/pm0634_00_00",
+    "sun-moon/pm0088_61",
+    "scarlet/pm0025_00_00"
+  ],
+  "sun-moon/tr1004_00": [
+    "sun-moon/pm0107_00",
+    "scarlet/pm1006_12_41",
+    "sun-moon/pm0876_00",
+    "sun-moon/pm0878_00",
+    "sun-moon/pm0228_00",
+    "scarlet/pm1044_00_00"
+  ],
+  "sun-moon/tr1005_00": [
+    "sun-moon/pm0168_00",
+    "sun-moon/pm0646_11",
+    "sun-moon/pm0751_00",
+    "sun-moon/pm0875_00",
+    "sun-moon/pm0404_00",
+    "sun-moon/pm0583_00"
+  ],
+  "sun-moon/tr1008_00": [
+    "sun-moon/pm0726_00",
+    "sun-moon/pm0286_00",
+    "scarlet/pm0586_13_00",
+    "scarlet/pm0715_12_00",
+    "scarlet/pm1063_00_00",
+    "scarlet/pm0826_00_00"
+  ],
+  "sun-moon/tr1009_00": [
+    "scarlet/pm0203_00_00",
+    "sun-moon/pm0447_00",
+    "sun-moon/pm0761_00",
+    "sun-moon/pm0382_00",
+    "scarlet/pm0211_00_00",
+    "sun-moon/pm0809_00"
   ]
 }

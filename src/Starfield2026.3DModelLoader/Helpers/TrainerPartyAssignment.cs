@@ -40,8 +40,11 @@ public static class TrainerPartyAssignment
         string pokemonRoot,
         Dictionary<string, string?[]> assignments)
     {
-        string trainerName = Path.GetFileName(trainerFolderPath.TrimEnd('/', '\\'));
-        if (!assignments.TryGetValue(trainerName, out var relativePaths))
+        string key = ExtractPartyKey(trainerFolderPath);
+        if (string.IsNullOrEmpty(key))
+            return null;
+
+        if (!assignments.TryGetValue(key, out var relativePaths))
             return null;
 
         var resolved = new string[6];
@@ -53,5 +56,31 @@ public static class TrainerPartyAssignment
                 resolved[i] = "";
         }
         return resolved;
+    }
+
+    private static string ExtractPartyKey(string trainerFolderPath)
+    {
+        string normalized = trainerFolderPath.Replace('\\', '/').TrimEnd('/');
+        
+        string[] generations = { "PZLA", "scarlet", "sun-moon" };
+        foreach (var gen in generations)
+        {
+            int idx = normalized.IndexOf($"/{gen}/", StringComparison.OrdinalIgnoreCase);
+            if (idx >= 0)
+            {
+                string afterGen = normalized.Substring(idx + gen.Length + 2);
+                string[] parts = afterGen.Split('/');
+                foreach (var part in parts)
+                {
+                    if (part.StartsWith("tr", StringComparison.OrdinalIgnoreCase) && part != "trainers")
+                    {
+                        return $"{gen}/{part}";
+                    }
+                }
+            }
+        }
+        
+        string trainerName = Path.GetFileName(normalized);
+        return trainerName.StartsWith("tr", StringComparison.OrdinalIgnoreCase) ? trainerName : "";
     }
 }
