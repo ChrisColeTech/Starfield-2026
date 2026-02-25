@@ -157,6 +157,49 @@ app.post<{ Body: { pathA: string; pathB: string } }>('/api/compare-models', asyn
   }
 })
 
+// ─── Screenshot capture (MCP → WS → Electron IPC → file) ───
+
+const pendingScreenshots = new Map<string, { resolve: (v: any) => void; timer: NodeJS.Timeout }>()
+
+app.post<{ Body: { outputPath: string } }>('/api/screenshot', async (request, reply) => {
+  const { outputPath } = request.body
+  if (!outputPath) return reply.status(400).send({ error: 'Missing outputPath' })
+
+  if (wsClients.size === 0) {
+    return reply.status(503).send({ error: 'No frontend connected.' })
+  }
+
+  const requestId = `ss_${Date.now()}`
+
+  // Wait for frontend to capture and POST back the result
+  const result = await new Promise<any>((resolve) => {
+    const timer = setTimeout(() => {
+      pendingScreenshots.delete(requestId)
+      resolve({ error: 'Screenshot timed out after 10s' })
+    }, 10000)
+    pendingScreenshots.set(requestId, { resolve, timer })
+    broadcast('screenshot:capture', { requestId, outputPath })
+  })
+
+  if (result.error) return reply.status(500).send(result)
+  return reply.send(result)
+})
+
+// Frontend POSTs back the result after Electron captures
+app.post<{ Body: { requestId: string; ok?: boolean; path?: string; size?: number; error?: string } }>(
+  '/api/screenshot/result',
+  async (request, reply) => {
+    const { requestId, ...result } = request.body
+    const pending = pendingScreenshots.get(requestId)
+    if (pending) {
+      clearTimeout(pending.timer)
+      pendingScreenshots.delete(requestId)
+      pending.resolve(result)
+    }
+    return reply.send({ ok: true })
+  }
+)
+
 // Serve model/texture files from any directory on disk.
 // The frontend encodes the manifest's `dir` (absolute path) as a base64url
 // token in the URL: /serve/<token>/<filename>

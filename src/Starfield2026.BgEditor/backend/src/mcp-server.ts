@@ -273,6 +273,54 @@ async function main() {
         },
     )
 
+    server.tool(
+        'save_ui_screenshot',
+        'Capture a screenshot of the entire BgEditor app window and save as PNG. Requires the BgEditor to be running in Electron. Saves to backend/outputs/ by default.',
+        {
+            outputPath: z.string().optional().describe('Optional path to save the PNG. Defaults to outputs folder with timestamp.'),
+        },
+        async ({ outputPath }) => {
+            try {
+                const OUTPUTS_DIR = path.resolve(__dirname, '..', 'outputs')
+                let absPath: string
+                if (outputPath) {
+                    absPath = path.resolve(outputPath)
+                } else {
+                    // Generate readable timestamp: screenshot-2026-02-25_14-05-33.png
+                    const now = new Date()
+                    const ts = now.toISOString().replace(/T/, '_').replace(/:/g, '-').replace(/\.\d+Z$/, '')
+                    absPath = path.join(OUTPUTS_DIR, `screenshot-${ts}.png`)
+                }
+
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+
+                const res = await fetch(`${BACKEND}/api/screenshot`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ outputPath: absPath }),
+                })
+
+                const data = await res.json() as any
+                if (data.error) {
+                    return { content: [{ type: 'text' as const, text: `Error: ${data.error}` }] }
+                }
+
+                return {
+                    content: [
+                        { type: 'text' as const, text: `✓ Screenshot saved to ${absPath} (${Math.round(data.size / 1024)} KB)` },
+                        { type: 'image' as const, data: fs.readFileSync(absPath).toString('base64'), mimeType: 'image/png' },
+                    ]
+                }
+            } catch (err: any) {
+                if (err.cause?.code === 'ECONNREFUSED') {
+                    return { content: [{ type: 'text' as const, text: 'Error: BgEditor is not running. Please start it first.' }] }
+                }
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
     const transport = new StdioServerTransport()
     await server.connect(transport)
 }

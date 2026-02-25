@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron')
 const path = require('path')
+const fs = require('fs')
 const Store = require('electron-store')
 
 const FRONTEND_URL = 'http://localhost:5173'
@@ -80,6 +81,21 @@ ipcMain.handle('store-set', (_event, key, value) => {
 
 ipcMain.handle('store-get-all', () => {
   return store.store
+})
+
+// Screenshot capture
+ipcMain.handle('capture-screenshot', async (_event, outputPath) => {
+  if (!mainWindow) return { error: 'No window' }
+  try {
+    const image = await mainWindow.webContents.capturePage()
+    const png = image.toPNG()
+    const dir = path.dirname(outputPath)
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(outputPath, png)
+    return { ok: true, path: outputPath, size: png.length }
+  } catch (err) {
+    return { error: err.message }
+  }
 })
 
 app.whenReady().then(() => {

@@ -90,6 +90,27 @@ function handleEvent(event: any) {
             showToast(`Rendered ${event.files?.length || 0} angles to ${event.outputDir}`)
             break
 
+        case 'screenshot:capture': {
+            console.log(`[WS] Screenshot request: ${event.outputPath}`)
+            const api = (window as any).electronAPI
+            if (api?.captureScreenshot) {
+                api.captureScreenshot(event.outputPath).then((result: any) => {
+                    fetch('http://localhost:3001/api/screenshot/result', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ requestId: event.requestId, ...result }),
+                    }).catch(() => { })
+                })
+            } else {
+                fetch('http://localhost:3001/api/screenshot/result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ requestId: event.requestId, error: 'Not running in Electron' }),
+                }).catch(() => { })
+            }
+            break
+        }
+
         default:
             console.log(`[WS] Unknown event: ${event.type}`)
     }
