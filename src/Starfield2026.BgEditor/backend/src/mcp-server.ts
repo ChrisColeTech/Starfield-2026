@@ -57,6 +57,8 @@ async function main() {
     const { z } = await import('zod')
     const fs = await import('fs')
     const path = await import('path')
+    const { fileURLToPath } = await import('url')
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
     const THREE = await import('three')
     const {
         createHeadlessRenderer,
