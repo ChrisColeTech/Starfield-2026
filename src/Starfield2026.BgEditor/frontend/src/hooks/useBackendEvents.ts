@@ -54,6 +54,22 @@ export function useBackendEvents() {
 
 function handleEvent(event: any) {
     switch (event.type) {
+        case 'model:load': {
+            const modelType = event.modelType || 'manifest'
+            console.log(`[WS] Load model: modelType=${modelType} path=${event.path}`)
+            const store = useEditorStore.getState()
+            if (modelType === 'manifest') {
+                store.loadManifestFromPath(event.path)
+            } else if (modelType === 'folder') {
+                store.loadFolder(event.path)
+            } else if (modelType === 'dae') {
+                const dir = event.path.replace(/[\\/][^\\/]+$/, '')
+                store.loadManifestFromPath(dir + '/manifest.json')
+            }
+            showToast(`Loading model from ${event.path}`)
+            break
+        }
+
         case 'render:progress':
             console.log(`[WS] Render progress: ${event.angle} — ${event.status}`)
             break

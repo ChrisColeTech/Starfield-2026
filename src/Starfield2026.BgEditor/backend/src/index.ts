@@ -54,6 +54,15 @@ app.get('/ws', { websocket: true }, (socket) => {
 
 export { broadcast }
 
+// ─── MCP → Frontend bridge ───
+app.post<{ Body: { path: string; type: 'manifest' | 'dae' | 'folder' } }>('/api/load-model', async (request, reply) => {
+  const { path: modelPath, type } = request.body
+  if (!modelPath) return reply.status(400).send({ error: 'Missing path' })
+
+  broadcast('model:load', { path: modelPath, modelType: type })
+  return reply.send({ ok: true })
+})
+
 // Serve model/texture files from any directory on disk.
 // The frontend encodes the manifest's `dir` (absolute path) as a base64url
 // token in the URL: /serve/<token>/<filename>
