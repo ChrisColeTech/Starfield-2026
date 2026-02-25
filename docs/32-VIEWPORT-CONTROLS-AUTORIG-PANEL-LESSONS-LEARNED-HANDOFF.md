@@ -1,102 +1,112 @@
-# 32 — Viewport Controls, AutoRig Panel & Bug Fixes — Lessons Learned & Handoff
+# 32 — Viewport Controls, Editor Tools & AutoRig Panel — Lessons Learned & Handoff
 
 **Date:** 2026-02-25  
-**Session Focus:** Programmatic viewport controls, AutoRig panel minimization, skeleton rendering bug fix, `clearAll` reset  
-**Status:** Viewport controls fully working (camera, lighting, persistence), AutoRig panel slimmed, all MCP tools verified
+**Session Focus:** Transform BgEditor from viewer → functional 3D skeleton editor with full MCP control  
+**Status:** 9 editor feature phases + 11 MCP tools implemented. UI bugs fixed. Manipulation tools wired but need restart/verification.
 
 ---
 
 ## 1. What We Accomplished
 
-### Viewport Controls System (✅ Complete)
-Added full programmatic control over the 3D viewport via MCP, with persistence across sessions.
+### Editor Feature Phases (9/9 ✅)
 
-| Feature | Implementation |
-|---------|---------------|
-| **Camera orbit** | Spherical coords (azimuth/elevation/distance) → Three.js cartesian |
-| **Pan** | Target offset (panX/panY/panZ) shifts OrbitControls target |
-| **Zoom** | Distance parameter controls camera-to-target distance |
-| **FOV** | Perspective camera field-of-view in degrees |
-| **Lighting** | Key light multiplier (0–2) scales all 3-point lights proportionally |
-| **Ambient** | Hemisphere light multiplier (0–2) |
-| **Background** | Hex color applied to WebGL clear color |
-| **Partial updates** | `{ azimuth: 90 }` only changes rotation, all else preserved |
-| **Persistence** | Debounced electron-store save on every change, hydrate on mount |
-| **Bidirectional sync** | OrbitControls drag → store → persist; MCP update → store → Three.js |
+| Phase | Feature | Key Files |
+|-------|---------|-----------|
+| 1 | **Bone click-to-select** — Raycaster hit-testing on skeleton spheres with highlight feedback | `Viewport.tsx` |
+| 2 | **TransformControls gizmo** — Three.js gizmo attachment, G/R/S keyboard shortcuts, OrbitControls conflict resolution | `Viewport.tsx` |
+| 3 | **ViewHelper** — Orientation cube in bottom-right corner | `Viewport.tsx` |
+| 4 | **Camera presets** — F/S/T/B/¾ buttons for front/side/top/back/three-quarter views | `AutoRigPanel.tsx` |
+| 5 | **Bone inspector** — Real-time name, parent, collection, head/tail XYZ display | `BoneInspector.tsx` (NEW) |
+| 6 | **Undo/redo stack** — Ctrl+Z/Y with per-bone before/after state tracking | `editorStore.ts` |
+| 7 | **Collection visibility** — Eye/EyeOff toggles per bone group, dimming hidden collections | `AutoRigPanel.tsx` |
+| 8 | **Grid/axes toggles** — Checkbox controls for viewport grid and axes helper | `AutoRigPanel.tsx`, `Viewport.tsx` |
+| 9 | **Box select** — Shift+drag rectangle selection, multi-bone highlighting with primary/secondary distinction | `Viewport.tsx`, `editorStore.ts` |
 
-**Key design:** `ViewportSettings` uses spherical coordinates because OrbitControls already works in spherical internally. Mapping azimuth/elevation/distance is more intuitive for MCP consumers than raw camera xyz. The `applyingRef` guard prevents infinite feedback loops between programmatic updates and OrbitControls change events.
+### MCP Tools — Editor Control (7 tools ✅)
 
-**Files:**
-- `editorStore.ts` — `ViewportSettings` type, `DEFAULT_VIEWPORT`, `updateViewport`/`resetViewport` actions
-- `Viewport.tsx` — `sphericalToCartesian()`/`cartesianToSpherical()`, light refs, hydration effect, apply effect
-- `index.ts` — `POST /api/viewport` endpoint
-- `mcp-server.ts` — `set_viewport` tool (10 optional params)
-- `useBackendEvents.ts` — `viewport:update` WS handler
-- `electron/main.js` — viewport defaults in electron-store
+| Tool | Type | Purpose |
+|------|------|---------|
+| `select_bone` | Fire-and-forget | Select bone by name or deselect (null) |
+| `set_transform_mode` | Fire-and-forget | Switch gizmo: translate/rotate/scale |
+| `toggle_collection` | Fire-and-forget | Toggle bone collection visibility |
+| `set_grid` | Fire-and-forget | Show/hide viewport grid |
+| `set_axes` | Fire-and-forget | Show/hide axes helper |
+| `get_bone_info` | Request-response | Query bone head/tail XYZ, parent |
+| `get_editor_state` | Request-response | Full state: selection, mode, visibility, bone count |
 
-### AutoRig Panel Minimization (✅ Complete)
-- Removed MODEL section (Load Model, Load Animation, Unload Animation, Fit Rig to Model)
-- Migrated those operations to the **Editor** menu in `Header.tsx` (disabled placeholders)
-- Panel now has 3 sections: **RIG TEMPLATE**, **GAME**, **BONES**
-- Removed unused imports (`Import`, `Play`, `Square` from lucide-react)
+### MCP Tools — Skeleton Manipulation (4 tools ✅ wired, needs verification)
 
-### Skeleton Rendering Bug Fix (✅ Complete)
-- **Root cause:** `POST /api/generate-rig` endpoint was **missing** from `backend/src/index.ts`. MCP tool succeeded but no WS broadcast was ever sent.
-- **Red herring:** Initially suspected WS pipeline issues, store action bugs, or race conditions. The real issue was that the REST endpoint simply didn't exist.
-- **Fix:** Added the endpoint, which broadcasts `rig:generate` with template name.
+| Tool | Type | Purpose |
+|------|------|---------|
+| `set_bone_position` | Fire-and-forget | Set absolute head/tail position |
+| `translate_bone` | Fire-and-forget | Move bone + optional child cascade by delta |
+| `set_bone_roll` | Fire-and-forget | Set bone roll angle |
+| `add_bone` | Fire-and-forget | Append new bone to skeleton |
 
-### clearAll Reset Fix (✅ Complete)
-- `clearAll` store action was not resetting `rigTemplate` or `gameType`, so dropdowns retained stale values after clearing.
-- Added `rigTemplate: 'human' as RigTemplate` and `gameType: 'SUNMOON' as GameType` to the reset payload.
-- Also removed duplicate `resetAnimations`/`clearAll` definitions that crept in from overlapping edit sessions.
+### UI Bug Fixes (2 ✅)
+- **BoneInspector** — Transform buttons now always visible, disabled until bone selected
+- **Bone section collapse** — Conditional `flex-1`/`shrink-0` so collapsing works properly
+
+### Architecture Pattern (Established)
+```
+MCP Tool (mcp-server.ts)
+  → POST /api/xxx (index.ts Fastify REST)
+    → broadcast('event:type', data) (WebSocket)
+      → useBackendEvents.ts handler
+        → editorStore action (Zustand)
+          → React UI rerenders (Viewport rebuilds skeleton group)
+```
+
+Request-response tools (get_bone_info, get_editor_state) use a `pendingEditorQueries` map, same pattern as screenshot capture:
+```
+MCP → POST /api/xxx → broadcast('editor:getXxx', { requestId }) → Frontend reads store
+  → POST /api/editor-query/result → Backend resolves pending promise → MCP returns JSON
+```
 
 ---
 
 ## 2. What Work Remains
 
 ### Critical
-1. **Enable Editor menu items** — "Load Model", "Load Animation", "Unload Animation", "Fit Rig to Model" are disabled placeholders. Need file picker integration + store actions.
-2. **Error boundary around Viewport** — Three.js errors still crash the entire React tree. Wrap `<Viewport>` in an error boundary.
-3. **Scene disposal pipeline** — No explicit GPU resource cleanup when switching models. Geometry/material/texture leaks accumulate.
+1. **Manipulation tool verification** — `translate_bone`, `set_bone_position`, `set_bone_roll`, `add_bone` are fully wired but need live MCP testing after a fresh backend restart
+2. **TransformControls ↔ store sync** — When user drags the gizmo to move a bone, the updated position should write back to `editorStore.skeleton[]`. Currently the gizmo moves the Three.js mesh but the store data is stale
+3. **Undo stack integration** — `pushUndo()` action exists but manipulation tools don't push undo entries yet. Need to wrap `setBonePosition`/`translateBone` with automatic undo recording
+4. **Delete bone tool** — No `remove_bone` MCP tool exists yet
 
 ### Important
-4. **Bone highlighting on click** — Click a bone in the viewport or bone list to highlight it. Requires raycasting + hover/selection state.
-5. **Per-collection visibility toggles** — Click bone collection names (Spine, Head, etc.) to toggle visibility.  
-6. **Export rig** — Export the current skeleton as JSON, glTF, or FBX for use in external tools.
-7. **Viewport state in URL** — Encode viewport settings in the URL hash so sharing a link preserves the camera angle.
+5. **Multi-select manipulation** — `translate_bone` only moves one bone + children. Need a `translate_selection` tool that moves all bones in `selectedBones`
+6. **Bone rename** — No rename capability for bones
+7. **Export skeleton** — No way to export the edited skeleton back to JSON/Blender format
+8. **HMR skeleton persistence** — Skeleton state lost on HMR reload during development. Store persists but viewport doesn't re-render the skeleton group after hot reload
 
 ### Nice to Have
-8. **Camera presets** — Front/Side/Top/Back/¾ view buttons in the panel or via MCP tool.
-9. **Smooth camera transitions** — Animate camera to new position instead of snapping (use `THREE.Vector3.lerp` in render loop).
-10. **Grid toggle** — Show/hide the ground grid via viewport settings.
+9. **Bone constraint visualization** — Show IK chains, symmetry pairs
+10. **Bone length lock** — Option to keep bone length fixed when moving head (tail follows)
+11. **Mirror mode** — Move bone on left side, automatically mirror to right side
 
 ---
 
 ## 3. Optimizations — Prime Suspects
 
-### Suspect 1: Viewport Effect Triggering on Every Object Change
-**Problem:** The `[viewport]` useEffect dependency re-runs on every Zustand shallow-compare failure. Since `viewport` is a new object reference on every `updateViewport()` call (spread creates new object), the effect fires even when values haven't meaningfully changed.  
-**Fix:** Use `zustand/shallow` equality or memoize the viewport selector. Or compare individual fields with `useRef` to skip no-op updates.
+### Suspect 1: Skeleton Re-render on Every Store Change
+**Problem:** The Viewport `useEffect` that builds the skeleton group depends on `skeleton` (the entire array). Any bone position change recreates ALL sphere meshes and line segments for 159+ bones.  
+**Impact:** Noticeable jitter when dragging bones or rapid translateBone calls.  
+**Fix:** Instead of rebuilding the entire group, update individual mesh positions. Track bones by name via a `Map<string, THREE.Mesh>` and only reposition changed bones.
 
-```typescript
-// Before: fires every time store.viewport reference changes
-const viewport = useEditorStore(s => s.viewport)
+### Suspect 2: Box Select Projection Performance
+**Problem:** On `pointerup` with shift, every bone sphere's world position is projected to screen space via `Vector3.project()`. For 159 bones this runs ~159 matrix multiplications.  
+**Impact:** Slight lag on large skeletons when completing a box select.  
+**Fix:** Only project visible bones (skip `hiddenCollections`). Cache screen-space positions and invalidate when camera moves.
 
-// After: only fires when actual values differ
-const viewport = useEditorStore(s => s.viewport, shallow)
-```
+### Suspect 3: WS Round-trip Latency for Read Tools
+**Problem:** `get_bone_info` and `get_editor_state` do a full MCP → REST → WS → frontend → REST → MCP round-trip. Each call takes ~50-200ms.  
+**Impact:** Slow when the AI wants to query multiple bones sequentially.  
+**Fix:** Add a `get_all_bones` tool that returns the entire skeleton in one call, avoiding per-bone round-trips. Or cache skeleton data in the backend after rig generation.
 
-### Suspect 2: OrbitControls Sync Timer Leak
-**Problem:** The debounced OrbitControls `change` listener creates a `setTimeout` on every mouse move during orbit. If the component unmounts mid-timer, the callback fires after cleanup.  
-**Fix:** Clear `syncTimer` in the init effect's cleanup function. Store the timer ref outside the listener closure.
-
-### Suspect 3: Animation Effect Stale Closures
-**Problem:** The animation `useEffect` at `Viewport.tsx` depends only on `[activeClipIndex]` but reads `storeAnimations` and `animationPlaying` from the outer scope. These stale closures can cause incorrect behavior.  
-**Fix:** Add `storeAnimations` and `animationPlaying` to the dependency array, or use refs for values that shouldn't trigger re-runs.
-
-### Suspect 4: Electron-Store Write Frequency
-**Problem:** Every OrbitControls `change` event (mouse move during orbit) triggers a debounced 150ms write to electron-store. On slow disks, this creates I/O pressure and can cause jank.  
-**Fix:** Increase debounce to 500ms. Or only persist on `mouseup`/`touchend` instead of continuous orbit. Use `controls.addEventListener('end', ...)` instead of `'change'`.
+### Suspect 4: editorStore Monolith
+**Problem:** Single Zustand store holds ALL state: model viewer, animation editor, rig editor, scan browser, viewport settings. Every action triggers all subscribers.  
+**Impact:** Unrelated components re-render when editor state changes (e.g., animation panel re-renders when a bone is selected).  
+**Fix:** Split into focused stores (`useRigStore`, `useViewportStore`, `useAnimationStore`) or use Zustand slices with selectors. Low priority but improves maintainability.
 
 ---
 
@@ -125,197 +135,220 @@ cd D:\Projects\Starfield-2026\src\Starfield2026.BgEditor
 npm run dev
 ```
 
-This starts three processes via `concurrently`:
+This starts 3 concurrent processes:
 | Process | Port | Description |
 |---------|------|-------------|
-| **fe** | 5173 | Vite dev server (React frontend) |
-| **be** | 3001 | Fastify backend (REST + WS) |
-| **el** | — | Electron shell loading Vite URL |
+| **fe** (Vite) | 5173 | React frontend with HMR |
+| **be** (Fastify) | 3001 | REST API + WebSocket hub |
+| **el** (Electron) | — | Desktop shell loading Vite URL |
 
 ### Verify Startup
-1. Electron window opens → Editor page with 3D viewport + AutoRig panel
-2. Console shows `Backend listening on http://localhost:3001`
-3. Console shows `[WS] Client connected (1 total)` — frontend connected to backend WS
-4. No red errors in terminal (Vite warnings about duplicate keys are safe to ignore if fixed)
+1. Electron window opens with BgEditor UI
+2. Console shows `[WS] Connected to backend`
+3. Navigate to Editor page (default `/`)
+4. AutoRig panel visible on right side with Rig Template dropdown, camera presets, grid/axes checkboxes
 
-### Common Startup Issues
-| Symptom | Fix |
-|---------|-----|
-| Port 5173/3001 in use | `npx kill-port 5173 3001` then retry |
-| Electron won't start | Check `wait-on http://localhost:5173` — Vite must be up first |
-| WS disconnects repeatedly | Backend crashed — check `[be]` terminal logs for stack trace |
-| Blank viewport | DevTools → Console → look for Three.js errors |
+### Generate & Test Rig
+1. Select "Human" template → click "Generate Game Rig"
+2. Skeleton appears in viewport (159 bones)
+3. Click any bone sphere → bone highlights, BoneInspector shows details
+4. Press G/R/S → gizmo changes mode
+5. Shift+drag → box select multiple bones
 
 ---
 
 ## 5. How to Start & Test the API
 
-### Backend REST Endpoints
+### MCP Server
+The MCP server runs as a **separate stdio process** configured in `.gemini/settings.json`. It is NOT started by `npm run dev`. AI assistants (Gemini/Claude) connect to it automatically.
+
+### REST API Testing (PowerShell)
+
+**Editor Control Tools:**
+```powershell
+# Select a bone
+Invoke-RestMethod -Method POST -Uri http://localhost:3001/api/select-bone `
+  -ContentType "application/json" -Body '{"name":"spine"}'
+
+# Set transform mode
+Invoke-RestMethod -Method POST -Uri http://localhost:3001/api/transform-mode `
+  -ContentType "application/json" -Body '{"mode":"rotate"}'
+
+# Get editor state (request-response)
+Invoke-RestMethod -Method POST -Uri http://localhost:3001/api/editor-state
+
+# Get bone info
+Invoke-RestMethod -Method POST -Uri http://localhost:3001/api/bone-info `
+  -ContentType "application/json" -Body '{"name":"spine"}'
+```
+
+**Skeleton Manipulation Tools:**
+```powershell
+# Translate bone + children by delta
+Invoke-RestMethod -Method POST -Uri http://localhost:3001/api/translate-bone `
+  -ContentType "application/json" -Body '{"name":"spine","delta":[0,0.5,0],"children":true}'
+
+# Set absolute bone position
+Invoke-RestMethod -Method POST -Uri http://localhost:3001/api/set-bone-position `
+  -ContentType "application/json" -Body '{"name":"hand.L","head":[1,2,0]}'
+
+# Add a new bone
+Invoke-RestMethod -Method POST -Uri http://localhost:3001/api/add-bone `
+  -ContentType "application/json" -Body '{"bone":{"name":"custom_bone","head":[0,0,0],"tail":[0,0.2,0],"parent":"spine"}}'
+```
+
+**Verify via screenshot:**
+```powershell
+# Take viewport screenshot (via MCP)
+# save_screenshot → saves PNG to backend/outputs/
+```
+
+### Full API Endpoint Reference
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| `GET` | `/ws` | WebSocket connection |
-| `GET` | `/api/manifests?dir=...` | Scan folder for manifests |
-| `GET` | `/api/manifests/read?dir=...` | Read + normalize manifest |
-| `POST` | `/api/load-model` | Load model into frontend |
-| `POST` | `/api/compare-models` | Side-by-side comparison |
-| `POST` | `/api/generate-rig` | Generate skeleton from template |
+| `POST` | `/api/select-bone` | Select/deselect bone |
+| `POST` | `/api/transform-mode` | Set gizmo mode |
+| `POST` | `/api/toggle-collection` | Toggle bone group visibility |
+| `POST` | `/api/set-grid` | Show/hide grid |
+| `POST` | `/api/set-axes` | Show/hide axes |
+| `POST` | `/api/bone-info` | Get bone details (round-trip) |
+| `POST` | `/api/editor-state` | Get full state (round-trip) |
+| `POST` | `/api/editor-query/result` | Frontend callback for round-trips |
+| `POST` | `/api/set-bone-position` | Set bone head/tail |
+| `POST` | `/api/translate-bone` | Move bone by delta |
+| `POST` | `/api/set-bone-roll` | Set bone roll |
+| `POST` | `/api/add-bone` | Add new bone |
+| `POST` | `/api/generate-rig` | Generate rig from template |
 | `POST` | `/api/clear-rig` | Clear skeleton |
-| `POST` | `/api/viewport` | Update camera/lighting/bg (**NEW**) |
-| `POST` | `/api/select-clip` | Select animation clip |
-| `POST` | `/api/tag-clip` | Tag clip with semantic name |
-| `POST` | `/api/auto-tag` | Auto-tag all clips |
-| `POST` | `/api/save-manifest` | Save manifest to disk |
-| `POST` | `/api/playback` | Play/pause animation |
-| `POST` | `/api/navigate` | Navigate to page |
-
-### MCP Tools (Full Inventory)
-
-| Tool | Description |
-|------|-------------|
-| `load_model` | Load manifest/dae into viewer |
-| `load_path` | Scan folder, load all manifests |
-| `compare_models` | Side-by-side model comparison |
-| `clear_all` | Reset all frontend state |
-| `generate_rig` | Generate Rigify skeleton |
-| `clear_rig` | Clear current skeleton |
-| `navigate_page` | Navigate to editor/animations/tools/extraction |
-| `select_model` | Select model by index |
-| `select_clip` | Select animation clip by index |
-| `tag_clip` | Tag clip with semantic name |
-| `auto_tag` | Auto-tag all clips |
-| `save_manifest` | Save manifest to disk |
-| `set_playback` | Play/pause animation |
-| `set_viewport` | Update camera/lighting/background (**NEW**) |
-| `save_screenshot` | Capture 3D viewport as PNG |
-| `save_ui_screenshot` | Capture full app window as PNG |
-| `render_model` | Headless multi-angle render |
-
-### Testing Viewport Controls
-```powershell
-# Via MCP tool (from AI assistant)
-set_viewport({ azimuth: 90, distance: 4 })            # Side view, zoomed
-set_viewport({ bgColor: "#2a1a3a", lightIntensity: 0.3 })  # Purple, dim
-
-# Via REST
-$body = '{"azimuth":90,"distance":4}' 
-Invoke-RestMethod -Method POST -Uri http://localhost:3001/api/viewport -ContentType "application/json" -Body $body
-```
 
 ---
 
-## 6. Known Issues & Error-Solving Strategies
+## 6. Known Issues & Strategies
 
-### Issue 1: Vite HMR Breaks WS Connection During Edits
-**Symptom:** MCP tools return "success" but nothing happens in the UI. After editing a frontend file, the old WS client disconnects and the new one reconnects, but events sent during the reconnection window are lost.  
+### Issue 1: HMR Loses Skeleton State
+**Symptom:** After a hot reload, "Bones (0)" shows in panel and skeleton disappears from viewport, even though `editorStore.skeleton` still has data.  
+**Root cause:** Viewport's Three.js scene is recreated on HMR, but the `useEffect` that builds the skeleton group doesn't re-trigger because the `skeleton` ref hasn't changed.  
 **Strategies:**
-1. **WS reconnect with replay** — Buffer the last N events in the backend. On WS reconnect, send them to the new client. Guarantees no lost events.
-2. **Frontend health check** — Add a periodic `ping` from MCP tool before sending real commands. If the ping fails, wait and retry.
-3. **Debounce HMR** — Configure Vite's `server.hmr` to batch updates and reduce reconnection frequency.
+1. **Force re-render on mount** — Add a `mountId` counter to the store, increment on HMR. Include in Viewport's skeleton `useEffect` deps
+2. **Persist skeleton to sessionStorage** — On store update, save skeleton to sessionStorage. On mount, check and restore
+3. **Accept it** — This only affects development. Production builds don't have HMR. Document as known dev-time artifact
 
-### Issue 2: Viewport Apply Effect Creates Feedback Loop Risk
-**Symptom:** Potential infinite loop: OrbitControls `change` → `updateViewport()` → store change → `[viewport]` useEffect → camera update → OrbitControls `change` → ...  
+### Issue 2: TransformControls Don't Write Back to Store
+**Symptom:** Dragging the gizmo visually moves the bone mesh, but `get_bone_info` returns the original position.  
+**Root cause:** TransformControls modify the Three.js mesh transform, but nothing propagates that change back to `editorStore.skeleton[]`.  
 **Strategies:**
-1. **`applyingRef` guard** (✅ implemented) — Set a ref before programmatic updates, skip sync during guard.
-2. **Separate user vs programmatic state** — Use two stores: `viewportTarget` (set by MCP/API) and `viewportCurrent` (set by OrbitControls). Only `viewportTarget` triggers the apply effect.
-3. **Event source tagging** — Attach `{ source: 'mcp' | 'user' }` to viewport updates. Only sync back to store for `source: 'user'`.
+1. **`change` event listener** — Listen for TransformControls `objectChange` event, read the mesh's world position, and call `setBonePosition()` on the store
+2. **`mouseUp` sync** — Only sync position when the user releases the gizmo (less frequent updates, better performance)
+3. **Viewport-to-store bridge** — Create a utility that watches TransformControls state and batches store updates
 
-### Issue 3: Electron-Store Persistence Race on Crash
-**Symptom:** If the app crashes during a debounced write, the viewport state may be lost or partially written.  
+### Issue 3: Undo Stack Not Connected to Manipulation
+**Symptom:** Ctrl+Z doesn't undo bone moves made via MCP tools.  
+**Root cause:** `pushUndo()` exists but manipulation actions don't call it.  
 **Strategies:**
-1. **Write-ahead journal** — Write to a temp file first, then atomic rename. Prevents partial writes.
-2. **Immediate write on significant changes** — Skip debounce for large delta changes (e.g., bgColor, fov) that are clearly intentional.
-3. **Fallback to defaults** — If `storeGet('viewport')` returns malformed data, fall back to `DEFAULT_VIEWPORT` instead of crashing.
+1. **Wrap actions** — Modify `setBonePosition`/`translateBone` to automatically `pushUndo()` before making changes
+2. **MCP-level undo** — Have the MCP tool read the "before" state, make the change, and push undo in a single atomic operation
+3. **Command pattern** — Replace direct store mutations with a command queue that automatically records undo entries
 
-### Issue 4: GPU Memory Leaks on Model/Rig Switching
-**Symptom:** Memory usage grows over time when generating/clearing rigs or loading/unloading models.  
+### Issue 4: Request-Response Tools Timeout on Slow Frontend
+**Symptom:** `get_bone_info` or `get_editor_state` returns "Timeout" if the frontend takes >5s to respond.  
+**Root cause:** The `pendingEditorQueries` timeout is 5000ms, which can be tight if the frontend is busy rendering.  
 **Strategies:**
-1. **Explicit dispose pipeline** — On rig clear: `skeletonGroup.traverse(child => { child.geometry?.dispose(); child.material?.dispose() })`.
-2. **WeakRef tracking** — Use `FinalizationRegistry` to log when Three.js objects are GC'd. Detect leaks.
-3. **Periodic forceGC** — In dev mode, call `renderer.info.memory` to log texture/geometry counts and alert when thresholds are exceeded.
+1. **Increase timeout** — 10s default with configurable override
+2. **Retry with backoff** — MCP tool retries once on timeout
+3. **Cache in backend** — After `generate_rig`, cache skeleton data in the backend. Serve `bone-info` and `editor-state` directly without WS round-trip for cached data
 
 ---
 
-## 7. Architecture Updates
+## 7. New Architecture & Quick Wins
 
-### New: Viewport Control Pipeline
+### Architecture Changes Made This Session
+
+**Before:** BgEditor was a read-only viewer with model loading, animation playback, and screenshot tools.
+
+**After:** BgEditor is now a functional 3D skeleton editor with:
+- Interactive bone selection (click, shift+drag box select)
+- Transform gizmo with keyboard shortcuts
+- MCP-driven programmatic control (11 new tools)
+- Skeleton manipulation (add/move/rotate bones)
+- Property inspection panel
+
 ```
-MCP set_viewport({ azimuth: 90 })
-  → POST /api/viewport  (Fastify)
-    → broadcast('viewport:update', { settings })  (WS)
-      → useBackendEvents: case 'viewport:update'
-        → store.updateViewport({ azimuth: 90 })  (Zustand partial merge)
-          → Viewport.tsx [viewport] useEffect
-            → sphericalToCartesian() → camera.position.set()
-            → controls.target.set() + controls.update()
-            → light intensities + renderer.setClearColor()
-            → electronAPI.storeSet('viewport', vp)  (persist)
+NEW: Editor Page Architecture
+┌─────────────────────────────────────┐
+│ Viewport.tsx                        │
+│ ├── Three.js Renderer               │
+│ ├── OrbitControls                    │
+│ ├── TransformControls (gizmo)       │
+│ ├── ViewHelper (orientation cube)   │
+│ ├── Raycaster (bone click)          │
+│ ├── Box-select (shift+drag)         │
+│ ├── Grid + Axes (toggleable)        │
+│ └── SkeletonRenderer (spheres+lines)│
+├─────────────────────────────────────┤
+│ AutoRigPanel.tsx                    │
+│ ├── Rig Template selector           │
+│ ├── Camera preset buttons (F/S/T/B/¾)│
+│ ├── Grid/Axes checkboxes            │
+│ ├── BoneCollectionsList (with eye)  │
+│ └── BoneInspector.tsx               │
+│     ├── Transform mode buttons (G/R/S)│
+│     └── Bone details (name/parent/XYZ)│
+└─────────────────────────────────────┘
 ```
 
-### Bidirectional Sync (User Orbit)
-```
-User drags viewport (mouse/touch)
-  → OrbitControls 'change' event
-    → debounce 150ms
-      → cartesianToSpherical(camera, target)
-        → store.updateViewport(spherical)
-          → electronAPI.storeSet('viewport', vp)  (persist)
+### Quick Wins
+
+| Win | Effort | Impact | Description |
+|-----|--------|--------|-------------|
+| **Industry-standard infinite grid** | 30 min | High | Replace basic `GridHelper` with infinite grid shader (see below) |
+| `get_all_bones` tool | 15 min | High | Return entire skeleton as JSON — eliminates per-bone round-trips |
+| TransformControls writeback | 30 min | Critical | Sync gizmo changes to store so `get_bone_info` returns actual positions |
+| `remove_bone` tool | 15 min | Medium | Filter bone out of skeleton array — completes CRUD |
+| Undo auto-recording | 20 min | High | Wrap manipulation actions with automatic `pushUndo()` |
+| `export_skeleton` tool | 30 min | High | Export edited skeleton to JSON file — enables Blender import |
+| `mirror_bone` tool | 20 min | Medium | Mirror .L bone to .R or vice versa — common rig editing operation |
+
+### Quick Win: Industry-Standard Infinite Grid
+
+**Current:** Basic `THREE.GridHelper(10, 10)` — fixed-size flat grid that ends abruptly, doesn't subdivide on zoom, no axis coloring. Looks like a prototype.
+
+**Target:** The infinite grid seen in Blender, Unity, and Unreal — fading to horizon, multi-scale subdivision, colored XZ axes (red/blue).
+
+**Implementation approach:**
+1. Use a custom `ShaderMaterial` on a large plane with the [Three.js InfiniteGridHelper pattern](https://github.com/Fyrestar/THREE.InfiniteGridHelper)
+2. The fragment shader draws grid lines procedurally based on world-space coordinates using `fwidth()` for anti-aliasing
+3. Two grid scales: major (1m) and minor (0.1m) with the minor fading in as camera gets closer
+4. Alpha fades to 0 at distance — grid appears infinite but doesn't clutter the far field
+5. X-axis line colored red, Z-axis line colored blue (industry convention)
+6. Grid plane sits at Y=0, automatically visible from any camera angle
+
+**Key shader technique:**
+```glsl
+// In fragment shader — procedural grid with LOD
+vec2 coord = worldPos.xz * scale;
+vec2 grid = abs(fract(coord - 0.5) - 0.5) / fwidth(coord);
+float line = min(grid.x, grid.y);
+float alpha = 1.0 - min(line, 1.0);
+alpha *= max(0.0, 1.0 - length(worldPos.xz) / fadeDistance);  // distance fade
 ```
 
-### Hydration on Launch
-```
-App mount → storeGet('viewport') 
-  → updateViewport(saved)
-    → [viewport] useEffect applies to Three.js
-```
-
-### ViewportSettings Type
-```typescript
-interface ViewportSettings {
-  azimuth: number       // 0 = front, 90 = right, 180 = back
-  elevation: number     // 0 = level, 90 = top-down, -30 = below
-  distance: number      // zoom distance from target
-  panX: number          // target X offset
-  panY: number          // target Y offset  
-  panZ: number          // target Z offset
-  fov: number           // camera field of view
-  lightIntensity: number   // key/fill/rim multiplier (0–2)
-  ambientIntensity: number // hemisphere light (0–2)
-  bgColor: string       // hex color
-}
-
-const DEFAULT_VIEWPORT: ViewportSettings = {
-  azimuth: 35, elevation: 25, distance: 8,
-  panX: 0, panY: 1, panZ: 0,
-  fov: 45, lightIntensity: 1.0, ambientIntensity: 0.8,
-  bgColor: '#1e1e1e',
-}
-```
+**Why this matters:** The grid is the most visually prominent element in the viewport. An industry-standard grid instantly makes the tool feel professional and gives users spatial reference for bone positions and scale.
 
 ---
 
-## 8. Quick Wins
+## 8. Key Lessons
 
-1. **Camera preset buttons** (~15 min) — Add Front/Side/Top/Back buttons to AutoRig panel that call `updateViewport({ azimuth: 0/90/top/180 })`. Instant UX improvement for model inspection.
+1. **The 3-layer MCP pipeline is rock-solid.** Every new tool follows the exact same pattern: `server.tool()` → `POST /api/xxx` → `broadcast()` → `handleEvent()` → store action. Adding a new tool is purely mechanical — 4 touch points, all predictable.
 
-2. **Smooth camera transitions** (~30 min) — Instead of snapping, lerp from current position to target over 500ms using `requestAnimationFrame`. Makes viewport changes feel professional.
+2. **Immutable store updates trigger viewport re-renders automatically.** Returning a new `skeleton` array from Zustand causes React to re-render, which rebuilds the Three.js scene. No manual invalidation needed. This makes manipulation tools trivial to implement.
 
-3. **Grid visibility toggle** (~10 min) — Add `showGrid: boolean` to `ViewportSettings`. Hide/show the `GridHelper` in the apply effect. Useful for clean screenshots.
+3. **Request-response WS patterns work but add complexity.** The `pendingEditorQueries` map + timeout + callback endpoint is 3x the code of a fire-and-forget tool. For frequently-queried data, caching in the backend would be simpler and faster.
 
-4. **Viewport reset MCP tool** (~5 min) — Already have `resetViewport()` in the store. Just add a `reset_viewport` MCP tool that calls it. One-liner.
+4. **HMR and Three.js don't play well together.** Three.js scene state (renderer, controls, skeleton group) is inherently imperative and lives outside React's reconciliation. HMR replaces the React component but the Three.js context is lost. Accept this as a dev-time artifact.
 
----
+5. **Flex layout gotcha: `flex-1` always takes space even when content is hidden.** A collapsed section with `flex-1` still occupies vertical space, preventing content below from moving up. Fix: conditionally apply `flex-1` only when the section is expanded, use `shrink-0` when collapsed.
 
-## 9. Key Lessons
+6. **Disabled buttons should be visible, not hidden.** Hiding UI elements until a prerequisite is met (like selecting a bone) confuses users. Better pattern: show the buttons but disable them with reduced opacity and no-cursor, providing visual affordance of what's possible.
 
-1. **Missing REST endpoints are invisible failures.** The `generate_rig` MCP tool returned 200 from the MCP layer (because the POST was "successful" from node-fetch's perspective — it got a response) but the backend was returning 404. The MCP tool didn't propagate the error properly. Always check the HTTP status code in MCP tool handlers.
-
-2. **Vite HMR breaks WebSocket connections.** Every file edit triggers an HMR update that drops and reconnects the WS client. Events sent during the ~100ms reconnection window are lost. This makes debugging via "edit → test → observe" unreliable. The workaround is to wait 2–3 seconds after a file edit before testing MCP tools.
-
-3. **Spherical coordinates are the right abstraction for camera control.** Raw cartesian (x,y,z) position is confusing for consumers — they have to mentally map coordinates. Spherical (azimuth, elevation, distance) maps directly to "rotate left/right", "tilt up/down", "zoom in/out". OrbitControls already uses spherical internally, making the conversion trivial.
-
-4. **Partial updates via shallow merge prevent state corruption.** `{ ...state.viewport, ...patch }` ensures that changing one field doesn't wipe others. This is critical for MCP tools where the caller shouldn't need to know the current state to make a change.
-
-5. **Bidirectional sync needs a feedback guard.** Without `applyingRef`, the cycle is: programmatic update → OrbitControls change event → store update → useEffect → programmatic update → ∞. The `requestAnimationFrame` release is important — it ensures the guard spans the full update cycle including Three.js's internal event dispatching.
-
-6. **Duplicate Zustand properties are silent.** JavaScript objects allow duplicate keys — the last one wins. This means two `clearAll:` definitions in a Zustand store don't error, they just silently use the last one. Vite/esbuild warns but doesn't error. Always search for duplicates after multi-edit sessions.
+7. **`z.tuple([z.number(), z.number(), z.number()])` in Zod for MCP schemas.** This is the correct way to define fixed-length arrays like `[x, y, z]` position vectors in MCP tool parameters. Using `z.array(z.number())` doesn't convey the fixed length to AI assistants.

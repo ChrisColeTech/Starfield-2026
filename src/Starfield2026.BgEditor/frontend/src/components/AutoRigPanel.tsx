@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Bone, RotateCcw, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Bone, RotateCcw, Trash2, Eye, EyeOff } from 'lucide-react'
 import { useEditorStore } from '../store/editorStore'
+import BoneInspector from './BoneInspector'
 import {
     RIG_TEMPLATE_LABELS,
     GAME_LABELS,
@@ -17,6 +18,10 @@ export default function AutoRigPanel() {
     const setRigTemplate = useEditorStore(s => s.setRigTemplate)
     const setGameType = useEditorStore(s => s.setGameType)
     const clearRig = useEditorStore(s => s.clearRig)
+    const showGrid = useEditorStore(s => s.showGrid)
+    const showAxes = useEditorStore(s => s.showAxes)
+    const setShowGrid = useEditorStore(s => s.setShowGrid)
+    const setShowAxes = useEditorStore(s => s.setShowAxes)
 
     // Collapsible sections — same pattern as AnimationsPage
     const [sectionsOpen, setSectionsOpen] = useState({
@@ -50,6 +55,36 @@ export default function AutoRigPanel() {
                         </select>
                         <PanelButton icon={<Bone size={12} strokeWidth={2} />} label="New Rig" onClick={() => generateRig()} />
                         <PanelButton icon={<RotateCcw size={12} strokeWidth={2} />} label="Reset View" onClick={() => window.dispatchEvent(new CustomEvent('viewport:resetView'))} />
+                        {/* Camera presets */}
+                        <div className="flex gap-1">
+                            {([
+                                ['F', 0, 0],
+                                ['S', 90, 0],
+                                ['T', 0, 89],
+                                ['B', 180, 0],
+                                ['¾', 35, 25],
+                            ] as [string, number, number][]).map(([label, az, el]) => (
+                                <button
+                                    key={label}
+                                    className="flex-1 px-1 py-1 text-[10px] bg-input border border-border rounded text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
+                                    onClick={() => useEditorStore.getState().updateViewport({ azimuth: az, elevation: el })}
+                                    title={label === 'F' ? 'Front' : label === 'S' ? 'Side' : label === 'T' ? 'Top' : label === 'B' ? 'Back' : '¾ View'}
+                                >
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                        {/* Grid/Axes toggles */}
+                        <div className="flex gap-2 text-[10px]">
+                            <label className="flex items-center gap-1 cursor-pointer text-muted-foreground hover:text-foreground">
+                                <input type="checkbox" checked={showGrid} onChange={e => setShowGrid(e.target.checked)} className="w-3 h-3 accent-primary" />
+                                Grid
+                            </label>
+                            <label className="flex items-center gap-1 cursor-pointer text-muted-foreground hover:text-foreground">
+                                <input type="checkbox" checked={showAxes} onChange={e => setShowAxes(e.target.checked)} className="w-3 h-3 accent-primary" />
+                                Axes
+                            </label>
+                        </div>
                     </div>
                 )}
             </div>
@@ -81,7 +116,7 @@ export default function AutoRigPanel() {
             </div>
 
             {/* ── Bones (scrollable) ── */}
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            <div className={`flex flex-col min-h-0 ${sectionsOpen.bones ? 'flex-1 overflow-hidden' : 'shrink-0'}`}>
                 <SectionHeader
                     label={`Bones (${boneCount})`}
                     open={sectionsOpen.bones}
@@ -93,6 +128,9 @@ export default function AutoRigPanel() {
                     </div>
                 )}
             </div>
+
+            {/* ── Bone Inspector (selected bone) ── */}
+            <BoneInspector />
         </div>
     )
 }
@@ -137,6 +175,10 @@ function BoneCollectionsList({
     collections: { name: string; color: string; bones: string[] }[]
 }) {
     const [expanded, setExpanded] = useState<Set<string>>(new Set())
+    const selectedBone = useEditorStore(s => s.selectedBone)
+    const selectBone = useEditorStore(s => s.selectBone)
+    const hiddenCollections = useEditorStore(s => s.hiddenCollections)
+    const toggleCollectionVisibility = useEditorStore(s => s.toggleCollectionVisibility)
 
     const toggle = (name: string) => {
         setExpanded(prev => {
@@ -151,27 +193,44 @@ function BoneCollectionsList({
         <div className="px-2.5 py-1.5">
             {collections.map(col => {
                 const isOpen = expanded.has(col.name)
+                const isHidden = hiddenCollections.has(col.name)
                 return (
                     <div key={col.name}>
-                        <button
-                            className="w-full flex items-center gap-1.5 px-1 py-0.5 text-xs bg-transparent border-none cursor-pointer rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-                            onClick={() => toggle(col.name)}
-                        >
-                            <span
-                                className="w-2 h-2 rounded-sm shrink-0"
-                                style={{ backgroundColor: col.color }}
-                            />
-                            {isOpen
-                                ? <ChevronDown size={10} className="text-muted-foreground" />
-                                : <ChevronRight size={10} className="text-muted-foreground" />
-                            }
-                            <span className="flex-1 text-left text-[11px]">{col.name}</span>
-                            <span className="text-muted-foreground/50 text-[10px]">{col.bones.length}</span>
-                        </button>
+                        <div className="flex items-center">
+                            <button
+                                className={`flex-1 flex items-center gap-1.5 px-1 py-0.5 text-xs bg-transparent border-none cursor-pointer rounded hover:bg-muted ${isHidden ? 'text-muted-foreground/30' : 'text-muted-foreground hover:text-foreground'}`}
+                                onClick={() => toggle(col.name)}
+                            >
+                                <span
+                                    className="w-2 h-2 rounded-sm shrink-0"
+                                    style={{ backgroundColor: col.color, opacity: isHidden ? 0.3 : 1 }}
+                                />
+                                {isOpen
+                                    ? <ChevronDown size={10} className="text-muted-foreground" />
+                                    : <ChevronRight size={10} className="text-muted-foreground" />
+                                }
+                                <span className="flex-1 text-left text-[11px]">{col.name}</span>
+                                <span className="text-muted-foreground/50 text-[10px]">{col.bones.length}</span>
+                            </button>
+                            <button
+                                className="px-1 py-0.5 bg-transparent border-none cursor-pointer text-muted-foreground/40 hover:text-foreground"
+                                onClick={(e) => { e.stopPropagation(); toggleCollectionVisibility(col.name) }}
+                                title={isHidden ? 'Show collection' : 'Hide collection'}
+                            >
+                                {isHidden ? <EyeOff size={10} /> : <Eye size={10} />}
+                            </button>
+                        </div>
                         {isOpen && (
-                            <div className="ml-6 text-[10px] text-muted-foreground/50">
+                            <div className="ml-6 text-[10px]">
                                 {col.bones.map(bname => (
-                                    <div key={bname} className="py-px hover:text-foreground cursor-default">
+                                    <div
+                                        key={bname}
+                                        className={`py-px cursor-pointer rounded px-1 ${selectedBone === bname
+                                            ? 'text-foreground bg-primary/20 border-l-2 border-primary'
+                                            : 'text-muted-foreground/50 hover:text-foreground hover:bg-muted'
+                                            }`}
+                                        onClick={() => selectBone(bname)}
+                                    >
                                         {bname}
                                     </div>
                                 ))}

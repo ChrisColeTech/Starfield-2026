@@ -1,10 +1,13 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
+import { ViewHelper } from 'three/examples/jsm/helpers/ViewHelper.js'
 import { useEditorStore } from '../store/editorStore'
 import type { ViewportSettings } from '../store/editorStore'
 import { DEFAULT_VIEWPORT } from '../store/editorStore'
 import { createSkeletonGroup, disposeSkeletonGroup } from '../lib/SkeletonRenderer'
+import { detectBoneCollections } from '../data/skeletons'
 
 /** Convert spherical (azimuth/elevation/distance) + pan to camera position */
 function sphericalToCartesian(vp: ViewportSettings) {
@@ -50,6 +53,12 @@ export default function Viewport() {
   const rimLightRef = useRef<THREE.DirectionalLight | null>(null)
   const hemiLightRef = useRef<THREE.HemisphereLight | null>(null)
   const applyingRef = useRef(false)  // guard against feedback loops
+  const raycasterRef = useRef(new THREE.Raycaster())
+  const pointerRef = useRef(new THREE.Vector2())
+  const pointerDownPos = useRef({ x: 0, y: 0 })
+  const prevHighlightRef = useRef<Array<{ mesh: THREE.Mesh; origColor: THREE.Color; origScale: number }>>([]);
+  const transformControlsRef = useRef<TransformControls | null>(null)
+  const viewHelperRef = useRef<ViewHelper | null>(null)
 
   const storeScene = useEditorStore(s => s.scene)
   const storeAnimations = useEditorStore(s => s.animations)
@@ -57,7 +66,15 @@ export default function Viewport() {
   const activeClipIndex = useEditorStore(s => s.activeClipIndex)
   const skeleton = useEditorStore(s => s.skeleton)
   const viewport = useEditorStore(s => s.viewport)
+  const selectedBone = useEditorStore(s => s.selectedBone)
+  const transformMode = useEditorStore(s => s.transformMode)
+  const showGrid = useEditorStore(s => s.showGrid)
+  const showAxes = useEditorStore(s => s.showAxes)
+  const hiddenCollections = useEditorStore(s => s.hiddenCollections)
+  const selectedBones = useEditorStore(s => s.selectedBones)
   const skeletonGroupRef = useRef<THREE.Group | null>(null)
+  const gridRef = useRef<THREE.GridHelper | null>(null)
+  const axesRef = useRef<THREE.AxesHelper | null>(null)
 
   // Init renderer + camera once
   useEffect(() => {
@@ -97,9 +114,49 @@ export default function Viewport() {
     controls.update()
     controlsRef.current = controls
 
-    // Grid
+    // TransformControls for bone editing
+    const tc = new TransformControls(camera, renderer.domElement)
+    tc.setSize(0.6)
+    sceneRef.current.add(tc.getHelper())
+    transformControlsRef.current = tc
+    // Disable orbit while dragging gizmo
+    tc.addEventListener('dragging-changed', (event: any) => {
+      controls.enabled = !event.value
+    })
+
+    // Keyboard shortcuts
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) useEditorStore.getState().redo()
+        else useEditorStore.getState().undo()
+        return
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault()
+        useEditorStore.getState().redo()
+        return
+      }
+      switch (e.key.toLowerCase()) {
+        case 'g': useEditorStore.getState().setTransformMode('translate'); break
+        case 'r': useEditorStore.getState().setTransformMode('rotate'); break
+        case 's': useEditorStore.getState().setTransformMode('scale'); break
+        case 'escape': useEditorStore.getState().selectBone(null); break
+        case 'delete': useEditorStore.getState().selectBone(null); break
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+
+    // Grid + Axes
     const grid = new THREE.GridHelper(20, 20, 0x444444, 0x333333)
     sceneRef.current.add(grid)
+    gridRef.current = grid
+
+    const axes = new THREE.AxesHelper(5)
+    axes.visible = false
+    sceneRef.current.add(axes)
+    axesRef.current = axes
 
     // Lights — three-point setup + hemisphere for natural ambient
     const hemi = new THREE.HemisphereLight(0x8899bb, 0x443322, 0.8)
@@ -137,6 +194,124 @@ export default function Viewport() {
       }, 150)
     })
 
+    // ── Bone click-to-select (raycasting) ──
+    const onPointerDown = (e: PointerEvent) => {
+      pointerDownPos.current = { x: e.clientX, y: e.clientY }
+    }
+    const onPointerUp = (e: PointerEvent) => {
+      // Only treat as click if pointer didn't move much (avoid selecting on orbit drag)
+      const dx = e.clientX - pointerDownPos.current.x
+      const dy = e.clientY - pointerDownPos.current.y
+      if (Math.sqrt(dx * dx + dy * dy) > 5) return
+
+      const rect = container.getBoundingClientRect()
+      pointerRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+      pointerRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
+
+      raycasterRef.current.setFromCamera(pointerRef.current, camera)
+
+      const skGroup = skeletonGroupRef.current
+      if (!skGroup) {
+        useEditorStore.getState().selectBone(null)
+        return
+      }
+
+      // Raycast against skeleton spheres (Mesh children only)
+      const meshes = skGroup.children.filter((c): c is THREE.Mesh => c instanceof THREE.Mesh)
+      const hits = raycasterRef.current.intersectObjects(meshes, false)
+      if (hits.length > 0) {
+        const boneName = hits[0].object.userData.boneName as string
+        if (boneName) {
+          useEditorStore.getState().selectBone(boneName)
+          return
+        }
+      }
+      // Click empty → deselect
+      useEditorStore.getState().selectBone(null)
+    }
+    renderer.domElement.addEventListener('pointerdown', onPointerDown)
+    renderer.domElement.addEventListener('pointerup', onPointerUp)
+
+    // ── Box select (shift+drag) ──
+    let boxStart: { x: number; y: number } | null = null
+    let boxDiv: HTMLDivElement | null = null
+
+    const onBoxDown = (e: PointerEvent) => {
+      if (!e.shiftKey) return
+      boxStart = { x: e.clientX, y: e.clientY }
+      // Create selection rect overlay
+      boxDiv = document.createElement('div')
+      boxDiv.style.cssText = 'position:fixed;border:1px solid #6366f1;background:rgba(99,102,241,0.1);pointer-events:none;z-index:9999;'
+      document.body.appendChild(boxDiv)
+      e.preventDefault()
+    }
+    const onBoxMove = (e: PointerEvent) => {
+      if (!boxStart || !boxDiv) return
+      const x = Math.min(boxStart.x, e.clientX)
+      const y = Math.min(boxStart.y, e.clientY)
+      const w = Math.abs(e.clientX - boxStart.x)
+      const h = Math.abs(e.clientY - boxStart.y)
+      boxDiv.style.left = x + 'px'
+      boxDiv.style.top = y + 'px'
+      boxDiv.style.width = w + 'px'
+      boxDiv.style.height = h + 'px'
+    }
+    const onBoxUp = (e: PointerEvent) => {
+      if (!boxStart || !boxDiv) return
+      const rectLeft = Math.min(boxStart.x, e.clientX)
+      const rectTop = Math.min(boxStart.y, e.clientY)
+      const rectRight = Math.max(boxStart.x, e.clientX)
+      const rectBottom = Math.max(boxStart.y, e.clientY)
+      boxDiv.remove()
+      boxDiv = null
+
+      if (rectRight - rectLeft < 5 && rectBottom - rectTop < 5) {
+        boxStart = null
+        return  // Too small, not a drag
+      }
+
+      // Project bone positions to screen and find those inside the rect
+      const skGroup = skeletonGroupRef.current
+      if (!skGroup || !camera) { boxStart = null; return }
+
+      const containerRect = container.getBoundingClientRect()
+      const selected: string[] = []
+
+      skGroup.children.forEach(child => {
+        if (!(child instanceof THREE.Mesh)) return
+        const boneName = child.userData.boneName as string
+        if (!boneName) return
+
+        const pos = new THREE.Vector3()
+        child.getWorldPosition(pos)
+        pos.project(camera)
+
+        // Convert NDC to screen coords
+        const sx = (pos.x * 0.5 + 0.5) * containerRect.width + containerRect.left
+        const sy = (-pos.y * 0.5 + 0.5) * containerRect.height + containerRect.top
+
+        if (sx >= rectLeft && sx <= rectRight && sy >= rectTop && sy <= rectBottom) {
+          selected.push(boneName)
+        }
+      })
+
+      if (selected.length > 0) {
+        useEditorStore.getState().addToSelection(selected)
+      }
+      boxStart = null
+    }
+    renderer.domElement.addEventListener('pointerdown', onBoxDown)
+    window.addEventListener('pointermove', onBoxMove)
+    window.addEventListener('pointerup', onBoxUp)
+
+    // ViewHelper (orientation cube) — rendered in corner
+    const viewHelper = new ViewHelper(camera, renderer.domElement)
+    viewHelperRef.current = viewHelper
+    const onViewHelperClick = (e: PointerEvent) => {
+      viewHelper.handleClick(e)
+    }
+    renderer.domElement.addEventListener('pointerup', onViewHelperClick)
+
     // Render loop
     function animate() {
       animFrameRef.current = requestAnimationFrame(animate)
@@ -146,6 +321,12 @@ export default function Viewport() {
       }
       controls.update()
       renderer.render(sceneRef.current, camera)
+      // Render orientation cube as overlay (needs separate pass)
+      if (viewHelper.animating) viewHelper.update(delta)
+      renderer.autoClear = false
+      renderer.clearDepth()
+      viewHelper.render(renderer)
+      renderer.autoClear = true
     }
     animate()
 
@@ -163,6 +344,14 @@ export default function Viewport() {
     return () => {
       cancelAnimationFrame(animFrameRef.current)
       ro.disconnect()
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown)
+      renderer.domElement.removeEventListener('pointerup', onPointerUp)
+      renderer.domElement.removeEventListener('pointerup', onViewHelperClick)
+      renderer.domElement.removeEventListener('pointerdown', onBoxDown)
+      window.removeEventListener('pointermove', onBoxMove)
+      window.removeEventListener('pointerup', onBoxUp)
+      window.removeEventListener('keydown', onKeyDown)
+      tc.dispose()
       controls.dispose()
       renderer.dispose()
       container.removeChild(renderer.domElement)
@@ -177,6 +366,99 @@ export default function Viewport() {
       }
     })
   }, [])
+
+  // Highlight selected bone(s)
+  useEffect(() => {
+    // Restore all previous highlights
+    for (const { mesh, origColor, origScale } of prevHighlightRef.current) {
+      const mat = mesh.material as THREE.MeshBasicMaterial
+      mat.color.copy(origColor)
+      mesh.scale.setScalar(origScale)
+    }
+    prevHighlightRef.current = []
+
+    if (selectedBones.size === 0 || !skeletonGroupRef.current) return
+
+    const group = skeletonGroupRef.current
+
+    // Highlight all selected bones
+    for (const child of group.children) {
+      if (!(child instanceof THREE.Mesh)) continue
+      const boneName = child.userData.boneName as string
+      if (!boneName || !selectedBones.has(boneName)) continue
+
+      const mat = child.material as THREE.MeshBasicMaterial
+      const isPrimary = boneName === selectedBone
+      const origColor = mat.color.clone()
+      const origScale = child.scale.x
+
+      if (isPrimary) {
+        child.scale.setScalar(origScale * 2.0)
+        mat.color.set(0xffffff)
+      } else {
+        child.scale.setScalar(origScale * 1.5)
+        mat.color.set(0xddddff)
+      }
+      prevHighlightRef.current.push({ mesh: child, origColor, origScale })
+    }
+  }, [selectedBone, selectedBones])
+
+  // Attach/detach TransformControls to selected bone
+  useEffect(() => {
+    const tc = transformControlsRef.current
+    if (!tc) return
+
+    if (!selectedBone || !skeletonGroupRef.current) {
+      tc.detach()
+      return
+    }
+
+    // Find the sphere mesh for the selected bone
+    const group = skeletonGroupRef.current
+    for (const child of group.children) {
+      if (child instanceof THREE.Mesh && child.userData.boneName === selectedBone) {
+        tc.attach(child)
+        return
+      }
+    }
+    tc.detach()
+  }, [selectedBone])
+
+  // Update TransformControls mode
+  useEffect(() => {
+    const tc = transformControlsRef.current
+    if (tc) tc.setMode(transformMode)
+  }, [transformMode])
+
+  // Grid / Axes visibility
+  useEffect(() => {
+    if (gridRef.current) gridRef.current.visible = showGrid
+  }, [showGrid])
+
+  useEffect(() => {
+    if (axesRef.current) axesRef.current.visible = showAxes
+  }, [showAxes])
+
+  // Collection visibility — hide bones belonging to hidden collections
+  useEffect(() => {
+    const group = skeletonGroupRef.current
+    const sk = useEditorStore.getState().skeleton
+    if (!group || !sk) return
+
+    // Build bone→collection map
+    const collections = detectBoneCollections(sk)
+    const boneToCollection = new Map<string, string>()
+    for (const col of collections) {
+      for (const bname of col.bones) boneToCollection.set(bname, col.name)
+    }
+
+    group.children.forEach(child => {
+      const boneName = child.userData.boneName as string | undefined
+      if (!boneName) return
+      const col = boneToCollection.get(boneName)
+      child.visible = !col || !hiddenCollections.has(col)
+    })
+  }, [hiddenCollections, skeleton])
 
   // Apply viewport state changes to Three.js camera/controls/lights
   useEffect(() => {

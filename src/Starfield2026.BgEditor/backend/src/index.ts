@@ -186,6 +186,111 @@ app.post('/api/clear-rig', async (_request, reply) => {
   return reply.send({ ok: true })
 })
 
+// ── Editor controls ──
+
+app.post<{ Body: { name: string | null } }>('/api/select-bone', async (request, reply) => {
+  broadcast('editor:selectBone', { name: request.body.name ?? null })
+  return reply.send({ ok: true })
+})
+
+app.post<{ Body: { mode: string } }>('/api/transform-mode', async (request, reply) => {
+  const { mode } = request.body
+  if (!mode) return reply.status(400).send({ error: 'Missing mode' })
+  broadcast('editor:transformMode', { mode })
+  return reply.send({ ok: true })
+})
+
+app.post<{ Body: { name: string } }>('/api/toggle-collection', async (request, reply) => {
+  const { name } = request.body
+  if (!name) return reply.status(400).send({ error: 'Missing name' })
+  broadcast('editor:toggleCollection', { name })
+  return reply.send({ ok: true })
+})
+
+app.post<{ Body: { show: boolean } }>('/api/set-grid', async (request, reply) => {
+  broadcast('editor:setGrid', { show: request.body.show })
+  return reply.send({ ok: true })
+})
+
+app.post<{ Body: { show: boolean } }>('/api/set-axes', async (request, reply) => {
+  broadcast('editor:setAxes', { show: request.body.show })
+  return reply.send({ ok: true })
+})
+
+// Request-response editor queries (same pattern as screenshots)
+const pendingEditorQueries = new Map<string, { resolve: (v: any) => void; timer: NodeJS.Timeout }>()
+
+app.post<{ Body: { name: string } }>('/api/bone-info', async (request, reply) => {
+  const { name } = request.body
+  if (!name) return reply.status(400).send({ error: 'Missing name' })
+  if (wsClients.size === 0) return reply.status(503).send({ error: 'No frontend connected' })
+
+  const requestId = `eq-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  const result: any = await new Promise(resolve => {
+    const timer = setTimeout(() => { pendingEditorQueries.delete(requestId); resolve({ error: 'Timeout' }) }, 5000)
+    pendingEditorQueries.set(requestId, { resolve, timer })
+    broadcast('editor:getBoneInfo', { requestId, name })
+  })
+
+  if (result.error) return reply.status(404).send(result)
+  return reply.send(result)
+})
+
+app.post('/api/editor-state', async (_request, reply) => {
+  if (wsClients.size === 0) return reply.status(503).send({ error: 'No frontend connected' })
+
+  const requestId = `eq-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  const result: any = await new Promise(resolve => {
+    const timer = setTimeout(() => { pendingEditorQueries.delete(requestId); resolve({ error: 'Timeout' }) }, 5000)
+    pendingEditorQueries.set(requestId, { resolve, timer })
+    broadcast('editor:getState', { requestId })
+  })
+
+  if (result.error) return reply.status(500).send(result)
+  return reply.send(result)
+})
+
+app.post<{ Body: { requestId: string;[key: string]: any } }>('/api/editor-query/result', async (request, reply) => {
+  const { requestId, ...data } = request.body
+  const pending = pendingEditorQueries.get(requestId)
+  if (pending) {
+    clearTimeout(pending.timer)
+    pendingEditorQueries.delete(requestId)
+    pending.resolve(data)
+  }
+  return reply.send({ ok: true })
+})
+
+// ── Skeleton manipulation ──
+
+app.post<{ Body: { name: string; head?: [number, number, number]; tail?: [number, number, number] } }>('/api/set-bone-position', async (request, reply) => {
+  const { name, head, tail } = request.body
+  if (!name) return reply.status(400).send({ error: 'Missing name' })
+  broadcast('editor:setBonePosition', { name, head, tail })
+  return reply.send({ ok: true })
+})
+
+app.post<{ Body: { name: string; delta: [number, number, number]; children?: boolean } }>('/api/translate-bone', async (request, reply) => {
+  const { name, delta, children } = request.body
+  if (!name || !delta) return reply.status(400).send({ error: 'Missing name or delta' })
+  broadcast('editor:translateBone', { name, delta, children })
+  return reply.send({ ok: true })
+})
+
+app.post<{ Body: { name: string; roll: number } }>('/api/set-bone-roll', async (request, reply) => {
+  const { name, roll } = request.body
+  if (!name || roll === undefined) return reply.status(400).send({ error: 'Missing name or roll' })
+  broadcast('editor:setBoneRoll', { name, roll })
+  return reply.send({ ok: true })
+})
+
+app.post<{ Body: { bone: { name: string; head: [number, number, number]; tail: [number, number, number]; roll?: number; parent?: string } } }>('/api/add-bone', async (request, reply) => {
+  const { bone } = request.body
+  if (!bone?.name || !bone.head || !bone.tail) return reply.status(400).send({ error: 'Missing bone data' })
+  broadcast('editor:addBone', { bone })
+  return reply.send({ ok: true })
+})
+
 // ─── Animation controls ───
 
 app.post<{ Body: { index: number } }>('/api/select-manifest', async (request, reply) => {

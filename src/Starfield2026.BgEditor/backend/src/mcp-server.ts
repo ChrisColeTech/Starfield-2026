@@ -483,6 +483,262 @@ async function main() {
         },
     )
 
+    // ─── Editor controls ───
+
+    server.tool(
+        'select_bone',
+        'Select a bone by name in the Editor viewport, or pass null to deselect.',
+        {
+            name: z.string().nullable().describe('Bone name to select, or null to deselect'),
+        },
+        async ({ name }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/select-bone`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name }),
+                })
+                return { content: [{ type: 'text' as const, text: name ? `✓ Selected bone: ${name}` : '✓ Bone deselected.' }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'set_transform_mode',
+        'Set the gizmo transform mode for the selected bone.',
+        {
+            mode: z.enum(['translate', 'rotate', 'scale']).describe('Transform mode: translate (G), rotate (R), or scale (S)'),
+        },
+        async ({ mode }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/transform-mode`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode }),
+                })
+                return { content: [{ type: 'text' as const, text: `✓ Transform mode: ${mode}` }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'toggle_collection',
+        'Toggle visibility of a bone collection (e.g. "Spine", "Left Arm").',
+        {
+            name: z.string().describe('Name of the bone collection to toggle'),
+        },
+        async ({ name }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/toggle-collection`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name }),
+                })
+                return { content: [{ type: 'text' as const, text: `✓ Toggled collection: ${name}` }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'set_grid',
+        'Show or hide the viewport grid.',
+        {
+            show: z.boolean().describe('True to show grid, false to hide'),
+        },
+        async ({ show }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/set-grid`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ show }),
+                })
+                return { content: [{ type: 'text' as const, text: show ? '✓ Grid shown.' : '✓ Grid hidden.' }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'set_axes',
+        'Show or hide the viewport axes helper.',
+        {
+            show: z.boolean().describe('True to show axes, false to hide'),
+        },
+        async ({ show }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/set-axes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ show }),
+                })
+                return { content: [{ type: 'text' as const, text: show ? '✓ Axes shown.' : '✓ Axes hidden.' }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'get_bone_info',
+        'Get detailed information about a specific bone (head/tail position, parent).',
+        {
+            name: z.string().describe('Name of the bone to query'),
+        },
+        async ({ name }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                const res = await fetch(`${BACKEND}/api/bone-info`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name }),
+                })
+                const data = await res.json() as any
+                if (data.error) return { content: [{ type: 'text' as const, text: `Error: ${data.error}` }] }
+                return { content: [{ type: 'text' as const, text: JSON.stringify(data.bone, null, 2) }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'get_editor_state',
+        'Get the current editor state: selected bone, transform mode, grid/axes visibility, hidden collections, bone count.',
+        {},
+        async () => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                const res = await fetch(`${BACKEND}/api/editor-state`, { method: 'POST' })
+                const data = await res.json() as any
+                if (data.error) return { content: [{ type: 'text' as const, text: `Error: ${data.error}` }] }
+                return { content: [{ type: 'text' as const, text: JSON.stringify(data.state, null, 2) }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    // ─── Skeleton manipulation ───
+
+    server.tool(
+        'set_bone_position',
+        'Set the absolute head and/or tail position of a bone.',
+        {
+            name: z.string().describe('Name of the bone to move'),
+            head: z.tuple([z.number(), z.number(), z.number()]).optional().describe('New head position [x, y, z]'),
+            tail: z.tuple([z.number(), z.number(), z.number()]).optional().describe('New tail position [x, y, z]'),
+        },
+        async ({ name, head, tail }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/set-bone-position`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, head, tail }),
+                })
+                const parts = []
+                if (head) parts.push(`head=[${head.join(',')}]`)
+                if (tail) parts.push(`tail=[${tail.join(',')}]`)
+                return { content: [{ type: 'text' as const, text: `✓ Set ${name}: ${parts.join(', ')}` }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'translate_bone',
+        'Move a bone by a delta offset. Optionally moves all child bones too.',
+        {
+            name: z.string().describe('Name of the bone to translate'),
+            delta: z.tuple([z.number(), z.number(), z.number()]).describe('Translation delta [dx, dy, dz] in Blender units'),
+            children: z.boolean().optional().default(false).describe('If true, also moves all child/descendant bones'),
+        },
+        async ({ name, delta, children }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/translate-bone`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, delta, children }),
+                })
+                return { content: [{ type: 'text' as const, text: `✓ Translated ${name} by [${delta.join(',')}]${children ? ' (with children)' : ''}` }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'set_bone_roll',
+        'Set the roll angle of a bone.',
+        {
+            name: z.string().describe('Name of the bone'),
+            roll: z.number().describe('Roll angle in radians'),
+        },
+        async ({ name, roll }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/set-bone-roll`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, roll }),
+                })
+                return { content: [{ type: 'text' as const, text: `✓ Set ${name} roll: ${roll.toFixed(4)} rad` }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'add_bone',
+        'Add a new bone to the current skeleton.',
+        {
+            name: z.string().describe('Name for the new bone'),
+            head: z.tuple([z.number(), z.number(), z.number()]).describe('Head position [x, y, z]'),
+            tail: z.tuple([z.number(), z.number(), z.number()]).describe('Tail position [x, y, z]'),
+            roll: z.number().optional().default(0).describe('Roll angle in radians (default: 0)'),
+            parent: z.string().optional().default('').describe('Parent bone name (empty for root)'),
+        },
+        async ({ name, head, tail, roll, parent }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/add-bone`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bone: { name, head, tail, roll, parent } }),
+                })
+                return { content: [{ type: 'text' as const, text: `✓ Added bone: ${name} (parent: ${parent || 'none'})` }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
     // ─── Viewport controls ───
 
     server.tool(

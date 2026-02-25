@@ -82,6 +82,14 @@ interface EditorState {
   skeleton: BoneData[] | null
   rigTemplate: RigTemplate
   gameType: GameType
+  selectedBone: string | null
+  selectedBones: Set<string>
+  transformMode: 'translate' | 'rotate' | 'scale'
+  hiddenCollections: Set<string>
+  showGrid: boolean
+  showAxes: boolean
+  undoStack: Array<{ boneName: string; before: number[]; after: number[] }>
+  redoStack: Array<{ boneName: string; before: number[]; after: number[] }>
 
   // Viewport settings
   viewport: ViewportSettings
@@ -115,6 +123,23 @@ interface EditorState {
   setRigTemplate: (template: RigTemplate) => void
   setGameType: (gameType: GameType) => void
   clearRig: () => void
+  selectBone: (name: string | null) => void
+  addToSelection: (names: string[]) => void
+  removeFromSelection: (names: string[]) => void
+  clearSelection: () => void
+  setTransformMode: (mode: 'translate' | 'rotate' | 'scale') => void
+  toggleCollectionVisibility: (collection: string) => void
+  setShowGrid: (show: boolean) => void
+  setShowAxes: (show: boolean) => void
+  pushUndo: (entry: { boneName: string; before: number[]; after: number[] }) => void
+  undo: () => void
+  redo: () => void
+
+  // Skeleton manipulation
+  setBonePosition: (name: string, head?: [number, number, number], tail?: [number, number, number]) => void
+  translateBone: (name: string, delta: [number, number, number], children?: boolean) => void
+  setBoneRoll: (name: string, roll: number) => void
+  addBone: (bone: { name: string; head: [number, number, number]; tail: [number, number, number]; roll?: number; parent?: string }) => void
 
   // Viewport actions
   updateViewport: (patch: Partial<ViewportSettings>) => void
@@ -200,6 +225,14 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   skeleton: null,
   rigTemplate: 'human' as RigTemplate,
   gameType: 'SUNMOON' as GameType,
+  selectedBone: null,
+  selectedBones: new Set<string>(),
+  transformMode: 'translate' as const,
+  hiddenCollections: new Set<string>(),
+  showGrid: true,
+  showAxes: false,
+  undoStack: [],
+  redoStack: [],
 
   // Viewport
   viewport: { ...DEFAULT_VIEWPORT },
@@ -576,7 +609,146 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   },
 
   clearRig: () => {
-    set({ skeleton: null })
+    set({ skeleton: null, selectedBone: null, selectedBones: new Set() })
+  },
+
+  selectBone: (name: string | null) => {
+    if (name) {
+      set({ selectedBone: name, selectedBones: new Set([name]) })
+    } else {
+      set({ selectedBone: null, selectedBones: new Set() })
+    }
+  },
+
+  addToSelection: (names: string[]) => {
+    set(state => {
+      const next = new Set(state.selectedBones)
+      for (const n of names) next.add(n)
+      const primary = state.selectedBone || names[0] || null
+      return { selectedBones: next, selectedBone: primary }
+    })
+  },
+
+  removeFromSelection: (names: string[]) => {
+    set(state => {
+      const next = new Set(state.selectedBones)
+      for (const n of names) next.delete(n)
+      const primary = next.has(state.selectedBone!) ? state.selectedBone : (next.values().next().value || null)
+      return { selectedBones: next, selectedBone: primary }
+    })
+  },
+
+  clearSelection: () => {
+    set({ selectedBone: null, selectedBones: new Set() })
+  },
+
+  setTransformMode: (mode: 'translate' | 'rotate' | 'scale') => {
+    set({ transformMode: mode })
+  },
+
+  toggleCollectionVisibility: (collection: string) => {
+    set(state => {
+      const next = new Set(state.hiddenCollections)
+      if (next.has(collection)) next.delete(collection)
+      else next.add(collection)
+      return { hiddenCollections: next }
+    })
+  },
+
+  setShowGrid: (show: boolean) => {
+    set({ showGrid: show })
+  },
+
+  setShowAxes: (show: boolean) => {
+    set({ showAxes: show })
+  },
+
+  pushUndo: (entry) => {
+    set(state => ({
+      undoStack: [...state.undoStack.slice(-49), entry],
+      redoStack: [],
+    }))
+  },
+
+  undo: () => {
+    set(state => {
+      if (state.undoStack.length === 0) return state
+      const entry = state.undoStack[state.undoStack.length - 1]
+      return {
+        undoStack: state.undoStack.slice(0, -1),
+        redoStack: [...state.redoStack, entry],
+      }
+    })
+  },
+
+  redo: () => {
+    set(state => {
+      if (state.redoStack.length === 0) return state
+      const entry = state.redoStack[state.redoStack.length - 1]
+      return {
+        redoStack: state.redoStack.slice(0, -1),
+        undoStack: [...state.undoStack, entry],
+      }
+    })
+  },
+
+  // ── Skeleton manipulation ──
+
+  setBonePosition: (name, head, tail) => {
+    set(state => {
+      if (!state.skeleton) return state
+      const skeleton = state.skeleton.map(b => {
+        if (b.name !== name) return b
+        return { ...b, ...(head ? { head } : {}), ...(tail ? { tail } : {}) }
+      })
+      return { skeleton }
+    })
+  },
+
+  translateBone: (name, delta, children = false) => {
+    set(state => {
+      if (!state.skeleton) return state
+      // Collect bone names to move
+      const toMove = new Set<string>([name])
+      if (children) {
+        // BFS to find all descendants
+        const queue = [name]
+        while (queue.length > 0) {
+          const current = queue.shift()!
+          for (const b of state.skeleton!) {
+            if (b.parent === current && !toMove.has(b.name)) {
+              toMove.add(b.name)
+              queue.push(b.name)
+            }
+          }
+        }
+      }
+      const skeleton = state.skeleton.map(b => {
+        if (!toMove.has(b.name)) return b
+        return {
+          ...b,
+          head: [b.head[0] + delta[0], b.head[1] + delta[1], b.head[2] + delta[2]] as [number, number, number],
+          tail: [b.tail[0] + delta[0], b.tail[1] + delta[1], b.tail[2] + delta[2]] as [number, number, number],
+        }
+      })
+      return { skeleton }
+    })
+  },
+
+  setBoneRoll: (name, roll) => {
+    set(state => {
+      if (!state.skeleton) return state
+      const skeleton = state.skeleton.map(b => b.name === name ? { ...b, roll } : b)
+      return { skeleton }
+    })
+  },
+
+  addBone: (bone) => {
+    set(state => {
+      if (!state.skeleton) return state
+      const newBone = { name: bone.name, head: bone.head, tail: bone.tail, roll: bone.roll ?? 0, parent: bone.parent ?? '' }
+      return { skeleton: [...state.skeleton, newBone] }
+    })
   },
 
   // ── Viewport actions ──

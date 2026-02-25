@@ -210,6 +210,106 @@ function handleEvent(event: any) {
             break
         }
 
+        // ── Editor controls ──
+
+        case 'editor:selectBone': {
+            console.log(`[WS] Select bone: ${event.name}`)
+            useEditorStore.getState().selectBone(event.name ?? null)
+            break
+        }
+
+        case 'editor:transformMode': {
+            console.log(`[WS] Transform mode: ${event.mode}`)
+            useEditorStore.getState().setTransformMode(event.mode)
+            break
+        }
+
+        case 'editor:toggleCollection': {
+            console.log(`[WS] Toggle collection: ${event.name}`)
+            useEditorStore.getState().toggleCollectionVisibility(event.name)
+            break
+        }
+
+        case 'editor:setGrid': {
+            console.log(`[WS] Set grid: ${event.show}`)
+            useEditorStore.getState().setShowGrid(event.show)
+            break
+        }
+
+        case 'editor:setAxes': {
+            console.log(`[WS] Set axes: ${event.show}`)
+            useEditorStore.getState().setShowAxes(event.show)
+            break
+        }
+
+        case 'editor:getBoneInfo': {
+            console.log(`[WS] Get bone info: ${event.name}`)
+            const store = useEditorStore.getState()
+            const bone = store.skeleton?.find(b => b.name === event.name)
+            const result = bone
+                ? { requestId: event.requestId, ok: true, bone: { name: bone.name, parent: bone.parent, head: bone.head, tail: bone.tail } }
+                : { requestId: event.requestId, ok: false, error: `Bone not found: ${event.name}` }
+            fetch('http://localhost:3001/api/editor-query/result', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(result),
+            }).catch(() => { })
+            break
+        }
+
+        case 'editor:getState': {
+            console.log('[WS] Get editor state')
+            const s = useEditorStore.getState()
+            const stateResult = {
+                requestId: event.requestId,
+                ok: true,
+                state: {
+                    selectedBone: s.selectedBone,
+                    selectedBones: Array.from(s.selectedBones),
+                    transformMode: s.transformMode,
+                    showGrid: s.showGrid,
+                    showAxes: s.showAxes,
+                    hiddenCollections: Array.from(s.hiddenCollections),
+                    boneCount: s.skeleton?.length ?? 0,
+                    rigTemplate: s.rigTemplate,
+                    gameType: s.gameType,
+                },
+            }
+            fetch('http://localhost:3001/api/editor-query/result', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(stateResult),
+            }).catch(() => { })
+            break
+        }
+
+        // ── Skeleton manipulation ──
+
+        case 'editor:setBonePosition': {
+            console.log(`[WS] Set bone position: ${event.name}`)
+            useEditorStore.getState().setBonePosition(event.name, event.head, event.tail)
+            break
+        }
+
+        case 'editor:translateBone': {
+            console.log(`[WS] Translate bone: ${event.name} by [${event.delta}]`)
+            useEditorStore.getState().translateBone(event.name, event.delta, event.children)
+            break
+        }
+
+        case 'editor:setBoneRoll': {
+            console.log(`[WS] Set bone roll: ${event.name} = ${event.roll}`)
+            useEditorStore.getState().setBoneRoll(event.name, event.roll)
+            break
+        }
+
+        case 'editor:addBone': {
+            console.log(`[WS] Add bone: ${event.bone.name}`)
+            useEditorStore.getState().addBone(event.bone)
+            showToast(`Added bone: ${event.bone.name}`)
+            break
+        }
+
         default:
             console.log(`[WS] Unknown event: ${event.type}`)
     }
