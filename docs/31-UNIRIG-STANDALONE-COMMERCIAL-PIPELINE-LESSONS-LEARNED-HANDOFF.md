@@ -2,11 +2,38 @@
 
 **Date:** 2026-02-25
 **Scope:** Analysis of ComfyUI-UniRig internals for extraction into a standalone, minimal-dependency commercial rigging pipeline.
-**Status:** Research & architecture phase complete. Full ComfyUI-UniRig pipeline reverse-engineered. Ready to build.
+**Status:** DAE parser complete and tested. Skeleton prediction working on DAE meshes. Skinning and animation transfer remain.
 
 ---
 
 ## 1. What We Accomplished
+
+### DAE Parser — Complete (dae_parser.py)
+
+Built a standalone Collada DAE parser using only stdlib `xml.etree.ElementTree` + numpy. Zero external dependencies. Replaces `trimesh`, `pycollada`, and `bpy`'s file I/O in 450 lines.
+
+**Tested on three file types:**
+
+| File Type | Result |
+|-----------|--------|
+| Pokemon model (`pm0001_00/model.dae`) | 9 meshes, 3589 verts, 5372 tris, 55-bone skeleton, 9 skin controllers, normals + UVs |
+| Animation clip (`clips/clip_000.dae`) | 40 animation channels, 43 keyframes each, 4x4 matrices, 1.4s duration |
+| Battle background (`Cave/Cave.dae`) | 1 mesh, 282 verts, 48 tris, static |
+
+**What it extracts:**
+- Mesh geometry: vertices, normals, UVs, triangle faces (with polylist/quad triangulation)
+- Skeleton hierarchy: joint nodes with 4x4 local transforms, parent-child tree
+- Skin controllers: bone names, inverse bind matrices, per-vertex weights (bone_idx + weight pairs)
+- Animations: per-bone keyframe times + 4x4 transform matrices + interpolation type
+- Combined mesh properties: `combined_vertices`, `combined_faces`, `combined_normals` for multi-mesh models
+
+**Key design decisions:**
+- Bone name extraction from animation channels strips `_bone_id` suffix automatically (`Waist_bone_id/transform` → `Waist`)
+- Face indices validated — combined mesh offsets ensure correct indexing across sub-meshes
+- Dataclass-based API (`DaeDocument`, `DaeMesh`, `DaeJoint`, `DaeAnimChannel`, `DaeSkinController`)
+- CLI mode built in for quick testing: `python dae_parser.py model.dae`
+
+**This eliminates the #1 blocker** from the previous session (DAE files loading as empty scenes in trimesh/pycollada).
 
 ### Full Reverse Engineering of ComfyUI-UniRig
 
