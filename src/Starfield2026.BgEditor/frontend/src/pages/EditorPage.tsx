@@ -37,7 +37,7 @@ export default function EditorPage() {
           </div>
 
           {panelOpen && (
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-hidden">
               <AutoRigPanel />
             </div>
           )}

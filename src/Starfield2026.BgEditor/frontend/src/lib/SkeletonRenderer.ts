@@ -3,6 +3,11 @@
  *
  * Bones are drawn head→tail with extended tails (matching Blender's stick mode).
  * Joint spheres mark bone heads. Colors come from auto-detected bone collections.
+ *
+ * Coordinate conversion:
+ *   Blender: X=right, Y=forward, Z=up
+ *   Three.js: X=right, Y=up, Z=forward
+ *   Mapping: three(x, y, z) = blender(x, z, -y)
  */
 
 import * as THREE from 'three'
@@ -12,7 +17,12 @@ import { detectBoneCollections } from '../data/skeletons'
 const MAX_TAIL = 0.3  // Blender units (meters)
 const LEAF_LENGTH = 0.05
 
-/** Extend stub tails toward first child (matching Blender's logic) */
+/** Convert Blender Z-up to Three.js Y-up: (x, z, -y) */
+function toY(p: [number, number, number]): THREE.Vector3 {
+    return new THREE.Vector3(p[0], p[2], -p[1])
+}
+
+/** Extend stub tails toward first child (matching Blender's logic) — in Blender coords */
 function computeExtendedBones(bones: BoneData[]): Array<BoneData & { displayTail: [number, number, number] }> {
     const byName = new Map(bones.map(b => [b.name, b]))
     const children = new Map<string, BoneData[]>()
@@ -68,7 +78,7 @@ function computeExtendedBones(bones: BoneData[]): Array<BoneData & { displayTail
 
 /**
  * Create a Three.js Group containing the skeleton visualization.
- * Rigify data is already Z-up (Blender native), so no rotation is needed.
+ * Blender data (Z-up) is converted to Three.js (Y-up) via toY().
  */
 export function createSkeletonGroup(bones: BoneData[]): THREE.Group {
     const group = new THREE.Group()
@@ -85,13 +95,13 @@ export function createSkeletonGroup(bones: BoneData[]): THREE.Group {
 
     const extBones = computeExtendedBones(bones)
 
-    // Compute bounding box to auto-scale joint radius
-    let minY = Infinity, maxY = -Infinity
+    // Compute rig height from Blender Z (= up) for auto-scaling joint radius
+    let minZ = Infinity, maxZ = -Infinity
     for (const b of bones) {
-        minY = Math.min(minY, b.head[2]) // Z is up in Blender
-        maxY = Math.max(maxY, b.head[2])
+        minZ = Math.min(minZ, b.head[2])
+        maxZ = Math.max(maxZ, b.head[2])
     }
-    const rigHeight = maxY - minY
+    const rigHeight = maxZ - minZ
     const jointRadius = Math.max(0.005, rigHeight * 0.008)
 
     const sphereGeo = new THREE.SphereGeometry(jointRadius, 8, 6)
@@ -100,26 +110,24 @@ export function createSkeletonGroup(bones: BoneData[]): THREE.Group {
         const hex = colorMap.get(bone.name) || '#aaaaaa'
         const color = new THREE.Color(hex)
 
+        // Convert Blender coords → Three.js coords
+        const headPos = toY(bone.head)
+        const tailPos = toY(bone.displayTail)
+
         // Joint sphere at head
         const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 })
         const sphere = new THREE.Mesh(sphereGeo, mat)
-        sphere.position.set(bone.head[0], bone.head[1], bone.head[2])
+        sphere.position.copy(headPos)
         sphere.userData.boneName = bone.name
         group.add(sphere)
 
         // Line from head to display tail
-        const lineGeo = new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(bone.head[0], bone.head[1], bone.head[2]),
-            new THREE.Vector3(bone.displayTail[0], bone.displayTail[1], bone.displayTail[2]),
-        ])
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([headPos, tailPos])
         const lineMat = new THREE.LineBasicMaterial({ color })
         const line = new THREE.Line(lineGeo, lineMat)
         line.userData.boneName = bone.name
         group.add(line)
     }
-
-    // No rotation needed — Rigify data is already Z-up (Blender native)
-    // If loading Y-up data (e.g. game DAE), rotation should be applied externally.
 
     return group
 }

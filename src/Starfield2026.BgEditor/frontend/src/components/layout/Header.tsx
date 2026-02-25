@@ -145,6 +145,24 @@ export function Header() {
                 },
                 { separator: true, label: '' },
                 {
+                    label: 'Load Model...',
+                    disabled: true,
+                },
+                {
+                    label: 'Load Animation...',
+                    disabled: true,
+                },
+                {
+                    label: 'Unload Animation',
+                    disabled: true,
+                },
+                { separator: true, label: '' },
+                {
+                    label: 'Fit Rig to Model',
+                    disabled: true,
+                },
+                { separator: true, label: '' },
+                {
                     label: 'Save Textures',
                     shortcut: 'Ctrl+S',
                     disabled: !hasScene || !hasModifications,

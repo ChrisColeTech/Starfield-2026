@@ -14,6 +14,18 @@ const store = new Store({
     manifestFormats: { fbx: true, dae: true, obj: true },
     windowBounds: { width: 1400, height: 900 },
     lastActivePage: '/',
+    viewport: {
+      azimuth: 35,
+      elevation: 25,
+      distance: 8,
+      panX: 0,
+      panY: 1,
+      panZ: 0,
+      fov: 45,
+      lightIntensity: 1.0,
+      ambientIntensity: 0.8,
+      bgColor: '#1e1e1e',
+    },
   },
 })
 

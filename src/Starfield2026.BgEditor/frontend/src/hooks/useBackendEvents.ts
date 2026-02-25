@@ -146,6 +146,70 @@ function handleEvent(event: any) {
             break
         }
 
+        case 'app:navigate': {
+            console.log(`[WS] Navigate to: ${event.page}`)
+            window.dispatchEvent(new CustomEvent('app:navigate', { detail: { page: event.page } }))
+            break
+        }
+
+        case 'rig:generate': {
+            console.log(`[WS] Generate rig: ${event.template}`)
+            const store = useEditorStore.getState()
+            store.generateRig(event.template)
+            showToast(`Generated ${event.template} rig`)
+            break
+        }
+
+        case 'rig:clear': {
+            console.log('[WS] Clear rig')
+            useEditorStore.getState().clearRig()
+            showToast('Rig cleared')
+            break
+        }
+
+        case 'anim:selectManifest': {
+            console.log(`[WS] Select manifest: ${event.index}`)
+            useEditorStore.getState().selectManifest(event.index)
+            break
+        }
+
+        case 'anim:selectClip': {
+            console.log(`[WS] Select clip: ${event.index}`)
+            useEditorStore.getState().selectClip(event.index)
+            break
+        }
+
+        case 'anim:tagClip': {
+            console.log(`[WS] Tag clip: ${event.index} → ${event.tag}`)
+            useEditorStore.getState().tagClip(event.index, event.tag)
+            break
+        }
+
+        case 'anim:autoTag': {
+            console.log('[WS] Auto-tag')
+            useEditorStore.getState().autoTag()
+            showToast('Auto-tagged all clips')
+            break
+        }
+
+        case 'anim:save': {
+            console.log('[WS] Save manifest')
+            useEditorStore.getState().saveManifest()
+            break
+        }
+
+        case 'anim:playback': {
+            console.log(`[WS] Playback: ${event.playing}`)
+            useEditorStore.getState().setAnimationPlaying(event.playing)
+            break
+        }
+
+        case 'viewport:update': {
+            console.log('[WS] Viewport update:', event.settings)
+            useEditorStore.getState().updateViewport(event.settings)
+            break
+        }
+
         default:
             console.log(`[WS] Unknown event: ${event.type}`)
     }

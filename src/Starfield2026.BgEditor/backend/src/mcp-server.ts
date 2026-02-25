@@ -295,6 +295,239 @@ async function main() {
         },
     )
 
+    // ─── Navigation ───
+
+    server.tool(
+        'navigate_page',
+        'Navigate the BgEditor to a specific page. Valid pages: editor, animations, tools, extraction.',
+        {
+            page: z.enum(['editor', 'animations', 'tools', 'extraction']).describe('Page to navigate to'),
+        },
+        async ({ page }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                const routes: Record<string, string> = { editor: '/', animations: '/animations', tools: '/tools', extraction: '/extraction' }
+                await fetch(`${BACKEND}/api/navigate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ page: routes[page] }),
+                })
+                return { content: [{ type: 'text' as const, text: `✓ Navigated to ${page} page.` }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    // ─── Rig controls ───
+
+    server.tool(
+        'generate_rig',
+        'Generate a Rigify metarig skeleton in the Editor viewport. Templates: human, bird, cat, horse, shark, wolf, basic_human, basic_quadruped.',
+        {
+            template: z.enum(['human', 'bird', 'cat', 'horse', 'shark', 'wolf', 'basic_human', 'basic_quadruped']).optional().default('human').describe('Rigify template name'),
+        },
+        async ({ template }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/generate-rig`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ template }),
+                })
+                return { content: [{ type: 'text' as const, text: `✓ Generated ${template} rig.` }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'clear_rig',
+        'Clear the current skeleton/rig from the Editor viewport.',
+        {},
+        async () => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/clear-rig`, { method: 'POST' })
+                return { content: [{ type: 'text' as const, text: '✓ Rig cleared.' }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    // ─── Animation controls ───
+
+    server.tool(
+        'select_model',
+        'Select a model by index from the Animations page model browser. Use after loading a folder.',
+        {
+            index: z.number().int().min(0).describe('Zero-based index of the model in the browser list'),
+        },
+        async ({ index }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/select-manifest`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ index }),
+                })
+                return { content: [{ type: 'text' as const, text: `✓ Selected model at index ${index}.` }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'select_clip',
+        'Select an animation clip by index from the current model\'s clip list.',
+        {
+            index: z.number().int().min(0).describe('Zero-based index of the clip'),
+        },
+        async ({ index }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/select-clip`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ index }),
+                })
+                return { content: [{ type: 'text' as const, text: `✓ Selected clip at index ${index}.` }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'tag_clip',
+        'Tag an animation clip with a semantic name (e.g. Idle, Walk, Run). Pass null to remove the tag.',
+        {
+            index: z.number().int().min(0).describe('Zero-based index of the clip'),
+            tag: z.string().nullable().describe('Semantic tag name, or null to remove'),
+        },
+        async ({ index, tag }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/tag-clip`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ index, tag }),
+                })
+                return { content: [{ type: 'text' as const, text: tag ? `✓ Tagged clip ${index} as "${tag}".` : `✓ Removed tag from clip ${index}.` }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'auto_tag',
+        'Auto-tag all clips in the current model using the slot-based naming convention.',
+        {},
+        async () => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/auto-tag`, { method: 'POST' })
+                return { content: [{ type: 'text' as const, text: '✓ Auto-tagged all clips.' }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'save_manifest',
+        'Save the current animation manifest with any tag changes to disk.',
+        {},
+        async () => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/save-manifest`, { method: 'POST' })
+                return { content: [{ type: 'text' as const, text: '✓ Manifest saved.' }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
+        'set_playback',
+        'Play or pause the current animation.',
+        {
+            playing: z.boolean().describe('True to play, false to pause'),
+        },
+        async ({ playing }) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+                await fetch(`${BACKEND}/api/playback`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ playing }),
+                })
+                return { content: [{ type: 'text' as const, text: playing ? '✓ Animation playing.' : '✓ Animation paused.' }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    // ─── Viewport controls ───
+
+    server.tool(
+        'set_viewport',
+        'Update the 3D viewport camera, lighting, or background. All fields are optional — only provided fields are changed.',
+        {
+            azimuth: z.number().optional().describe('Horizontal rotation in degrees (0 = front, 90 = right side, 180 = back)'),
+            elevation: z.number().optional().describe('Vertical angle in degrees (0 = level, 90 = top-down, -30 = below)'),
+            distance: z.number().optional().describe('Camera distance from target (zoom)'),
+            panX: z.number().optional().describe('Target X offset (horizontal pan)'),
+            panY: z.number().optional().describe('Target Y offset (vertical pan)'),
+            panZ: z.number().optional().describe('Target Z offset (depth pan)'),
+            fov: z.number().optional().describe('Camera field of view in degrees'),
+            lightIntensity: z.number().optional().describe('Key light intensity multiplier (0-2)'),
+            ambientIntensity: z.number().optional().describe('Ambient/hemisphere light intensity (0-2)'),
+            bgColor: z.string().optional().describe('Background color hex (e.g. "#1e1e1e")'),
+        },
+        async (args) => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+
+                // Filter out undefined values
+                const settings: Record<string, any> = {}
+                for (const [k, v] of Object.entries(args)) {
+                    if (v !== undefined) settings[k] = v
+                }
+                if (Object.keys(settings).length === 0) {
+                    return { content: [{ type: 'text' as const, text: 'No settings provided.' }] }
+                }
+
+                await fetch(`${BACKEND}/api/viewport`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings),
+                })
+
+                const summary = Object.entries(settings).map(([k, v]) => `${k}=${v}`).join(', ')
+                return { content: [{ type: 'text' as const, text: `✓ Viewport updated: ${summary}` }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
     server.tool(
         'save_screenshot',
         'Capture a screenshot of just the 3D viewport (model render) and save as PNG. Saves to backend/outputs/ by default.',

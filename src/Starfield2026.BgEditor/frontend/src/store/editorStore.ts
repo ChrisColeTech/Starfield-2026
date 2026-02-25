@@ -13,6 +13,32 @@ const API_BASE = 'http://localhost:3001'
 
 // ─────────────────────────── Types ───────────────────────────
 
+export interface ViewportSettings {
+  azimuth: number      // horizontal rotation in degrees (0 = front)
+  elevation: number    // vertical angle in degrees (0 = level, 90 = top-down)
+  distance: number     // zoom distance from target
+  panX: number         // target offset X
+  panY: number         // target offset Y
+  panZ: number         // target offset Z
+  fov: number          // camera field of view
+  lightIntensity: number   // key light multiplier 0–2
+  ambientIntensity: number // hemisphere light multiplier 0–2
+  bgColor: string      // hex e.g. "#1e1e1e"
+}
+
+export const DEFAULT_VIEWPORT: ViewportSettings = {
+  azimuth: 35,
+  elevation: 25,
+  distance: 8,
+  panX: 0,
+  panY: 1,
+  panZ: 0,
+  fov: 45,
+  lightIntensity: 1.0,
+  ambientIntensity: 0.8,
+  bgColor: '#1e1e1e',
+}
+
 interface ManifestListEntry {
   name: string
   dir: string
@@ -57,6 +83,9 @@ interface EditorState {
   rigTemplate: RigTemplate
   gameType: GameType
 
+  // Viewport settings
+  viewport: ViewportSettings
+
   // Editor actions
   loadManifest: (file: File) => Promise<void>
   loadManifestFromPath: (filePath: string) => Promise<void>
@@ -86,6 +115,10 @@ interface EditorState {
   setRigTemplate: (template: RigTemplate) => void
   setGameType: (gameType: GameType) => void
   clearRig: () => void
+
+  // Viewport actions
+  updateViewport: (patch: Partial<ViewportSettings>) => void
+  resetViewport: () => void
 }
 
 // ─────────────────────────── Helpers ───────────────────────────
@@ -167,6 +200,9 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   skeleton: null,
   rigTemplate: 'human' as RigTemplate,
   gameType: 'SUNMOON' as GameType,
+
+  // Viewport
+  viewport: { ...DEFAULT_VIEWPORT },
 
   // ─────────────── Editor actions ───────────────
 
@@ -482,12 +518,14 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
       saving: false,
       clipLoading: false,
       activeModelIndex: 0,
-      activeClipIndex: -1,
+      activeClipIndex: 0,
+      animationPlaying: true,
     })
   },
 
   clearAll: () => {
     set({
+      // Scene
       sceneName: null,
       manifest: null,
       scene: null,
@@ -498,19 +536,22 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
       error: null,
       animationPlaying: true,
       activeClipIndex: 0,
+      // Animation editor
       folderPath: null,
       animManifest: null,
       dirty: false,
       saving: false,
       clipLoading: false,
       activeModelIndex: 0,
+      // Scan browser
       scanDir: '',
       manifests: [],
       scanning: false,
       selectedManifestIndex: -1,
+      // Rig
       skeleton: null,
       rigTemplate: 'human' as RigTemplate,
-      gameType: 'SUNMOON',
+      gameType: 'SUNMOON' as GameType,
     })
   },
 
@@ -536,5 +577,15 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
 
   clearRig: () => {
     set({ skeleton: null })
+  },
+
+  // ── Viewport actions ──
+
+  updateViewport: (patch: Partial<ViewportSettings>) => {
+    set(state => ({ viewport: { ...state.viewport, ...patch } }))
+  },
+
+  resetViewport: () => {
+    set({ viewport: { ...DEFAULT_VIEWPORT } })
   },
 }))

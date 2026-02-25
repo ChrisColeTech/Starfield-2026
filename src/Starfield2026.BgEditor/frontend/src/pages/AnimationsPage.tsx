@@ -353,7 +353,7 @@ export default function AnimationsPage() {
                       }
                     }}
                     disabled={!selectedClip}
-                    className="w-full px-1.5 py-1 text-[11px] bg-input border border-border rounded text-foreground outline-none disabled:opacity-40"
+                    className="w-full px-1.5 py-1 text-[11px] bg-input border border-border rounded text-foreground outline-none disabled:opacity-40 text-center"
                   >
                     <option value="">— No tag —</option>
                     {SEMANTIC_TAGS.map(tag => (
@@ -388,7 +388,7 @@ export default function AnimationsPage() {
                     <select
                       value={loopMode}
                       onChange={e => setLoopMode(e.target.value as 'loop' | 'once' | 'pingpong')}
-                      className="w-full px-1.5 py-1 text-[11px] bg-input border border-border rounded text-foreground outline-none"
+                      className="w-full px-1.5 py-1 text-[11px] bg-input border border-border rounded text-foreground outline-none text-center"
                     >
                       <option value="loop">Loop</option>
                       <option value="once">Play Once</option>

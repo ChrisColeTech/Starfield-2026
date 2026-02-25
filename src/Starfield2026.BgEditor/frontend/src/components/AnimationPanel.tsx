@@ -24,7 +24,7 @@ export default function AnimationPanel() {
       <div className="px-3.5 py-2 shrink-0 flex items-center gap-2">
         <button
           onClick={() => setAnimationPlaying(!animationPlaying)}
-          className="px-3.5 py-1.5 bg-input border border-border rounded text-foreground text-xs cursor-pointer flex items-center gap-1.5 shrink-0 hover:bg-muted"
+          className="px-3.5 py-1.5 bg-input border border-border rounded text-foreground text-xs cursor-pointer flex items-center justify-center gap-1.5 shrink-0 hover:bg-muted"
         >
           {animationPlaying ? (
             <><Pause size={12} strokeWidth={2} /> Pause</>
@@ -44,8 +44,8 @@ export default function AnimationPanel() {
             key={clip.name + i}
             onClick={() => setActiveClipIndex(i)}
             className={`flex items-center justify-between px-2.5 py-1.5 mb-0.5 rounded cursor-pointer border transition-colors ${i === activeClipIndex
-                ? 'bg-primary/10 border-primary'
-                : 'border-transparent hover:bg-muted'
+              ? 'bg-primary/10 border-primary'
+              : 'border-transparent hover:bg-muted'
               }`}
           >
             <div className="flex-1 min-w-0">

@@ -164,6 +164,77 @@ app.post('/api/clear', async (_request, reply) => {
   return reply.send({ ok: true })
 })
 
+// ─── Navigation ───
+
+app.post<{ Body: { page: string } }>('/api/navigate', async (request, reply) => {
+  const { page } = request.body
+  if (!page) return reply.status(400).send({ error: 'Missing page' })
+  broadcast('app:navigate', { page })
+  return reply.send({ ok: true })
+})
+
+// ─── Rig controls ───
+
+app.post<{ Body: { template?: string } }>('/api/generate-rig', async (request, reply) => {
+  const { template } = request.body || {}
+  broadcast('rig:generate', { template: template || 'human' })
+  return reply.send({ ok: true })
+})
+
+app.post('/api/clear-rig', async (_request, reply) => {
+  broadcast('rig:clear', {})
+  return reply.send({ ok: true })
+})
+
+// ─── Animation controls ───
+
+app.post<{ Body: { index: number } }>('/api/select-manifest', async (request, reply) => {
+  const { index } = request.body
+  if (index === undefined) return reply.status(400).send({ error: 'Missing index' })
+  broadcast('anim:selectManifest', { index })
+  return reply.send({ ok: true })
+})
+
+app.post<{ Body: { index: number } }>('/api/select-clip', async (request, reply) => {
+  const { index } = request.body
+  if (index === undefined) return reply.status(400).send({ error: 'Missing index' })
+  broadcast('anim:selectClip', { index })
+  return reply.send({ ok: true })
+})
+
+app.post<{ Body: { index: number; tag: string | null } }>('/api/tag-clip', async (request, reply) => {
+  const { index, tag } = request.body
+  if (index === undefined) return reply.status(400).send({ error: 'Missing index' })
+  broadcast('anim:tagClip', { index, tag })
+  return reply.send({ ok: true })
+})
+
+app.post('/api/auto-tag', async (_request, reply) => {
+  broadcast('anim:autoTag', {})
+  return reply.send({ ok: true })
+})
+
+app.post('/api/save-manifest', async (_request, reply) => {
+  broadcast('anim:save', {})
+  return reply.send({ ok: true })
+})
+
+app.post<{ Body: { playing: boolean } }>('/api/playback', async (request, reply) => {
+  const { playing } = request.body
+  if (playing === undefined) return reply.status(400).send({ error: 'Missing playing' })
+  broadcast('anim:playback', { playing })
+  return reply.send({ ok: true })
+})
+
+// ─── Viewport controls ───
+
+app.post<{ Body: Record<string, any> }>('/api/viewport', async (request, reply) => {
+  const settings = request.body
+  if (!settings || Object.keys(settings).length === 0) return reply.status(400).send({ error: 'Missing settings' })
+  broadcast('viewport:update', { settings })
+  return reply.send({ ok: true })
+})
+
 // ─── Screenshot capture (MCP → WS → Electron IPC → file) ───
 
 const pendingScreenshots = new Map<string, { resolve: (v: any) => void; timer: NodeJS.Timeout }>()

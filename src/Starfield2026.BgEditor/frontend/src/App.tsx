@@ -52,6 +52,21 @@ function NavigationPersistence() {
   return null
 }
 
+function NavigationListener() {
+  const navigate = useNavigate()
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const page = (e as CustomEvent).detail?.page
+      if (page && VALID_PAGES.includes(page)) {
+        navigate(page)
+      }
+    }
+    window.addEventListener('app:navigate', handler)
+    return () => window.removeEventListener('app:navigate', handler)
+  }, [navigate])
+  return null
+}
+
 function InitialRedirect({ lastPage }: { lastPage: string }) {
   const location = useLocation()
   const navigate = useNavigate()
@@ -83,6 +98,7 @@ export default function App() {
   return (
     <>
       <NavigationPersistence />
+      <NavigationListener />
       <InitialRedirect lastPage={lastPage} />
       <BackendEventsProvider />
       <Header />
