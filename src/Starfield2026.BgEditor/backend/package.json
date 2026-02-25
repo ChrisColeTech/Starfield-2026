@@ -6,12 +6,20 @@
   "scripts": {
     "dev": "npx kill-port 3001 && cross-env NODE_OPTIONS=--max-old-space-size=8192 tsx watch src/index.ts",
     "start": "cross-env NODE_OPTIONS=--max-old-space-size=8192 tsx src/index.ts",
+    "render": "tsx src/cli-render.ts",
     "test": "tsx --test test/**/*.test.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",
     "@fastify/static": "^9.0.0",
-    "fastify": "^5.7.4"
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@types/three": "^0.183.1",
+    "fastify": "^5.7.4",
+    "gl": "^8.1.6",
+    "pngjs": "^7.0.0",
+    "sharp": "^0.34.5",
+    "three": "^0.152.0",
+    "xmldom": "^0.6.0"
   },
   "devDependencies": {
     "@types/node": "^25.2.3",

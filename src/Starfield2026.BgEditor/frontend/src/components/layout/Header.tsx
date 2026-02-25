@@ -120,6 +120,36 @@ export function Header() {
                     disabled: !hasAnimModel,
                     onClick: () => animAutoTag(),
                 },
+                { separator: true, label: '' },
+                {
+                    label: 'Render Angles...',
+                    disabled: !hasAnimModel && !hasScene,
+                    onClick: async () => {
+                        // Try editor store first, then animation store
+                        const editorManifest = useEditorStore.getState().manifest;
+                        const animFolder = useAnimationEditorStore.getState().folderPath;
+                        const manifestDir = editorManifest?.dir || animFolder;
+                        if (!manifestDir) {
+                            alert('No model loaded. Open a manifest first.');
+                            return;
+                        }
+                        const outputDir = await browseFolder();
+                        if (!outputDir) return;
+                        try {
+                            const manifestPath = `${manifestDir}/manifest.json`.replace(/\\/g, '/');
+                            const res = await fetch('http://localhost:3001/api/render-angles', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ manifestPath, outputDir }),
+                            });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.error || 'Render failed');
+                            alert(`Saved ${data.saved.length} renders to:\n${outputDir}`);
+                        } catch (err: any) {
+                            alert(`Render failed: ${err.message}`);
+                        }
+                    },
+                },
             ],
         },
         {

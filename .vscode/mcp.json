@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+        "starfield-renderer": {
+            "command": "npx",
+            "args": [
+                "tsx",
+                "src/mcp-server.ts"
+            ],
+            "cwd": "src/Starfield2026.BgEditor/backend"
+        }
+    }
+}

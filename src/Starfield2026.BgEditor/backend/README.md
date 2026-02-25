@@ -16,6 +16,9 @@ npm test       # Run unit tests
 backend/
   src/
     index.ts              # Fastify server entry point
+    cli-render.ts         # Headless 3D renderer (CLI + reusable functions)
+    mcp-server.ts         # MCP server exposing render_model tool
+    test-gl.ts            # WebGL render test harness
     routes/
       manifests.ts        # Manifest scan/generate API
       textures.ts         # Texture serving API
@@ -288,6 +291,129 @@ GARC file on disk
   -> DAE.exportModelOnly() / DAE.exportClipOnly() -> .dae files
 ```
 
+## Headless CLI Renderer
+
+Renders 3D models from the command line using a headless WebGL context (via the `gl` npm package). Supports manifest.json or raw .dae files.
+
+### Usage
+
+```bash
+npx tsx src/cli-render.ts --manifest <path/to/manifest.json> [options]
+npx tsx src/cli-render.ts --model <path/to/model.dae> [options]
+```
+
+### Options
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--manifest <path>` | Path to manifest.json | — |
+| `--model <path>` | Path to .dae model file | — |
+| `--output <path>` | Output PNG path | `render.png` |
+| `--width <n>` | Image width | `1920` |
+| `--height <n>` | Image height | `1080` |
+| `--bg <hex>` | Background color | `1a1a2e` |
+| `--camera <preset>` | `front`, `back`, `left`, `right`, `top`, `3/4` | `3/4` |
+| `--distance <n>` | Camera distance multiplier | `1.0` |
+| `--lighting <preset>` | `studio`, `flat`, `dramatic` | `studio` |
+| `--rotate <degrees>` | Rotate model Y-axis | `0` |
+| `--clip <file>` | Clip DAE to bake into model | — |
+| `--frame <n>` | Animation frame to render | `0` |
+
+### Examples
+
+Render a Pokemon from its manifest:
+```bash
+npx tsx src/cli-render.ts \
+  --manifest ../Starfield.Assets/Pokemon3D/pm0003_00/manifest.json \
+  --output venusaur.png --camera front
+```
+
+Render a raw DAE file:
+```bash
+npx tsx src/cli-render.ts \
+  --model path/to/model.dae \
+  --output render.png --width 512 --height 512
+```
+
+### Rendering Pipeline
+
+1. **Load** — Parse DAE with ColladaLoader, extract image references from DAE XML
+2. **Decode textures** — Use `sharp` to decode PNG/TGA textures into raw RGBA DataTextures
+3. **Match textures** — Fuzzy-match texture names to material names (handles prefixes, suffixes, `_alb`, `_skin` variants)
+4. **Apply materials** — Assign MeshPhongMaterial (lit) or MeshBasicMaterial (eyes) with sRGB color pipeline
+5. **Render** — Set up camera angle, studio lighting, render via headless WebGL
+6. **Save** — Read pixels, flip vertically, write PNG with `pngjs`
+
+## MCP Server
+
+Exposes the renderer as an MCP tool for AI agent integration.
+
+### VS Code Setup
+
+Add to `.vscode/mcp.json` (already configured):
+```json
+{
+  "mcpServers": {
+    "starfield-renderer": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp-server.ts"],
+      "cwd": "src/Starfield2026.BgEditor/backend"
+    }
+  }
+}
+```
+
+### Claude Code Setup
+
+Register globally (available in all projects):
+```bash
+claude mcp add --scope user starfield-renderer \
+  -- cmd /c npx tsx D:/Projects/Starfield-2026/src/Starfield2026.BgEditor/backend/src/mcp-server.ts
+```
+
+Or register for this project only:
+```bash
+claude mcp add starfield-renderer \
+  -- cmd /c npx tsx D:/Projects/Starfield-2026/src/Starfield2026.BgEditor/backend/src/mcp-server.ts
+```
+
+Verify it's registered:
+```bash
+claude mcp list
+```
+
+Expected output should show `starfield-renderer: ... - ✓ Connected`.
+
+### Testing
+
+Test the MCP server responds to initialization:
+```bash
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' | npx tsx src/mcp-server.ts
+```
+
+Expected response includes `"name":"starfield-renderer"` and `"tools":{"listChanged":true}`.
+
+Test the tool listing:
+```bash
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' | npx tsx src/mcp-server.ts
+```
+
+Expected: returns `render_model` tool with its schema.
+
+### Tool: `render_model`
+
+Renders a 3D model from 4 angles (front, 3/4, side, back).
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `inputPath` | string | ✓ | Path to manifest.json or .dae model file |
+| `outputDir` | string | ✓ | Directory to save rendered PNG files |
+| `width` | number | | Image width (default: 512) |
+| `height` | number | | Image height (default: 512) |
+
+Output files: `front.png`, `3-4.png`, `side.png`, `back.png`
+
 ## API Server
 
 ### Endpoints
@@ -299,6 +425,21 @@ GARC file on disk
 | POST | `/api/manifests/generate` | Scan directory and generate manifest.json files |
 | GET | `/api/file?dir=...&name=...` | Serve a file from disk (model/texture) |
 | GET | `/serve/<base64dir>/<filename>` | Serve files with Three.js-compatible relative paths |
+| POST | `/api/render-angles` | Render model from 4 angles, save PNGs to disk |
+
+### POST `/api/render-angles`
+
+Request body:
+```json
+{
+  "manifestPath": "path/to/manifest.json",
+  "outputDir": "path/to/output",
+  "width": 512,
+  "height": 512
+}
+```
+
+Alternatively use `modelPath` instead of `manifestPath` for raw .dae files. Returns `{ saved: ["path/to/front.png", ...] }`.
 
 ## Tests
 
