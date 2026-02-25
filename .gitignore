@@ -24,3 +24,4 @@ Thumbs.db
 src/Starfield2026.Tests
 tools/lpc-cli/output
 tools/dae-to-gltf/test-output
+/src/Starfield2026.BgEditor/backend/outputs
