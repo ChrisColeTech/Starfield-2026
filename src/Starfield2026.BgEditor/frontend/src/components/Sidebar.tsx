@@ -21,9 +21,9 @@ export default function Sidebar() {
             key={path}
             onClick={() => navigate(path)}
             title={label}
-            className={`w-9 h-9 flex items-center justify-center bg-transparent border-none cursor-pointer border-l-2 transition-colors ${active
-                ? 'text-foreground border-l-primary'
-                : 'text-muted-foreground/50 border-l-transparent hover:bg-muted hover:text-muted-foreground'
+            className={`w-9 h-9 flex items-center justify-center bg-transparent cursor-pointer transition-colors border-y-0 border-r-0 border-l-2 border-solid ${active
+              ? 'text-foreground border-l-primary'
+              : 'text-muted-foreground/50 border-l-transparent hover:bg-muted hover:text-muted-foreground'
               }`}
           >
             <Icon size={18} />
