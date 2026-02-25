@@ -7,6 +7,7 @@ export interface MenuItem {
     danger?: boolean;
     separator?: boolean;
     onClick?: () => void;
+    children?: MenuItem[];
 }
 
 export interface MenuDefinition {

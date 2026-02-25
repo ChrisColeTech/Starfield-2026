@@ -1,6 +1,6 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import type { MenuDefinition } from '../../types';
+import type { MenuDefinition, MenuItem as MenuItemType } from '../../types';
 import { HeaderMenuBar } from './HeaderMenuBar';
 import { useEditorStore } from '../../store/editorStore';
 
@@ -17,6 +17,7 @@ export function Header() {
     const textures = useEditorStore(s => s.textures);
     const selectedTextureIndex = useEditorStore(s => s.selectedTextureIndex);
     const resetTexture = useEditorStore(s => s.resetTexture);
+    const clearAll = useEditorStore(s => s.clearAll);
 
     const animManifest = useEditorStore(s => s.animManifest);
     const animDirty = useEditorStore(s => s.dirty);
@@ -27,6 +28,22 @@ export function Header() {
     const hasScene = !!sceneName;
     const hasModifications = textures.some(t => t.modifiedDataUrl !== t.originalDataUrl);
     const hasAnimModel = !!animManifest;
+
+    // ── Recent paths ──
+    const [recentPaths, setRecentPaths] = useState<string[]>([]);
+
+    useEffect(() => {
+        (window as any).electronAPI?.storeGet?.('recentPaths').then((paths: string[] | null) => {
+            if (paths) setRecentPaths(paths);
+        });
+    }, []);
+
+    const addRecent = useCallback(async (filePath: string) => {
+        const normalized = filePath.replace(/\\/g, '/');
+        const updated = [normalized, ...recentPaths.filter(p => p !== normalized)].slice(0, 10);
+        setRecentPaths(updated);
+        await (window as any).electronAPI?.storeSet?.('recentPaths', updated);
+    }, [recentPaths]);
 
     const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -40,14 +57,78 @@ export function Header() {
     }, []);
 
     // ── Menus ──
+    const recentItems: MenuItemType[] = recentPaths.length > 0
+        ? [
+            ...recentPaths.map((p) => ({
+                label: p.split('/').pop() || p,
+                onClick: async () => {
+                    navigate('/');
+                    useEditorStore.getState().loadManifestFromPath(p);
+                },
+            })),
+            { separator: true, label: '' },
+            {
+                label: 'Clear Recent',
+                onClick: async () => {
+                    setRecentPaths([]);
+                    await (window as any).electronAPI?.storeSet?.('recentPaths', []);
+                },
+            },
+        ]
+        : [{ label: 'No Recent Files', disabled: true }];
+
     const menus: MenuDefinition[] = [
         {
             label: 'File',
+            active: true,
             items: [
-                { label: 'New', shortcut: 'Ctrl+N', disabled: true },
+                {
+                    label: 'New',
+                    shortcut: 'Ctrl+N',
+                    onClick: () => {
+                        clearAll();
+                        navigate('/');
+                    },
+                },
+                {
+                    label: 'New Window',
+                    onClick: () => {
+                        // Open a new Electron window at the same URL
+                        window.open(window.location.origin, '_blank');
+                    },
+                },
                 { separator: true, label: '' },
-                { label: 'Save', shortcut: 'Ctrl+S', disabled: true },
-                { label: 'Export PNG...', disabled: true },
+                {
+                    label: 'Open File...',
+                    shortcut: 'Ctrl+O',
+                    onClick: async () => {
+                        navigate('/');
+                        const filePath = await (window as any).electronAPI?.browseFile?.();
+                        if (filePath) {
+                            addRecent(filePath);
+                            useEditorStore.getState().loadManifestFromPath(filePath);
+                        }
+                    },
+                },
+                {
+                    label: 'Open Folder...',
+                    shortcut: 'Ctrl+Shift+O',
+                    onClick: async () => {
+                        navigate('/');
+                        const picked = await browseFolder();
+                        if (picked) {
+                            addRecent(picked);
+                            useEditorStore.getState().scanFolder(picked);
+                        }
+                    },
+                },
+                { separator: true, label: '' },
+                { label: 'Open Recent', children: recentItems },
+                { separator: true, label: '' },
+                {
+                    label: 'Exit',
+                    onClick: () => window.close(),
+                },
             ],
         },
         {
