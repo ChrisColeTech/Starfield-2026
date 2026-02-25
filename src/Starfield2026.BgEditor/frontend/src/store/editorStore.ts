@@ -226,6 +226,10 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
         loading: false,
         animationPlaying: true,
         activeClipIndex: 0,
+        // Also populate animation page fields
+        folderPath: manifest.dir || '',
+        animManifest: manifest as any,
+        activeModelIndex: 0,
       })
     } catch (err) {
       console.error('[EditorStore] loadManifestData failed:', err)
