@@ -6,6 +6,8 @@ import type { SplitManifest } from '../types/animation'
 import { loadScene, loadModelOnly, loadBakedClip } from '../services/sceneService'
 import type { Manifest } from '../services/sceneService'
 import { applyAdjustment, updateThreeTexture } from '../services/textureProcessor'
+import type { BoneData, GameType } from '../data/skeletons'
+import { SKELETONS } from '../data/skeletons'
 
 const API_BASE = 'http://localhost:3001'
 
@@ -50,6 +52,10 @@ interface EditorState {
   scanning: boolean
   selectedManifestIndex: number
 
+  // Auto-rig state
+  skeleton: BoneData[] | null
+  gameType: GameType
+
   // Editor actions
   loadManifest: (file: File) => Promise<void>
   loadManifestFromPath: (filePath: string) => Promise<void>
@@ -73,6 +79,11 @@ interface EditorState {
   saveManifest: () => Promise<void>
   resetAnimations: () => void
   clearAll: () => void
+
+  // Rig actions
+  generateRig: (gameType?: GameType) => void
+  setGameType: (gameType: GameType) => void
+  clearRig: () => void
 }
 
 // ─────────────────────────── Helpers ───────────────────────────
@@ -149,6 +160,10 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   manifests: [],
   scanning: false,
   selectedManifestIndex: -1,
+
+  // Auto-rig state
+  skeleton: null,
+  gameType: 'SUNMOON' as GameType,
 
   // ─────────────── Editor actions ───────────────
 
@@ -490,6 +505,28 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
       manifests: [],
       scanning: false,
       selectedManifestIndex: -1,
+      skeleton: null,
+      gameType: 'SUNMOON',
     })
+  },
+
+  // ── Rig actions ──
+
+  generateRig: (gameType?: GameType) => {
+    const gt = gameType ?? get().gameType
+    const bones = SKELETONS[gt]
+    if (!bones || bones.length === 0) {
+      console.warn(`No skeleton data for ${gt}`)
+      return
+    }
+    set({ skeleton: bones, gameType: gt })
+  },
+
+  setGameType: (gameType: GameType) => {
+    set({ gameType })
+  },
+
+  clearRig: () => {
+    set({ skeleton: null })
   },
 }))

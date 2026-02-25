@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { PanelRightClose, PanelRightOpen } from 'lucide-react'
 import Viewport from '../components/Viewport'
-import TexturePanel from '../components/TexturePanel'
-import ColorControls from '../components/ColorControls'
+import AutoRigPanel from '../components/AutoRigPanel'
 
 export default function EditorPage() {
   const [panelOpen, setPanelOpen] = useState(true)
@@ -17,7 +16,7 @@ export default function EditorPage() {
           </div>
         </div>
 
-        {/* Right: properties panel with collapse toggle */}
+        {/* Right: Auto-Rig panel with collapse toggle */}
         <div
           className="bg-card border-l border-border flex flex-col overflow-hidden shrink-0"
           style={{ width: panelOpen ? 280 : 28 }}
@@ -32,20 +31,15 @@ export default function EditorPage() {
             </button>
             {panelOpen && (
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mr-1">
-                Properties
+                Auto Rig
               </span>
             )}
           </div>
 
           {panelOpen && (
-            <>
-              <div className="flex-none max-h-[30%] overflow-hidden flex">
-                <TexturePanel />
-              </div>
-              <div className="flex-1 overflow-hidden flex flex-col">
-                <ColorControls />
-              </div>
-            </>
+            <div className="flex-1 overflow-y-auto">
+              <AutoRigPanel />
+            </div>
           )}
         </div>
       </div>

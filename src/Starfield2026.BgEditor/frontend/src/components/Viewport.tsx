@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { useEditorStore } from '../store/editorStore'
+import { createSkeletonGroup, disposeSkeletonGroup } from '../lib/SkeletonRenderer'
 
 export default function Viewport() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -19,6 +20,8 @@ export default function Viewport() {
   const storeAnimations = useEditorStore(s => s.animations)
   const animationPlaying = useEditorStore(s => s.animationPlaying)
   const activeClipIndex = useEditorStore(s => s.activeClipIndex)
+  const skeleton = useEditorStore(s => s.skeleton)
+  const skeletonGroupRef = useRef<THREE.Group | null>(null)
 
   // Init renderer + camera once
   useEffect(() => {
@@ -245,6 +248,77 @@ export default function Viewport() {
     action.play()
     activeActionRef.current = action
   }, [activeClipIndex])
+
+  // Render skeleton when store.skeleton changes
+  useEffect(() => {
+    const threeScene = sceneRef.current
+    const camera = cameraRef.current
+    const controls = controlsRef.current
+
+    // Clean up previous skeleton
+    if (skeletonGroupRef.current) {
+      disposeSkeletonGroup(skeletonGroupRef.current)
+      threeScene.remove(skeletonGroupRef.current)
+      skeletonGroupRef.current = null
+    }
+
+    if (!skeleton || skeleton.length === 0) return
+
+    const group = createSkeletonGroup(skeleton)
+    threeScene.add(group)
+    skeletonGroupRef.current = group
+
+    // Auto-fit camera to skeleton bounds
+    group.updateMatrixWorld(true)
+    const box = new THREE.Box3().setFromObject(group)
+    if (!box.isEmpty() && camera && controls) {
+      const center = box.getCenter(new THREE.Vector3())
+      const size = box.getSize(new THREE.Vector3())
+      const maxDim = Math.max(size.x, size.y, size.z)
+
+      const fov = camera.fov * (Math.PI / 180)
+      const distance = (maxDim / 2) / Math.tan(fov / 2) * 1.5
+      camera.position.set(center.x, center.y, center.z + distance)
+      camera.near = distance * 0.01
+      camera.far = distance * 10
+      camera.updateProjectionMatrix()
+
+      controls.target.copy(center)
+      controls.update()
+    }
+
+    console.log(`[BgEditor] Skeleton rendered: ${skeleton.length} bones`)
+  }, [skeleton])
+
+  // Listen for viewport:resetView custom event (from AutoRigPanel)
+  useEffect(() => {
+    const handler = () => {
+      const camera = cameraRef.current
+      const controls = controlsRef.current
+      const group = skeletonGroupRef.current || modelGroupRef.current
+      if (!camera || !controls || !group) return
+
+      group.updateMatrixWorld(true)
+      const box = new THREE.Box3().setFromObject(group)
+      if (box.isEmpty()) return
+
+      const center = box.getCenter(new THREE.Vector3())
+      const size = box.getSize(new THREE.Vector3())
+      const maxDim = Math.max(size.x, size.y, size.z)
+
+      const fov = camera.fov * (Math.PI / 180)
+      const distance = (maxDim / 2) / Math.tan(fov / 2) * 1.5
+      camera.position.set(center.x, center.y, center.z + distance)
+      camera.near = distance * 0.01
+      camera.far = distance * 10
+      camera.updateProjectionMatrix()
+
+      controls.target.copy(center)
+      controls.update()
+    }
+    window.addEventListener('viewport:resetView', handler)
+    return () => window.removeEventListener('viewport:resetView', handler)
+  }, [])
 
   return (
     <div
