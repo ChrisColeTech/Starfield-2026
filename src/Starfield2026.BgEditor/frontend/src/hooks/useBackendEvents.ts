@@ -59,11 +59,10 @@ function handleEvent(event: any) {
             console.log(`[WS] Load model: modelType=${modelType} dir=${event.dir}`)
             const store = useEditorStore.getState()
 
-            if (event.manifest) {
-                // Manifest data sent directly by backend — no round-trip needed
+            if (modelType === 'folder') {
+                store.loadFolder(event.dir, event.manifest)
+            } else if (event.manifest) {
                 store.loadManifestData(event.manifest)
-            } else if (modelType === 'folder' && event.dir) {
-                store.loadFolder(event.dir)
             }
             showToast(`Loading model from ${event.dir}`)
             break

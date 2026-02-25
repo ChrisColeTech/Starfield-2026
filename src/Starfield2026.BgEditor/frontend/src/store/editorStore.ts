@@ -65,7 +65,7 @@ interface EditorState {
   // Animation actions
   scanFolder: (dir: string) => Promise<void>
   selectManifest: (index: number) => void
-  loadFolder: (dir: string) => Promise<void>
+  loadFolder: (dir: string, manifest?: any) => Promise<void>
   selectClip: (index: number) => Promise<void>
   tagClip: (index: number, semanticName: string | null) => void
   autoTag: () => void
@@ -298,16 +298,21 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     if (m?.dir) get().loadFolder(m.dir)
   },
 
-  loadFolder: async (dir: string) => {
+  loadFolder: async (dir: string, prefetchedManifest?: any) => {
     set({ loading: true, error: null, folderPath: dir, dirty: false, activeClipIndex: -1 })
 
     try {
-      const res = await fetch(`${API_BASE}/api/manifests/read?dir=${encodeURIComponent(dir)}`)
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: res.statusText }))
-        throw new Error(err.error || `HTTP ${res.status}`)
+      let manifest: SplitManifest
+      if (prefetchedManifest) {
+        manifest = prefetchedManifest
+      } else {
+        const res = await fetch(`${API_BASE}/api/manifests/read?dir=${encodeURIComponent(dir)}`)
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText }))
+          throw new Error(err.error || `HTTP ${res.status}`)
+        }
+        manifest = await res.json()
       }
-      const manifest: SplitManifest = await res.json()
 
       if (!manifest.models || manifest.models.length === 0) {
         throw new Error('Manifest has no models')
