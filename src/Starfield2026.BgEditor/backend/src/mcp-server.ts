@@ -135,67 +135,99 @@ async function main() {
         },
     )
 
+    const BACKEND = 'http://localhost:3001'
+
+    async function checkBackend(): Promise<string | null> {
+        try {
+            await fetch(`${BACKEND}/api/manifests?dir=test`)
+            return null
+        } catch {
+            return 'Error: BgEditor is not running. Please start it first.'
+        }
+    }
+
+    async function sendToFrontend(absPath: string, type: 'manifest' | 'dae' | 'folder'): Promise<string | null> {
+        const res = await fetch(`${BACKEND}/api/load-model`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: absPath, type }),
+        })
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+            return `Error: ${(err as any).error}`
+        }
+        return null
+    }
+
     server.tool(
         'load_model',
-        'Load a model into the BgEditor frontend. Accepts a manifest.json path, a .dae model path, or a folder containing manifests. Requires the BgEditor to be running.',
+        'Load a model into the BgEditor frontend. Accepts a manifest.json path or a .dae model path. Requires the BgEditor to be running.',
         {
-            path: z.string().describe('Path to manifest.json, .dae model file, or folder containing manifests'),
+            path: z.string().describe('Path to manifest.json or .dae model file'),
         },
         async ({ path: inputPath }) => {
-            const BACKEND = 'http://localhost:3001'
             try {
                 const absPath = path.resolve(inputPath)
-
                 if (!fs.existsSync(absPath)) {
-                    return { content: [{ type: 'text' as const, text: `Error: Path not found: ${absPath}` }] }
+                    return { content: [{ type: 'text' as const, text: `Error: File not found: ${absPath}` }] }
                 }
 
-                // Check if backend is running
-                try {
-                    await fetch(`${BACKEND}/api/manifests?dir=test`)
-                } catch {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+
+                const ext = path.extname(absPath).toLowerCase()
+                let type: 'manifest' | 'dae'
+
+                if (ext === '.json') type = 'manifest'
+                else if (ext === '.dae') type = 'dae'
+                else return { content: [{ type: 'text' as const, text: `Error: Unsupported file type "${ext}". Provide a .json manifest or .dae model.` }] }
+
+                const sendErr = await sendToFrontend(absPath, type)
+                if (sendErr) return { content: [{ type: 'text' as const, text: sendErr }] }
+
+                return { content: [{ type: 'text' as const, text: `✓ Loaded ${path.basename(absPath)} in BgEditor.` }] }
+            } catch (err: any) {
+                if (err.cause?.code === 'ECONNREFUSED') {
                     return { content: [{ type: 'text' as const, text: 'Error: BgEditor is not running. Please start it first.' }] }
                 }
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
 
-                const stat = fs.statSync(absPath)
-                let type: 'manifest' | 'dae' | 'folder'
-                let summary: string
-
-                if (stat.isDirectory()) {
-                    type = 'folder'
-                    // Verify manifests exist in the folder
-                    const res = await fetch(`${BACKEND}/api/manifests?dir=${encodeURIComponent(absPath)}`)
-                    const manifests = await res.json() as any[]
-                    if (manifests.length === 0) {
-                        return { content: [{ type: 'text' as const, text: `No manifests found in: ${absPath}` }] }
-                    }
-                    summary = `Loading ${manifests.length} manifest(s) from ${absPath}`
-                } else {
-                    const ext = path.extname(absPath).toLowerCase()
-                    if (ext === '.json') {
-                        type = 'manifest'
-                        summary = `Loading manifest: ${path.basename(absPath)}`
-                    } else if (ext === '.dae') {
-                        type = 'dae'
-                        summary = `Loading model: ${path.basename(absPath)}`
-                    } else {
-                        return { content: [{ type: 'text' as const, text: `Error: Unsupported file type "${ext}". Provide a .json manifest, .dae model, or folder.` }] }
-                    }
+    server.tool(
+        'load_path',
+        'Load a folder of models into the BgEditor frontend. Scans the folder for manifests and loads them. Requires the BgEditor to be running.',
+        {
+            path: z.string().describe('Path to a folder containing model manifests'),
+        },
+        async ({ path: inputPath }) => {
+            try {
+                const absPath = path.resolve(inputPath)
+                if (!fs.existsSync(absPath) || !fs.statSync(absPath).isDirectory()) {
+                    return { content: [{ type: 'text' as const, text: `Error: Not a valid folder: ${absPath}` }] }
                 }
 
-                // Tell the backend to push to frontend via WS
-                const res = await fetch(`${BACKEND}/api/load-model`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ path: absPath, type }),
-                })
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
 
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({ error: 'Unknown error' }))
-                    return { content: [{ type: 'text' as const, text: `Error: ${(err as any).error}` }] }
+                // Scan for manifests
+                const res = await fetch(`${BACKEND}/api/manifests?dir=${encodeURIComponent(absPath)}`)
+                const manifests = await res.json() as any[]
+
+                if (manifests.length === 0) {
+                    return { content: [{ type: 'text' as const, text: `No manifests found in: ${absPath}` }] }
                 }
 
-                return { content: [{ type: 'text' as const, text: `✓ ${summary}\nSent to BgEditor frontend.` }] }
+                const sendErr = await sendToFrontend(absPath, 'folder')
+                if (sendErr) return { content: [{ type: 'text' as const, text: sendErr }] }
+
+                const summary = [
+                    `✓ Loaded ${manifests.length} manifest(s) in BgEditor:`,
+                    ...manifests.map((m: any) => `  • ${m.name}`),
+                ].join('\n')
+
+                return { content: [{ type: 'text' as const, text: summary }] }
             } catch (err: any) {
                 if (err.cause?.code === 'ECONNREFUSED') {
                     return { content: [{ type: 'text' as const, text: 'Error: BgEditor is not running. Please start it first.' }] }
