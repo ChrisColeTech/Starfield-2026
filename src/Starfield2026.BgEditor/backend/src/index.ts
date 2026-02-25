@@ -63,8 +63,25 @@ app.post<{ Body: { path: string; type: 'manifest' | 'dae' | 'folder' } }>('/api/
     return reply.status(503).send({ error: 'No frontend connected. Please open the BgEditor UI first.' })
   }
 
-  broadcast('model:load', { path: modelPath, modelType: type })
-  return reply.send({ ok: true })
+  try {
+    // Read manifest data from disk and send it directly via WS
+    const dir = type === 'dae' || type === 'manifest'
+      ? modelPath.replace(/[\\/][^\\/]+$/, '').replace(/\\/g, '/')
+      : modelPath.replace(/\\/g, '/')
+
+    const manifestPath = path.join(dir, 'manifest.json')
+    if (!fs.existsSync(manifestPath)) {
+      return reply.status(404).send({ error: `manifest.json not found in ${dir}` })
+    }
+
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
+    manifest.dir = dir
+
+    broadcast('model:load', { dir, modelType: type, manifest })
+    return reply.send({ ok: true })
+  } catch (err: any) {
+    return reply.status(500).send({ error: err.message })
+  }
 })
 
 // Serve model/texture files from any directory on disk.

@@ -53,6 +53,7 @@ interface EditorState {
   // Editor actions
   loadManifest: (file: File) => Promise<void>
   loadManifestFromPath: (filePath: string) => Promise<void>
+  loadManifestData: (manifest: Manifest) => Promise<void>
   selectTexture: (index: number) => void
   setAdjustment: (index: number, adj: Partial<TextureAdjustment>) => void
   resetTexture: (index: number) => void
@@ -203,6 +204,31 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
       })
     } catch (err) {
       console.error('[EditorStore] loadManifestFromPath failed:', err)
+      set({
+        error: err instanceof Error ? err.message : 'Failed to load scene',
+        loading: false,
+      })
+    }
+  },
+
+  loadManifestData: async (manifest: Manifest) => {
+    set({ loading: true, error: null })
+    try {
+      console.log(`[EditorStore] loadManifestData: name="${manifest.name}" dir="${manifest.dir}"`)
+      const result = await loadScene(manifest)
+      set({
+        scene: result.scene,
+        animations: result.animations,
+        textures: result.textures,
+        sceneName: manifest.name,
+        manifest,
+        selectedTextureIndex: 0,
+        loading: false,
+        animationPlaying: true,
+        activeClipIndex: 0,
+      })
+    } catch (err) {
+      console.error('[EditorStore] loadManifestData failed:', err)
       set({
         error: err instanceof Error ? err.message : 'Failed to load scene',
         loading: false,

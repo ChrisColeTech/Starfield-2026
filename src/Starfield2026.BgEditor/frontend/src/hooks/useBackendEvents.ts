@@ -56,17 +56,16 @@ function handleEvent(event: any) {
     switch (event.type) {
         case 'model:load': {
             const modelType = event.modelType || 'manifest'
-            console.log(`[WS] Load model: modelType=${modelType} path=${event.path}`)
+            console.log(`[WS] Load model: modelType=${modelType} dir=${event.dir}`)
             const store = useEditorStore.getState()
-            if (modelType === 'manifest') {
-                store.loadManifestFromPath(event.path)
-            } else if (modelType === 'folder') {
-                store.loadFolder(event.path)
-            } else if (modelType === 'dae') {
-                const dir = event.path.replace(/[\\/][^\\/]+$/, '')
-                store.loadManifestFromPath(dir + '/manifest.json')
+
+            if (event.manifest) {
+                // Manifest data sent directly by backend — no round-trip needed
+                store.loadManifestData(event.manifest)
+            } else if (modelType === 'folder' && event.dir) {
+                store.loadFolder(event.dir)
             }
-            showToast(`Loading model from ${event.path}`)
+            showToast(`Loading model from ${event.dir}`)
             break
         }
 
