@@ -59,6 +59,10 @@ app.post<{ Body: { path: string; type: 'manifest' | 'dae' | 'folder' } }>('/api/
   const { path: modelPath, type } = request.body
   if (!modelPath) return reply.status(400).send({ error: 'Missing path' })
 
+  if (wsClients.size === 0) {
+    return reply.status(503).send({ error: 'No frontend connected. Please open the BgEditor UI first.' })
+  }
+
   broadcast('model:load', { path: modelPath, modelType: type })
   return reply.send({ ok: true })
 })
