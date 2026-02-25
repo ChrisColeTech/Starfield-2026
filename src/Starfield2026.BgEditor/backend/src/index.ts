@@ -192,11 +192,40 @@ app.post<{ Body: { outputPath: string } }>('/api/screenshot', async (request, re
   return reply.send(result)
 })
 
-// Frontend POSTs back the result after Electron captures
-app.post<{ Body: { requestId: string; ok?: boolean; path?: string; size?: number; error?: string } }>(
+// Frontend POSTs back the result after capture (Electron or canvas)
+app.post<{ Body: { requestId: string; ok?: boolean; path?: string; size?: number; error?: string; dataUrl?: string; outputPath?: string } }>(
   '/api/screenshot/result',
   async (request, reply) => {
-    const { requestId, ...result } = request.body
+    const { requestId, dataUrl, outputPath, ...result } = request.body
+
+    // If dataUrl is provided (viewport capture), decode and save to disk
+    if (dataUrl && outputPath) {
+      try {
+        const base64 = dataUrl.replace(/^data:image\/png;base64,/, '')
+        const buf = Buffer.from(base64, 'base64')
+        const dir = path.dirname(outputPath)
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+        fs.writeFileSync(outputPath, buf)
+        const finalResult = { ok: true, path: outputPath, size: buf.length }
+        const pending = pendingScreenshots.get(requestId)
+        if (pending) {
+          clearTimeout(pending.timer)
+          pendingScreenshots.delete(requestId)
+          pending.resolve(finalResult)
+        }
+        return reply.send({ ok: true })
+      } catch (err: any) {
+        const pending = pendingScreenshots.get(requestId)
+        if (pending) {
+          clearTimeout(pending.timer)
+          pendingScreenshots.delete(requestId)
+          pending.resolve({ error: err.message })
+        }
+        return reply.send({ ok: false })
+      }
+    }
+
+    // Standard Electron screenshot result
     const pending = pendingScreenshots.get(requestId)
     if (pending) {
       clearTimeout(pending.timer)
@@ -206,6 +235,30 @@ app.post<{ Body: { requestId: string; ok?: boolean; path?: string; size?: number
     return reply.send({ ok: true })
   }
 )
+
+// Viewport-only screenshot (captures just the 3D canvas)
+app.post<{ Body: { outputPath: string } }>('/api/viewport-screenshot', async (request, reply) => {
+  const { outputPath } = request.body
+  if (!outputPath) return reply.status(400).send({ error: 'Missing outputPath' })
+
+  if (wsClients.size === 0) {
+    return reply.status(503).send({ error: 'No frontend connected.' })
+  }
+
+  const requestId = `vs_${Date.now()}`
+
+  const result = await new Promise<any>((resolve) => {
+    const timer = setTimeout(() => {
+      pendingScreenshots.delete(requestId)
+      resolve({ error: 'Viewport screenshot timed out after 10s' })
+    }, 10000)
+    pendingScreenshots.set(requestId, { resolve, timer })
+    broadcast('viewport:capture', { requestId, outputPath })
+  })
+
+  if (result.error) return reply.status(500).send(result)
+  return reply.send(result)
+})
 
 // Serve model/texture files from any directory on disk.
 // The frontend encodes the manifest's `dir` (absolute path) as a base64url

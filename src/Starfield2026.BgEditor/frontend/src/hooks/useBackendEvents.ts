@@ -118,6 +118,34 @@ function handleEvent(event: any) {
             break
         }
 
+        case 'viewport:capture': {
+            console.log(`[WS] Viewport capture request: ${event.outputPath}`)
+            const captureFn = (window as any).__captureViewport
+            if (captureFn) {
+                const dataUrl = captureFn()
+                if (dataUrl) {
+                    fetch('http://localhost:3001/api/screenshot/result', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ requestId: event.requestId, ok: true, dataUrl, outputPath: event.outputPath }),
+                    }).catch(() => { })
+                } else {
+                    fetch('http://localhost:3001/api/screenshot/result', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ requestId: event.requestId, error: 'No renderer available' }),
+                    }).catch(() => { })
+                }
+            } else {
+                fetch('http://localhost:3001/api/screenshot/result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ requestId: event.requestId, error: 'Viewport not initialized' }),
+                }).catch(() => { })
+            }
+            break
+        }
+
         default:
             console.log(`[WS] Unknown event: ${event.type}`)
     }

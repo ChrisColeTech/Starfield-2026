@@ -25,13 +25,20 @@ export default function Viewport() {
     const container = containerRef.current
     if (!container) return
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true })
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true })
     renderer.setPixelRatio(window.devicePixelRatio)
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.setClearColor(0x1e1e1e)
     renderer.setSize(container.clientWidth, container.clientHeight)
     container.appendChild(renderer.domElement)
     rendererRef.current = renderer
+
+      // Expose viewport capture for MCP screenshot tool
+      ; (window as any).__captureViewport = () => {
+        if (!rendererRef.current || !cameraRef.current) return null
+        rendererRef.current.render(sceneRef.current, cameraRef.current)
+        return rendererRef.current.domElement.toDataURL('image/png')
+      }
 
     const camera = new THREE.PerspectiveCamera(
       45,
