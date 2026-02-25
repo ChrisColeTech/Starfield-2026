@@ -231,6 +231,7 @@ public static class TrinityTextureBaker
                 float remainder = Math.Clamp(1f - maskSum, 0f, 1f);
 
                 // Sample original albedo pixel for remainder (unmasked areas keep original texture)
+                // Convert sRGB albedo to linear for correct compositing
                 Vector3 remainderColor;
                 if (albedoImage != null)
                 {
@@ -240,21 +241,24 @@ public static class TrinityTextureBaker
                     ax = Math.Min(ax, albedoImage.Width - 1);
                     ay = Math.Min(ay, albedoImage.Height - 1);
                     var albPixel = albedoImage[ax, ay];
-                    remainderColor = new Vector3(albPixel.R / 255f, albPixel.G / 255f, albPixel.B / 255f);
+                    remainderColor = new Vector3(
+                        SrgbToLinear(albPixel.R / 255f),
+                        SrgbToLinear(albPixel.G / 255f),
+                        SrgbToLinear(albPixel.B / 255f));
                 }
                 else
                 {
                     remainderColor = baseColor0;
                 }
 
-                // Blend: layer colors where masked, original albedo where unmasked
+                // Blend in linear space: BaseColorLayer values are already linear (shader params)
                 Vector3 color = baseColors[0] * maskR
                               + baseColors[1] * maskG
                               + baseColors[2] * maskB
                               + baseColors[3] * maskA
                               + remainderColor * remainder;
 
-                // Add emission contribution
+                // Add emission contribution (also linear)
                 Vector3 emission = emissionColors[0] * emissionIntensities[0] * maskR
                                  + emissionColors[1] * emissionIntensities[1] * maskG
                                  + emissionColors[2] * emissionIntensities[2] * maskB
@@ -264,10 +268,11 @@ public static class TrinityTextureBaker
                 color += emission;
                 color = Vector3.Clamp(color, Vector3.Zero, Vector3.One);
 
+                // Convert linear result back to sRGB for PNG output
                 result[x, y] = new Rgba32(
-                    (byte)(color.X * 255),
-                    (byte)(color.Y * 255),
-                    (byte)(color.Z * 255),
+                    (byte)(LinearToSrgb(color.X) * 255),
+                    (byte)(LinearToSrgb(color.Y) * 255),
+                    (byte)(LinearToSrgb(color.Z) * 255),
                     255);
             }
         }
@@ -447,6 +452,13 @@ public static class TrinityTextureBaker
         {
             return null;
         }
+    }
+
+    private static float SrgbToLinear(float srgb)
+    {
+        if (srgb <= 0.04045f)
+            return srgb / 12.92f;
+        return MathF.Pow((srgb + 0.055f) / 1.055f, 2.4f);
     }
 
     private static float LinearToSrgb(float linear)

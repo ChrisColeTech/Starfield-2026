@@ -211,23 +211,59 @@ async function main() {
                 const err = await checkBackend()
                 if (err) return { content: [{ type: 'text' as const, text: err }] }
 
-                // Scan for manifests
-                const res = await fetch(`${BACKEND}/api/manifests?dir=${encodeURIComponent(absPath)}`)
-                const manifests = await res.json() as any[]
-
-                if (manifests.length === 0) {
-                    return { content: [{ type: 'text' as const, text: `No manifests found in: ${absPath}` }] }
-                }
-
+                // Backend handles recursive scanning and sends manifests via WS
                 const sendErr = await sendToFrontend(absPath, 'folder')
                 if (sendErr) return { content: [{ type: 'text' as const, text: sendErr }] }
 
-                const summary = [
-                    `✓ Loaded ${manifests.length} manifest(s) in BgEditor:`,
-                    ...manifests.map((m: any) => `  • ${m.name}`),
-                ].join('\n')
+                return { content: [{ type: 'text' as const, text: `✓ Loaded folder in BgEditor: ${absPath}` }] }
+            } catch (err: any) {
+                if (err.cause?.code === 'ECONNREFUSED') {
+                    return { content: [{ type: 'text' as const, text: 'Error: BgEditor is not running. Please start it first.' }] }
+                }
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
 
-                return { content: [{ type: 'text' as const, text: summary }] }
+    async function sendCompare(pathA: string, pathB: string): Promise<string | null> {
+        const res = await fetch(`${BACKEND}/api/compare-models`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pathA, pathB }),
+        })
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+            return `Error: ${(err as any).error}`
+        }
+        return null
+    }
+
+    server.tool(
+        'compare_models',
+        'Compare two models side by side in the BgEditor. Accepts two paths (manifest.json or model folder). Both models are added to the model browser and the first is auto-loaded. Requires the BgEditor to be running.',
+        {
+            pathA: z.string().describe('Path to first manifest.json or model folder'),
+            pathB: z.string().describe('Path to second manifest.json or model folder'),
+        },
+        async ({ pathA, pathB }) => {
+            try {
+                const absA = path.resolve(pathA)
+                const absB = path.resolve(pathB)
+
+                if (!fs.existsSync(absA)) {
+                    return { content: [{ type: 'text' as const, text: `Error: Path A not found: ${absA}` }] }
+                }
+                if (!fs.existsSync(absB)) {
+                    return { content: [{ type: 'text' as const, text: `Error: Path B not found: ${absB}` }] }
+                }
+
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+
+                const sendErr = await sendCompare(absA, absB)
+                if (sendErr) return { content: [{ type: 'text' as const, text: sendErr }] }
+
+                return { content: [{ type: 'text' as const, text: `✓ Loaded 2 models for comparison in BgEditor:\n  A: ${path.basename(absA)}\n  B: ${path.basename(absB)}` }] }
             } catch (err: any) {
                 if (err.cause?.code === 'ECONNREFUSED') {
                     return { content: [{ type: 'text' as const, text: 'Error: BgEditor is not running. Please start it first.' }] }

@@ -65,6 +65,7 @@ interface EditorState {
   // Animation actions
   scanFolder: (dir: string) => Promise<void>
   selectManifest: (index: number) => void
+  loadManifestList: (manifests: any[], dir?: string) => void
   loadFolder: (dir: string, manifest?: any) => Promise<void>
   selectClip: (index: number) => Promise<void>
   tagClip: (index: number, semanticName: string | null) => void
@@ -303,6 +304,18 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
     set({ selectedManifestIndex: index })
     const m = manifests[index]
     if (m?.dir) get().loadFolder(m.dir)
+  },
+
+  loadManifestList: (manifests: any[], dir?: string) => {
+    set({
+      manifests,
+      scanDir: dir || manifests[0]?.dir || '',
+      selectedManifestIndex: 0,
+      scanning: false,
+    })
+    // Auto-load the first manifest
+    const first = manifests[0]
+    if (first?.dir) get().loadFolder(first.dir, first)
   },
 
   loadFolder: async (dir: string, prefetchedManifest?: any) => {

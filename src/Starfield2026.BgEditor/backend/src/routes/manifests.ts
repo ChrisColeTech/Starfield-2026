@@ -115,7 +115,7 @@ function scanAndGenerate(
   return generated
 }
 
-function collectManifests(folderPath: string): Manifest[] {
+export function collectManifests(folderPath: string): Manifest[] {
   const manifests: Manifest[] = []
   let entries: string[]
   try { entries = fs.readdirSync(folderPath) } catch { return manifests }

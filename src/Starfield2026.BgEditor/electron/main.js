@@ -40,7 +40,7 @@ function createWindow() {
   })
 
   mainWindow.loadURL(FRONTEND_URL)
-  // mainWindow.webContents.openDevTools()
+  mainWindow.webContents.openDevTools()
 
   // Forward renderer console to terminal
   mainWindow.webContents.on('console-message', (_e, _level, message) => {

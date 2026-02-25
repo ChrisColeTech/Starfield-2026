@@ -4,7 +4,7 @@ import websocket from '@fastify/websocket'
 import type { WebSocket } from 'ws'
 import fs from 'fs'
 import path from 'path'
-import manifestRoutes from './routes/manifests.js'
+import manifestRoutes, { collectManifests } from './routes/manifests.js'
 import textureRoutes from './routes/textures.js'
 import extractionRoutes from './routes/extraction.js'
 import {
@@ -54,7 +54,54 @@ app.get('/ws', { websocket: true }, (socket) => {
 
 export { broadcast }
 
+// ─── Manifest normalization helpers ───
+
+function normalizeManifest(manifest: any): any {
+  const normalizeClips = (clips: any[]) => clips.map((c: any, i: number) => ({
+    index: c.index ?? i,
+    id: c.id || c.name || `clip_${String(i).padStart(3, '0')}`,
+    name: c.name || c.id || `clip_${i}`,
+    sourceName: c.sourceName || c.name || '',
+    semanticName: c.semanticName || null,
+    semanticSource: c.semanticSource || null,
+    file: c.file || '',
+    frameCount: c.frameCount || 0,
+    fps: c.fps || 30,
+  }))
+
+  if (manifest.models && Array.isArray(manifest.models)) {
+    const rootClips = Array.isArray(manifest.clips) ? manifest.clips : []
+    manifest.models = manifest.models.map((m: any) => ({
+      name: m.name || '',
+      modelFile: m.modelFile || m.file || manifest.modelFile || 'model.dae',
+      clips: normalizeClips(m.clips || rootClips),
+      meshCount: m.meshCount,
+      boneCount: m.boneCount,
+    }))
+  } else if (manifest.modelFile) {
+    const modelName = manifest.modelFile.replace(/\.[^.]+$/, '')
+    manifest.models = [{
+      name: modelName,
+      modelFile: manifest.modelFile,
+      clips: normalizeClips(manifest.clips || []),
+    }]
+  }
+  if (!manifest.mode) manifest.mode = 'split-model-anims'
+  return manifest
+}
+
+function readAndNormalizeManifest(dir: string): any {
+  const manifestPath = path.join(dir, 'manifest.json')
+  if (!fs.existsSync(manifestPath)) {
+    throw new Error(`manifest.json not found in ${dir}`)
+  }
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
+  manifest.dir = dir
+  return normalizeManifest(manifest)
+}
+
 // ─── MCP → Frontend bridge ───
+
 app.post<{ Body: { path: string; type: 'manifest' | 'dae' | 'folder' } }>('/api/load-model', async (request, reply) => {
   const { path: modelPath, type } = request.body
   if (!modelPath) return reply.status(400).send({ error: 'Missing path' })
@@ -64,53 +111,47 @@ app.post<{ Body: { path: string; type: 'manifest' | 'dae' | 'folder' } }>('/api/
   }
 
   try {
-    // Read manifest data from disk and send it directly via WS
-    const dir = type === 'dae' || type === 'manifest'
-      ? modelPath.replace(/[\\/][^\\/]+$/, '').replace(/\\/g, '/')
-      : modelPath.replace(/\\/g, '/')
-
-    const manifestPath = path.join(dir, 'manifest.json')
-    if (!fs.existsSync(manifestPath)) {
-      return reply.status(404).send({ error: `manifest.json not found in ${dir}` })
+    if (type === 'folder') {
+      // Recursively scan folder for manifests
+      const dir = modelPath.replace(/\\/g, '/')
+      const raw = collectManifests(dir)
+      if (raw.length === 0) {
+        return reply.status(404).send({ error: `No manifests found in ${dir}` })
+      }
+      const manifests = raw.map(m => normalizeManifest(m))
+      broadcast('model:load', { dir, modelType: 'folder', manifests, manifest: manifests[0] })
+      return reply.send({ ok: true, count: manifests.length })
     }
 
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
-    manifest.dir = dir
-
-    // Normalize manifest to ensure models[] array exists (same as /api/manifests/read)
-    const normalizeClips = (clips: any[]) => clips.map((c: any, i: number) => ({
-      index: c.index ?? i,
-      id: c.id || c.name || `clip_${String(i).padStart(3, '0')}`,
-      name: c.name || c.id || `clip_${i}`,
-      sourceName: c.sourceName || c.name || '',
-      semanticName: c.semanticName || null,
-      semanticSource: c.semanticSource || null,
-      file: c.file || '',
-      frameCount: c.frameCount || 0,
-      fps: c.fps || 30,
-    }))
-
-    if (manifest.models && Array.isArray(manifest.models)) {
-      const rootClips = Array.isArray(manifest.clips) ? manifest.clips : []
-      manifest.models = manifest.models.map((m: any) => ({
-        name: m.name || '',
-        modelFile: m.modelFile || m.file || manifest.modelFile || 'model.dae',
-        clips: normalizeClips(m.clips || rootClips),
-        meshCount: m.meshCount,
-        boneCount: m.boneCount,
-      }))
-    } else if (manifest.modelFile) {
-      const modelName = manifest.modelFile.replace(/\.[^.]+$/, '')
-      manifest.models = [{
-        name: modelName,
-        modelFile: manifest.modelFile,
-        clips: normalizeClips(manifest.clips || []),
-      }]
-    }
-    if (!manifest.mode) manifest.mode = 'split-model-anims'
-
-    broadcast('model:load', { dir, modelType: type, manifest })
+    // Single file (manifest or dae)
+    const dir = modelPath.replace(/[\\/][^\\/]+$/, '').replace(/\\/g, '/')
+    const manifest = readAndNormalizeManifest(dir)
+    broadcast('model:load', { dir, modelType: type, manifests: [manifest], manifest })
     return reply.send({ ok: true })
+  } catch (err: any) {
+    return reply.status(500).send({ error: err.message })
+  }
+})
+
+app.post<{ Body: { pathA: string; pathB: string } }>('/api/compare-models', async (request, reply) => {
+  const { pathA, pathB } = request.body
+  if (!pathA || !pathB) return reply.status(400).send({ error: 'Missing pathA or pathB' })
+
+  if (wsClients.size === 0) {
+    return reply.status(503).send({ error: 'No frontend connected. Please open the BgEditor UI first.' })
+  }
+
+  try {
+    // Resolve dirs — strip filename if path points to a file
+    const dirA = fs.statSync(pathA).isDirectory() ? pathA.replace(/\\/g, '/') : pathA.replace(/[\\/][^\\/]+$/, '').replace(/\\/g, '/')
+    const dirB = fs.statSync(pathB).isDirectory() ? pathB.replace(/\\/g, '/') : pathB.replace(/[\\/][^\\/]+$/, '').replace(/\\/g, '/')
+
+    const manifestA = readAndNormalizeManifest(dirA)
+    const manifestB = readAndNormalizeManifest(dirB)
+    const manifests = [manifestA, manifestB]
+
+    broadcast('model:compare', { manifests, manifest: manifestA })
+    return reply.send({ ok: true, models: [manifestA.name || dirA, manifestB.name || dirB] })
   } catch (err: any) {
     return reply.status(500).send({ error: err.message })
   }

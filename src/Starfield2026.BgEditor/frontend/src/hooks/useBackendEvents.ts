@@ -59,12 +59,25 @@ function handleEvent(event: any) {
             console.log(`[WS] Load model: modelType=${modelType} dir=${event.dir}`)
             const store = useEditorStore.getState()
 
-            if (modelType === 'folder') {
-                store.loadFolder(event.dir, event.manifest)
+            if (event.manifests && Array.isArray(event.manifests)) {
+                // Folder or single load — populate model browser + auto-load first
+                store.loadManifestList(event.manifests, event.dir)
             } else if (event.manifest) {
+                // Legacy fallback
                 store.loadManifestData(event.manifest)
             }
-            showToast(`Loading model from ${event.dir}`)
+            const count = event.manifests?.length || 1
+            showToast(`Loaded ${count} model(s) from ${event.dir}`)
+            break
+        }
+
+        case 'model:compare': {
+            console.log(`[WS] Compare models: ${event.manifests?.length} models`)
+            const store = useEditorStore.getState()
+            if (event.manifests && Array.isArray(event.manifests)) {
+                store.loadManifestList(event.manifests)
+            }
+            showToast(`Comparing ${event.manifests?.length || 0} models`)
             break
         }
 
