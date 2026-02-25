@@ -61,13 +61,17 @@ class GAMERIG_OT_generate(bpy.types.Operator):
                     bone.parent = parent
 
         # Extend stub tails toward first child for visibility
+        MAX_TAIL = 30.0  # cap bone length for root/long bones
         for bone in edit_bones:
             children = bone.children
             if children:
                 child_head = children[0].head
                 direction = child_head - bone.head
                 if direction.length > 0.01:
-                    bone.tail = child_head
+                    if direction.length > MAX_TAIL:
+                        bone.tail = bone.head + direction.normalized() * MAX_TAIL
+                    else:
+                        bone.tail = child_head
             else:
                 if bone.parent:
                     direction = bone.head - bone.parent.head

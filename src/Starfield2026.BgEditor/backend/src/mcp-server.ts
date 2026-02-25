@@ -135,6 +135,69 @@ async function main() {
         },
     )
 
+    server.tool(
+        'load_model',
+        'Load a model into the BgEditor frontend. Accepts a manifest.json path, a .dae model path, or a folder containing manifests. Requires the BgEditor to be running.',
+        {
+            path: z.string().describe('Path to manifest.json, .dae model file, or folder containing manifests'),
+        },
+        async ({ path: inputPath }) => {
+            try {
+                const absPath = path.resolve(inputPath)
+
+                if (!fs.existsSync(absPath)) {
+                    return { content: [{ type: 'text' as const, text: `Error: Path not found: ${absPath}` }] }
+                }
+
+                // Check if backend is running
+                try {
+                    const res = await fetch('http://localhost:3001/api/manifests?dir=' + encodeURIComponent(absPath))
+                    if (!res.ok && res.status !== 404) throw new Error()
+                } catch {
+                    return { content: [{ type: 'text' as const, text: 'Error: BgEditor is not running. Please start it first (npm run dev in the backend folder).' }] }
+                }
+
+                const stat = fs.statSync(absPath)
+
+                if (stat.isDirectory()) {
+                    // Folder — scan for manifests
+                    const res = await fetch('http://localhost:3001/api/manifests?dir=' + encodeURIComponent(absPath))
+                    const manifests = await res.json() as any[]
+
+                    if (manifests.length === 0) {
+                        return { content: [{ type: 'text' as const, text: `No manifests found in: ${absPath}` }] }
+                    }
+
+                    const summary = [
+                        `Found ${manifests.length} manifest(s) in ${absPath}:`,
+                        ...manifests.map((m: any) => `  • ${m.name} (${m.clipCount} clips, ${m.textures?.length || 0} textures)`),
+                        '',
+                        'Ready to load in editor via WebSocket (not yet wired).',
+                    ].join('\n')
+
+                    return { content: [{ type: 'text' as const, text: summary }] }
+                }
+
+                // Single file
+                const ext = path.extname(absPath).toLowerCase()
+
+                if (ext === '.json') {
+                    const manifest = JSON.parse(fs.readFileSync(absPath, 'utf-8'))
+                    const name = manifest.name || path.basename(path.dirname(absPath))
+                    return { content: [{ type: 'text' as const, text: `Manifest: ${name}\nPath: ${absPath}\n\nReady to load in editor via WebSocket (not yet wired).` }] }
+                }
+
+                if (ext === '.dae') {
+                    return { content: [{ type: 'text' as const, text: `Model: ${path.basename(absPath)}\nPath: ${absPath}\n\nReady to load in editor via WebSocket (not yet wired).` }] }
+                }
+
+                return { content: [{ type: 'text' as const, text: `Error: Unsupported file type "${ext}". Provide a .json manifest, .dae model, or folder.` }] }
+            } catch (err: any) {
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
     const transport = new StdioServerTransport()
     await server.connect(transport)
 }
