@@ -37,6 +37,15 @@ function broadcast(type: string, data: Record<string, any>) {
 app.get('/ws', { websocket: true }, (socket) => {
   wsClients.add(socket)
   console.log(`[WS] Client connected (${wsClients.size} total)`)
+
+  // Relay incoming messages to all OTHER clients (MCP → frontend)
+  socket.on('message', (raw) => {
+    const msg = raw.toString()
+    for (const ws of wsClients) {
+      if (ws !== socket && ws.readyState === 1) ws.send(msg)
+    }
+  })
+
   socket.on('close', () => {
     wsClients.delete(socket)
     console.log(`[WS] Client disconnected (${wsClients.size} total)`)

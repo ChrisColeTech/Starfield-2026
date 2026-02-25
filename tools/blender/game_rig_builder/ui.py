@@ -80,11 +80,34 @@ class GAMERIG_OT_generate(bpy.types.Operator):
 
         bpy.ops.object.mode_set(mode='OBJECT')
 
-        # Create bone collection so bones appear in properties panel
-        col = arm_data.collections.new("Skeleton")
-        col.is_visible = True
-        for bone in arm_data.bones:
-            col.assign(bone)
+        # Organize bones into collections by body part
+        bone_groups = {
+            'Root':        ['tr0010_00', 'Origin'],
+            'Torso':       ['Waist', 'Spine2', 'Spine3', 'Hips'],
+            'Head':        ['Neck', 'Head'],
+            'Left Arm':    ['LShoulder', 'LArm', 'LForeArm', 'LHand', 'LArmEX', 'LForeArmEX'],
+            'Right Arm':   ['RShoulder', 'RArm', 'RForeArm', 'RHand', 'RArmEX', 'RForeArmEX', 'EffBall'],
+            'Left Fingers': [f'LFinger{l}{n}' for l in 'ABCDE' for n in '123'],
+            'Right Fingers': [f'RFinger{l}{n}' for l in 'ABCDE' for n in '123'],
+            'Left Leg':    ['LThigh', 'LLeg', 'LFoot', 'LToe'],
+            'Right Leg':   ['RThigh', 'RLeg', 'RFoot', 'RToe'],
+        }
+        assigned = set()
+        for group_name, bone_names in bone_groups.items():
+            col = arm_data.collections.new(group_name)
+            col.is_visible = True
+            for bname in bone_names:
+                bone = arm_data.bones.get(bname)
+                if bone:
+                    col.assign(bone)
+                    assigned.add(bname)
+        # Catch any unassigned bones
+        if len(assigned) < len(arm_data.bones):
+            col = arm_data.collections.new("Other")
+            col.is_visible = True
+            for bone in arm_data.bones:
+                if bone.name not in assigned:
+                    col.assign(bone)
 
         arm_obj.data.display_type = 'STICK'
         arm_obj.show_in_front = True
@@ -92,8 +115,6 @@ class GAMERIG_OT_generate(bpy.types.Operator):
         # Rotate to match Collada Y-up -> Blender Z-up
         from math import radians
         arm_obj.rotation_euler[0] = radians(90)
-
-        _set_front_view(context)
 
         self.report({'INFO'}, f"{rig_name} rig: {len(arm_data.bones)} bones")
         return {'FINISHED'}
