@@ -274,6 +274,26 @@ async function main() {
     )
 
     server.tool(
+        'clear_all',
+        'Clear all loaded models, animations, and textures from the BgEditor. Resets the UI to its initial empty state.',
+        {},
+        async () => {
+            try {
+                const err = await checkBackend()
+                if (err) return { content: [{ type: 'text' as const, text: err }] }
+
+                await fetch(`${BACKEND}/api/clear`, { method: 'POST' })
+                return { content: [{ type: 'text' as const, text: '✓ BgEditor cleared — all models, animations, and textures removed.' }] }
+            } catch (err: any) {
+                if (err.cause?.code === 'ECONNREFUSED') {
+                    return { content: [{ type: 'text' as const, text: 'Error: BgEditor is not running.' }] }
+                }
+                return { content: [{ type: 'text' as const, text: `Error: ${err.message}` }] }
+            }
+        },
+    )
+
+    server.tool(
         'save_ui_screenshot',
         'Capture a screenshot of the entire BgEditor app window and save as PNG. Requires the BgEditor to be running in Electron. Saves to backend/outputs/ by default.',
         {

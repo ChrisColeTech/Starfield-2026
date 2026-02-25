@@ -90,6 +90,13 @@ function handleEvent(event: any) {
             showToast(`Rendered ${event.files?.length || 0} angles to ${event.outputDir}`)
             break
 
+        case 'model:clear': {
+            console.log('[WS] Clear all')
+            useEditorStore.getState().clearAll()
+            showToast('Editor cleared')
+            break
+        }
+
         case 'screenshot:capture': {
             console.log(`[WS] Screenshot request: ${event.outputPath}`)
             const api = (window as any).electronAPI

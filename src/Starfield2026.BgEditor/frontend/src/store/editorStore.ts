@@ -72,6 +72,7 @@ interface EditorState {
   autoTag: () => void
   saveManifest: () => Promise<void>
   resetAnimations: () => void
+  clearAll: () => void
 }
 
 // ─────────────────────────── Helpers ───────────────────────────
@@ -307,13 +308,19 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   },
 
   loadManifestList: (manifests: any[], dir?: string) => {
+    const existing = get().manifests
+    // Dedup by dir — new manifests override existing ones with same dir
+    const existingDirs = new Set(manifests.map((m: any) => m.dir))
+    const kept = existing.filter((m: any) => !existingDirs.has(m.dir))
+    const merged = [...kept, ...manifests]
+
     set({
-      manifests,
-      scanDir: dir || manifests[0]?.dir || '',
-      selectedManifestIndex: 0,
+      manifests: merged,
+      scanDir: dir || manifests[0]?.dir || get().scanDir,
+      selectedManifestIndex: kept.length, // select first new one
       scanning: false,
     })
-    // Auto-load the first manifest
+    // Auto-load the first new manifest
     const first = manifests[0]
     if (first?.dir) get().loadFolder(first.dir, first)
   },
@@ -458,6 +465,31 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
       clipLoading: false,
       activeModelIndex: 0,
       activeClipIndex: -1,
+    })
+  },
+
+  clearAll: () => {
+    set({
+      sceneName: null,
+      manifest: null,
+      scene: null,
+      animations: [],
+      textures: [],
+      selectedTextureIndex: 0,
+      loading: false,
+      error: null,
+      animationPlaying: true,
+      activeClipIndex: 0,
+      folderPath: null,
+      animManifest: null,
+      dirty: false,
+      saving: false,
+      clipLoading: false,
+      activeModelIndex: 0,
+      scanDir: '',
+      manifests: [],
+      scanning: false,
+      selectedManifestIndex: -1,
     })
   },
 }))

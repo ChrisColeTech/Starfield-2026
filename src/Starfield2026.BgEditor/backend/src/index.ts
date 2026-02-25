@@ -157,6 +157,13 @@ app.post<{ Body: { pathA: string; pathB: string } }>('/api/compare-models', asyn
   }
 })
 
+// ─── Clear all ───
+
+app.post('/api/clear', async (_request, reply) => {
+  broadcast('model:clear', {})
+  return reply.send({ ok: true })
+})
+
 // ─── Screenshot capture (MCP → WS → Electron IPC → file) ───
 
 const pendingScreenshots = new Map<string, { resolve: (v: any) => void; timer: NodeJS.Timeout }>()
