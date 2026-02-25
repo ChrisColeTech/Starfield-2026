@@ -6,8 +6,8 @@ import type { SplitManifest } from '../types/animation'
 import { loadScene, loadModelOnly, loadBakedClip } from '../services/sceneService'
 import type { Manifest } from '../services/sceneService'
 import { applyAdjustment, updateThreeTexture } from '../services/textureProcessor'
-import type { BoneData, GameType } from '../data/skeletons'
-import { SKELETONS } from '../data/skeletons'
+import type { BoneData, RigTemplate, GameType } from '../data/skeletons'
+import { RIG_TEMPLATES } from '../data/skeletons'
 
 const API_BASE = 'http://localhost:3001'
 
@@ -54,6 +54,7 @@ interface EditorState {
 
   // Auto-rig state
   skeleton: BoneData[] | null
+  rigTemplate: RigTemplate
   gameType: GameType
 
   // Editor actions
@@ -81,7 +82,8 @@ interface EditorState {
   clearAll: () => void
 
   // Rig actions
-  generateRig: (gameType?: GameType) => void
+  generateRig: (template?: RigTemplate) => void
+  setRigTemplate: (template: RigTemplate) => void
   setGameType: (gameType: GameType) => void
   clearRig: () => void
 }
@@ -163,6 +165,7 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
 
   // Auto-rig state
   skeleton: null,
+  rigTemplate: 'human' as RigTemplate,
   gameType: 'SUNMOON' as GameType,
 
   // ─────────────── Editor actions ───────────────
@@ -506,20 +509,25 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
       scanning: false,
       selectedManifestIndex: -1,
       skeleton: null,
+      rigTemplate: 'human' as RigTemplate,
       gameType: 'SUNMOON',
     })
   },
 
   // ── Rig actions ──
 
-  generateRig: (gameType?: GameType) => {
-    const gt = gameType ?? get().gameType
-    const bones = SKELETONS[gt]
+  generateRig: (template?: RigTemplate) => {
+    const t = template ?? get().rigTemplate
+    const bones = RIG_TEMPLATES[t]
     if (!bones || bones.length === 0) {
-      console.warn(`No skeleton data for ${gt}`)
+      console.warn(`No skeleton data for ${t}`)
       return
     }
-    set({ skeleton: bones, gameType: gt })
+    set({ skeleton: bones, rigTemplate: t })
+  },
+
+  setRigTemplate: (template: RigTemplate) => {
+    set({ rigTemplate: template })
   },
 
   setGameType: (gameType: GameType) => {

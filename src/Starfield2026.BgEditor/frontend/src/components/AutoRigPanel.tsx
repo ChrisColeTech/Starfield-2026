@@ -1,37 +1,46 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, Bone, Play, Square, RotateCcw, Import, Trash2 } from 'lucide-react'
 import { useEditorStore } from '../store/editorStore'
-import { BONE_COLLECTIONS, GAME_LABELS, type GameType } from '../data/skeletons'
+import {
+    RIG_TEMPLATE_LABELS,
+    GAME_LABELS,
+    detectBoneCollections,
+    type RigTemplate,
+    type GameType,
+} from '../data/skeletons'
 
 export default function AutoRigPanel() {
     const skeleton = useEditorStore(s => s.skeleton)
+    const rigTemplate = useEditorStore(s => s.rigTemplate)
     const gameType = useEditorStore(s => s.gameType)
     const generateRig = useEditorStore(s => s.generateRig)
+    const setRigTemplate = useEditorStore(s => s.setRigTemplate)
     const setGameType = useEditorStore(s => s.setGameType)
     const clearRig = useEditorStore(s => s.clearRig)
 
     const [collectionsOpen, setCollectionsOpen] = useState(true)
-    const [visibleGroups, setVisibleGroups] = useState<Set<string>>(
-        new Set(BONE_COLLECTIONS.map(c => c.name))
-    )
 
     const boneCount = skeleton?.length ?? 0
+    const templateOptions = Object.entries(RIG_TEMPLATE_LABELS) as [RigTemplate, string][]
     const gameOptions = Object.entries(GAME_LABELS) as [GameType, string][]
 
-    const toggleGroup = (name: string) => {
-        setVisibleGroups(prev => {
-            const next = new Set(prev)
-            if (next.has(name)) next.delete(name)
-            else next.add(name)
-            return next
-        })
-    }
+    // Auto-detect bone collections from skeleton names
+    const collections = skeleton ? detectBoneCollections(skeleton) : []
 
     return (
         <div className="flex flex-col h-full text-[13px] select-none">
             {/* ── Auto Rig ── */}
             <Section title="AUTO RIG">
                 <div className="flex flex-col gap-1.5">
+                    <select
+                        value={rigTemplate}
+                        onChange={e => setRigTemplate(e.target.value as RigTemplate)}
+                        className="w-full h-7 px-2 rounded text-[13px] bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] focus:outline-none focus:border-[hsl(var(--ring))]"
+                    >
+                        {templateOptions.map(([value, label]) => (
+                            <option key={value} value={value}>{label}</option>
+                        ))}
+                    </select>
                     <ActionButton
                         icon={<Bone size={14} />}
                         label="New Rig"
@@ -41,7 +50,6 @@ export default function AutoRigPanel() {
                         icon={<RotateCcw size={14} />}
                         label="Reset View"
                         onClick={() => {
-                            // Dispatch a custom event the viewport listens for
                             window.dispatchEvent(new CustomEvent('viewport:resetView'))
                         }}
                     />
@@ -54,19 +62,19 @@ export default function AutoRigPanel() {
                     <ActionButton
                         icon={<Import size={14} />}
                         label="Load Model"
-                        disabled={true}
+                        disabled
                         onClick={() => { }}
                     />
                     <ActionButton
                         icon={<Play size={14} />}
                         label="Load Animation"
-                        disabled={true}
+                        disabled
                         onClick={() => { }}
                     />
                     <ActionButton
                         icon={<Square size={14} />}
                         label="Unload Animation"
-                        disabled={true}
+                        disabled
                         onClick={() => { }}
                     />
                 </div>
@@ -77,7 +85,7 @@ export default function AutoRigPanel() {
                 <ActionButton
                     icon={<Bone size={14} />}
                     label="Fit Rig to Model"
-                    disabled={true}
+                    disabled
                     onClick={() => { }}
                 />
             </Section>
@@ -88,7 +96,7 @@ export default function AutoRigPanel() {
                     <select
                         value={gameType}
                         onChange={e => setGameType(e.target.value as GameType)}
-                        className="w-full h-7 px-2 bg-muted border border-border rounded text-foreground text-[13px] focus:outline-none focus:border-primary"
+                        className="w-full h-7 px-2 rounded text-[13px] bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] focus:outline-none focus:border-[hsl(var(--ring))]"
                     >
                         {gameOptions.map(([value, label]) => (
                             <option key={value} value={value}>{label}</option>
@@ -118,46 +126,68 @@ export default function AutoRigPanel() {
                     open={collectionsOpen}
                     onToggle={() => setCollectionsOpen(!collectionsOpen)}
                 >
-                    <div className="flex flex-col gap-0.5">
-                        {BONE_COLLECTIONS.map(col => {
-                            const groupBones = skeleton.filter(b => col.bones.includes(b.name))
-                            if (groupBones.length === 0) return null
-                            const visible = visibleGroups.has(col.name)
-                            return (
-                                <div key={col.name}>
-                                    <button
-                                        className="w-full flex items-center gap-1.5 px-1 py-0.5 text-[12px] bg-transparent border-none cursor-pointer hover:bg-muted text-foreground rounded"
-                                        onClick={() => toggleGroup(col.name)}
-                                    >
-                                        <span
-                                            className="w-2.5 h-2.5 rounded-sm shrink-0"
-                                            style={{ backgroundColor: col.color }}
-                                        />
-                                        <span className="flex-1 text-left">{col.name}</span>
-                                        <span className="text-muted-foreground text-[11px]">
-                                            {groupBones.length}
-                                        </span>
-                                    </button>
-                                    {visible && (
-                                        <div className="ml-5 text-[11px] text-muted-foreground">
-                                            {groupBones.map(b => (
-                                                <div key={b.name} className="py-px hover:text-foreground cursor-default">
-                                                    {b.name}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )
-                        })}
-                    </div>
+                    <BoneCollectionsList collections={collections} skeleton={skeleton} />
                 </Section>
             )}
         </div>
     )
 }
 
-// ── Reusable sub-components ──
+// ── Sub-components (theme-compliant, no hardcoded colors in UI) ──
+
+function BoneCollectionsList({
+    collections,
+    skeleton,
+}: {
+    collections: { name: string; color: string; bones: string[] }[]
+    skeleton: { name: string }[]
+}) {
+    const [expanded, setExpanded] = useState<Set<string>>(new Set())
+
+    const toggle = (name: string) => {
+        setExpanded(prev => {
+            const next = new Set(prev)
+            if (next.has(name)) next.delete(name)
+            else next.add(name)
+            return next
+        })
+    }
+
+    return (
+        <div className="flex flex-col gap-0.5">
+            {collections.map(col => {
+                const isOpen = expanded.has(col.name)
+                return (
+                    <div key={col.name}>
+                        <button
+                            className="w-full flex items-center gap-1.5 px-1 py-0.5 text-[12px] bg-transparent border-none cursor-pointer rounded text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]"
+                            onClick={() => toggle(col.name)}
+                        >
+                            <span
+                                className="w-2.5 h-2.5 rounded-sm shrink-0"
+                                style={{ backgroundColor: col.color }}
+                            />
+                            {isOpen ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+                            <span className="flex-1 text-left">{col.name}</span>
+                            <span className="text-[hsl(var(--muted-foreground))] text-[11px]">
+                                {col.bones.length}
+                            </span>
+                        </button>
+                        {isOpen && (
+                            <div className="ml-6 text-[11px] text-[hsl(var(--muted-foreground))]">
+                                {col.bones.map(bname => (
+                                    <div key={bname} className="py-px hover:text-[hsl(var(--foreground))] cursor-default">
+                                        {bname}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )
+            })}
+        </div>
+    )
+}
 
 function Section({
     title,
@@ -173,9 +203,9 @@ function Section({
     onToggle?: () => void
 }) {
     return (
-        <div className="border-b border-border">
+        <div className="border-b border-[hsl(var(--border))]">
             <button
-                className="w-full flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground bg-transparent border-none cursor-pointer hover:text-foreground"
+                className="w-full flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider bg-transparent border-none cursor-pointer text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
                 onClick={onToggle}
             >
                 {collapsible && (
@@ -203,14 +233,14 @@ function ActionButton({
     disabled?: boolean
     danger?: boolean
 }) {
+    const base = 'w-full h-8 flex items-center gap-2 px-3 rounded border text-[13px] cursor-pointer transition-colors'
+    const normal = 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--secondary))]'
+    const dangerCls = 'bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] border-[hsl(var(--destructive)/0.3)] hover:bg-[hsl(var(--destructive)/0.2)]'
+    const disabledCls = disabled ? 'opacity-40 cursor-not-allowed' : ''
+
     return (
         <button
-            className={`w-full h-8 flex items-center gap-2 px-3 rounded border border-border text-[13px] cursor-pointer transition-colors
-        ${danger
-                    ? 'bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/30'
-                    : 'bg-muted text-foreground hover:bg-muted/80'
-                }
-        ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+            className={`${base} ${danger ? dangerCls : normal} ${disabledCls}`}
             onClick={onClick}
             disabled={disabled}
         >

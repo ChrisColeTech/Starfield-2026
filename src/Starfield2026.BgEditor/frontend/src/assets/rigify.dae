@@ -1,0 +1,1741 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <asset>
+    <contributor>
+      <author>Blender User</author>
+      <authoring_tool>Blender 4.0.0 commit date:2023-11-13, commit time:17:26, hash:878f71061b8e</authoring_tool>
+    </contributor>
+    <created>2026-02-25T06:56:08</created>
+    <modified>2026-02-25T06:56:08</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_images/>
+  <library_controllers/>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="metarig" name="metarig" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+        <node id="metarig_spine" name="spine" sid="spine" type="JOINT">
+          <matrix sid="transform">1 0 0 0 0 -0.2496395 -0.9683388 0.0552 0 0.9683388 -0.2496394 1.0099 0 0 0 1</matrix>
+          <node id="metarig_spine_001" name="spine.001" sid="spine_001" type="JOINT">
+            <matrix sid="transform">1 0 0 0 0 0.9916856 0.1286845 0.1522195 0 -0.1286845 0.9916855 -1.49012e-8 0 0 0 1</matrix>
+            <node id="metarig_spine_002" name="spine.002" sid="spine_002" type="JOINT">
+              <matrix sid="transform">1 0 0 0 0 0.9879986 0.1544628 0.1366368 0 -0.1544628 0.9879987 2.59024e-9 0 0 0 1</matrix>
+              <node id="metarig_spine_003" name="spine.003" sid="spine_003" type="JOINT">
+                <matrix sid="transform">1 0 0 0 0 0.9999947 -0.003254294 0.1728875 0 0.003254293 0.9999947 0 0 0 0 1</matrix>
+                <node id="metarig_spine_004" name="spine.004" sid="spine_004" type="JOINT">
+                  <matrix sid="transform">1 0 0 0 0 0.9186037 -0.3951799 0.1925785 0 0.3951799 0.9186038 1.86265e-9 0 0 0 1</matrix>
+                  <node id="metarig_spine_005" name="spine.005" sid="spine_005" type="JOINT">
+                    <matrix sid="transform">1 0 0 0 0 0.9820042 0.1888595 0.06616349 0 -0.1888596 0.9820042 -7.45058e-9 0 0 0 1</matrix>
+                    <node id="metarig_spine_006" name="spine.006" sid="spine_006" type="JOINT">
+                      <matrix sid="transform">1 0 0 0 0 0.9824361 0.1865991 0.06270123 0 -0.1865991 0.9824362 2.23517e-8 0 0 0 1</matrix>
+                      <node id="metarig_face" name="face" sid="face" type="JOINT">
+                        <matrix sid="transform">1 0 0 0 0 0.9999999 0 -2.20835e-9 0 0 0.9999999 -1.86265e-9 0 0 0 1</matrix>
+                        <node id="metarig_nose" name="nose" sid="nose" type="JOINT">
+                          <matrix sid="transform">1 0 0 0 0 -0.7938364 -0.6081312 0.1165 0 0.6081312 -0.7938359 0.1289 0 0 0 1</matrix>
+                          <node id="metarig_nose_001" name="nose.001" sid="nose_001" type="JOINT">
+                            <matrix sid="transform">1 0 0 0 0 0.994795 0.1018981 0.04900262 0 -0.1018981 0.9947948 -5.96046e-8 0 0 0 1</matrix>
+                            <node id="metarig_nose_002" name="nose.002" sid="nose_002" type="JOINT">
+                              <matrix sid="transform">1 0 0 0 0 -0.3406658 -0.9401845 0.01910014 0 0.9401845 -0.3406656 -1.19209e-7 0 0 0 1</matrix>
+                              <node id="metarig_nose_003" name="nose.003" sid="nose_003" type="JOINT">
+                                <matrix sid="transform">1 0 0 0 0 0.9402526 -0.3404778 0.01209342 0 0.3404777 0.9402526 -8.19564e-8 0 0 0 1</matrix>
+                                <node id="metarig_nose_004" name="nose.004" sid="nose_004" type="JOINT">
+                                  <matrix sid="transform">1 0 0 0 0 0.1141205 0.9934669 0.01482734 0 -0.9934669 0.1141206 -1.39698e-8 0 0 0 1</matrix>
+                                  <extra>
+                                    <technique profile="blender">
+                                      <connect sid="connect" type="bool">1</connect>
+                                      <collections type="string">Face</collections>
+                                      <tip_x sid="tip_x" type="float">0</tip_x>
+                                      <tip_y sid="tip_y" type="float">7.99999e-4</tip_y>
+                                      <tip_z sid="tip_z" type="float">-0.01490008</tip_z>
+                                    </technique>
+                                  </extra>
+                                </node>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Face</collections>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Face</collections>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_lip_T_L" name="lip.T.L" sid="lip_T_L" type="JOINT">
+                          <matrix sid="transform">0.2674554 0.9633066 -0.02253924 0 -0.02253906 0.02963941 0.9993064 0.03270005 0.9633066 -0.2667619 0.02963924 0.1463 0 0 0 1</matrix>
+                          <node id="metarig_lip_T_L_001" name="lip.T.L.001" sid="lip_T_L_001" type="JOINT">
+                            <matrix sid="transform">0.8400406 -0.4748296 -0.2624287 0 0.5331222 0.8121442 0.2370706 0.02024278 0.1005619 -0.3390554 0.9353763 4.98258e-8 0 0 0 1</matrix>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                                <roll sid="roll" type="float">0.02359998</roll>
+                                <tip_x sid="tip_x" type="float">0.01569998</tip_x>
+                                <tip_y sid="tip_y" type="float">0.0162</tip_y>
+                                <tip_z sid="tip_z" type="float">-0.007200002</tip_z>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_lip_B_L" name="lip.B.L" sid="lip_B_L" type="JOINT">
+                          <matrix sid="transform">0.4212911 0.8875263 -0.1865769 0 -0.07675234 0.2398774 0.9677643 0.01649998 0.9036718 -0.3933902 0.169178 0.142 0 0 0 1</matrix>
+                          <node id="metarig_lip_B_L_001" name="lip.B.L.001" sid="lip_B_L_001" type="JOINT">
+                            <matrix sid="transform">0.985046 -0.07875147 0.1532411 2.98023e-8 0.07620598 0.99684 0.022424 0.02084451 -0.1545228 -0.01041074 0.9879345 2.79397e-8 0 0 0 1</matrix>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                                <roll sid="roll" type="float">0.07309997</roll>
+                                <tip_x sid="tip_x" type="float">0.01669996</tip_x>
+                                <tip_y sid="tip_y" type="float">0.00909996</tip_y>
+                                <tip_z sid="tip_z" type="float">0.004599928</tip_z>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <roll sid="roll" type="float">-0.07889997</roll>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_jaw" name="jaw" sid="jaw" type="JOINT">
+                          <matrix sid="transform">1 0 0 0 0 -0.08160774 -0.9966645 -0.03740013 0 0.9966645 -0.08160781 0.06979999 0 0 0 1</matrix>
+                          <node id="metarig_chin" name="chin" sid="chin" type="JOINT">
+                            <matrix sid="transform">1 0 0 0 0 0.2805414 0.9598419 0.05759208 0 -0.9598418 0.2805414 -1.03377e-7 0 0 0 1</matrix>
+                            <node id="metarig_chin_001" name="chin.001" sid="chin_001" type="JOINT">
+                              <matrix sid="transform">1 0 0 0 0 0.8648375 0.5020519 0.03212852 0 -0.5020519 0.8648374 1.49012e-8 0 0 0 1</matrix>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Face</collections>
+                                  <tip_x sid="tip_x" type="float">0</tip_x>
+                                  <tip_y sid="tip_y" type="float">0.003499984</tip_y>
+                                  <tip_z sid="tip_z" type="float">0.02170002</tip_z>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_ear_L" name="ear.L" sid="ear_L" type="JOINT">
+                          <matrix sid="transform">0.9610588 0.1741024 -0.2146029 0.0919 -0.184384 0.982435 -0.0287021 0.08090007 0.2058363 0.06715374 0.9762794 0.006199997 0 0 0 1</matrix>
+                          <node id="metarig_ear_L_001" name="ear.L.001" sid="ear_L_001" type="JOINT">
+                            <matrix sid="transform">0.8919428 0.4272248 -0.1480442 7.45058e-9 0.05106281 0.2301513 0.9718142 0.04020618 0.4492556 -0.8743622 0.1834666 3.72529e-9 0 0 0 1</matrix>
+                            <node id="metarig_ear_L_002" name="ear.L.002" sid="ear_L_002" type="JOINT">
+                              <matrix sid="transform">0.7609141 0.1607186 -0.6286333 2.23517e-8 0.6488528 -0.1879259 0.7373428 0.03305664 3.68282e-4 -0.9689448 -0.2472784 2.73576e-8 0 0 0 1</matrix>
+                              <node id="metarig_ear_L_003" name="ear.L.003" sid="ear_L_003" type="JOINT">
+                                <matrix sid="transform">0.6547865 -0.4869545 -0.5780399 1.49012e-8 0.7056632 0.6678172 0.2367696 0.03792698 0.270729 -0.5629349 0.7809035 -3.72529e-9 0 0 0 1</matrix>
+                                <node id="metarig_ear_L_004" name="ear.L.004" sid="ear_L_004" type="JOINT">
+                                  <matrix sid="transform">0.4829763 -0.859165 -0.169026 1.37836e-7 -0.8667546 -0.4965074 0.04709259 0.04164856 -0.1243829 0.1237596 -0.9844859 -7.45058e-9 0 0 0 1</matrix>
+                                  <extra>
+                                    <technique profile="blender">
+                                      <connect sid="connect" type="bool">1</connect>
+                                      <collections type="string">Face</collections>
+                                      <roll sid="roll" type="float">0.1518</roll>
+                                      <tip_x sid="tip_x" type="float">-0.00909996</tip_x>
+                                      <tip_y sid="tip_y" type="float">0.003799974</tip_y>
+                                      <tip_z sid="tip_z" type="float">0.01999998</tip_z>
+                                    </technique>
+                                  </extra>
+                                </node>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Face</collections>
+                                    <roll sid="roll" type="float">0.3033</roll>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Face</collections>
+                                  <roll sid="roll" type="float">-0.02649998</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                                <roll sid="roll" type="float">0.06559997</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <roll sid="roll" type="float">-0.03239995</roll>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_ear_R" name="ear.R" sid="ear_R" type="JOINT">
+                          <matrix sid="transform">0.9610588 -0.1741024 0.2146029 -0.0919 0.184384 0.982435 -0.0287021 0.08090007 -0.2058363 0.06715374 0.9762794 0.006199997 0 0 0 1</matrix>
+                          <node id="metarig_ear_R_001" name="ear.R.001" sid="ear_R_001" type="JOINT">
+                            <matrix sid="transform">0.8919428 -0.4272248 0.1480442 -7.45058e-9 -0.05106281 0.2301513 0.9718142 0.04020618 -0.4492556 -0.8743622 0.1834666 3.72529e-9 0 0 0 1</matrix>
+                            <node id="metarig_ear_R_002" name="ear.R.002" sid="ear_R_002" type="JOINT">
+                              <matrix sid="transform">0.7609141 -0.1607186 0.6286333 -2.23517e-8 -0.6488528 -0.1879259 0.7373428 0.03305664 -3.68282e-4 -0.9689448 -0.2472784 2.73576e-8 0 0 0 1</matrix>
+                              <node id="metarig_ear_R_003" name="ear.R.003" sid="ear_R_003" type="JOINT">
+                                <matrix sid="transform">0.6547865 0.4869545 0.5780399 -1.49012e-8 -0.7056632 0.6678172 0.2367696 0.03792698 -0.270729 -0.5629349 0.7809035 -3.72529e-9 0 0 0 1</matrix>
+                                <node id="metarig_ear_R_004" name="ear.R.004" sid="ear_R_004" type="JOINT">
+                                  <matrix sid="transform">0.4829763 0.859165 0.169026 -1.37836e-7 0.8667546 -0.4965074 0.04709259 0.04164856 0.1243829 0.1237596 -0.9844859 -7.45058e-9 0 0 0 1</matrix>
+                                  <extra>
+                                    <technique profile="blender">
+                                      <connect sid="connect" type="bool">1</connect>
+                                      <collections type="string">Face</collections>
+                                      <roll sid="roll" type="float">-0.1518</roll>
+                                      <tip_x sid="tip_x" type="float">0.00909996</tip_x>
+                                      <tip_y sid="tip_y" type="float">0.003799974</tip_y>
+                                      <tip_z sid="tip_z" type="float">0.01999998</tip_z>
+                                    </technique>
+                                  </extra>
+                                </node>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Face</collections>
+                                    <roll sid="roll" type="float">-0.3033</roll>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Face</collections>
+                                  <roll sid="roll" type="float">0.02649998</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                                <roll sid="roll" type="float">-0.06559997</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <roll sid="roll" type="float">0.03239995</roll>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_lip_T_R" name="lip.T.R" sid="lip_T_R" type="JOINT">
+                          <matrix sid="transform">0.2674554 -0.9633066 0.02253924 0 0.02253906 0.02963941 0.9993064 0.03270005 -0.9633066 -0.2667619 0.02963924 0.1463 0 0 0 1</matrix>
+                          <node id="metarig_lip_T_R_001" name="lip.T.R.001" sid="lip_T_R_001" type="JOINT">
+                            <matrix sid="transform">0.8400406 0.4748296 0.2624287 0 -0.5331222 0.8121442 0.2370706 0.02024278 -0.1005619 -0.3390554 0.9353763 4.98258e-8 0 0 0 1</matrix>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                                <roll sid="roll" type="float">-0.02359998</roll>
+                                <tip_x sid="tip_x" type="float">-0.01569998</tip_x>
+                                <tip_y sid="tip_y" type="float">0.0162</tip_y>
+                                <tip_z sid="tip_z" type="float">-0.007200002</tip_z>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_lip_B_R" name="lip.B.R" sid="lip_B_R" type="JOINT">
+                          <matrix sid="transform">0.4212911 -0.8875263 0.1865769 0 0.07675234 0.2398774 0.9677643 0.01649998 -0.9036718 -0.3933902 0.169178 0.142 0 0 0 1</matrix>
+                          <node id="metarig_lip_B_R_001" name="lip.B.R.001" sid="lip_B_R_001" type="JOINT">
+                            <matrix sid="transform">0.985046 0.07875147 -0.1532411 -2.98023e-8 -0.07620598 0.99684 0.022424 0.02084451 0.1545228 -0.01041074 0.9879345 2.79397e-8 0 0 0 1</matrix>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                                <roll sid="roll" type="float">-0.07309997</roll>
+                                <tip_x sid="tip_x" type="float">-0.01669996</tip_x>
+                                <tip_y sid="tip_y" type="float">0.00909996</tip_y>
+                                <tip_z sid="tip_z" type="float">0.004599928</tip_z>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <roll sid="roll" type="float">0.07889997</roll>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_brow_B_L" name="brow.B.L" sid="brow_B_L" type="JOINT">
+                          <matrix sid="transform">-0.2310965 -0.567803 0.7900594 0.0791 0.7789784 0.3785358 0.499903 0.1207 -0.5829124 0.730965 0.3548281 0.09899999 0 0 0 1</matrix>
+                          <node id="metarig_brow_B_L_001" name="brow.B.L.001" sid="brow_B_L_001" type="JOINT">
+                            <matrix sid="transform">0.7348312 -0.02959511 0.6776041 -1.56462e-7 -0.2754382 0.8999367 0.3380061 0.01532227 -0.6198041 -0.4350155 0.6531497 8.9407e-8 0 0 0 1</matrix>
+                            <node id="metarig_brow_B_L_002" name="brow.B.L.002" sid="brow_B_L_002" type="JOINT">
+                              <matrix sid="transform">0.7615582 0.5187107 0.3885463 1.49012e-8 -0.5900024 0.8029735 0.08444344 0.01497932 -0.2681907 -0.2935519 0.9175517 -1.67638e-8 0 0 0 1</matrix>
+                              <node id="metarig_brow_B_L_003" name="brow.B.L.003" sid="brow_B_L_003" type="JOINT">
+                                <matrix sid="transform">0.8423264 0.1576398 0.5153986 -2.98023e-8 -0.35641 0.8802519 0.3132543 0.01907303 -0.4042994 -0.4475557 0.797644 1.08033e-7 0 0 0 1</matrix>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Face</collections>
+                                    <roll sid="roll" type="float">0.1405</roll>
+                                    <tip_x sid="tip_x" type="float">-0.01669996</tip_x>
+                                    <tip_y sid="tip_y" type="float">0.00209999</tip_y>
+                                    <tip_z sid="tip_z" type="float">-0.01190006</tip_z>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Face</collections>
+                                  <roll sid="roll" type="float">0.08469998</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                                <roll sid="roll" type="float">0.01919996</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <roll sid="roll" type="float">0.04119998</roll>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_lid_T_L" name="lid.T.L" sid="lid_T_L" type="JOINT">
+                          <matrix sid="transform">-0.2413017 -0.5244631 0.8165243 0.0768 0.8569433 0.2797112 0.4329082 0.1134001 -0.4554355 0.8041765 0.3819403 0.09709999 0 0 0 1</matrix>
+                          <node id="metarig_lid_T_L_001" name="lid.T.L.001" sid="lid_T_L_001" type="JOINT">
+                            <matrix sid="transform">0.6228944 0.1147063 0.773851 5.21541e-8 -0.3840927 0.9066001 0.1747835 0.01716048 -0.6815246 -0.4061021 0.6087739 8.9407e-8 0 0 0 1</matrix>
+                            <node id="metarig_lid_T_L_002" name="lid.T.L.002" sid="lid_T_L_002" type="JOINT">
+                              <matrix sid="transform">0.7597435 0.509133 0.404442 0 -0.6338966 0.7184607 0.2863377 0.01533392 -0.1447918 -0.4739177 0.8685836 5.7742e-8 0 0 0 1</matrix>
+                              <node id="metarig_lid_T_L_003" name="lid.T.L.003" sid="lid_T_L_003" type="JOINT">
+                                <matrix sid="transform">0.8464845 0.02653214 0.5317518 1.49012e-8 -0.1576411 0.966464 0.202723 0.01301194 -0.5085404 -0.2554279 0.8222794 4.47035e-8 0 0 0 1</matrix>
+                                <node id="metarig_lid_B_L" name="lid.B.L" sid="lid_B_L" type="JOINT">
+                                  <matrix sid="transform">-0.8289835 0.4792586 -0.2882668 7.45058e-8 -0.1549159 -0.6920356 -0.7050449 0.01893841 -0.5373897 -0.5398133 0.6479308 7.45058e-8 0 0 0 1</matrix>
+                                  <node id="metarig_lid_B_L_001" name="lid.B.L.001" sid="lid_B_L_001" type="JOINT">
+                                    <matrix sid="transform">0.982494 -0.06359802 0.1751028 0 0.08991599 0.9850814 -0.1467291 0.01363047 -0.1631588 0.159905 0.9735552 6.70552e-8 0 0 0 1</matrix>
+                                    <node id="metarig_lid_B_L_002" name="lid.B.L.002" sid="lid_B_L_002" type="JOINT">
+                                      <matrix sid="transform">0.890603 -0.3558989 0.2831295 1.49012e-8 0.4438794 0.8157507 -0.3708395 0.0161524 -0.09898168 0.4559461 0.8844862 -4.70318e-8 0 0 0 1</matrix>
+                                      <node id="metarig_lid_B_L_003" name="lid.B.L.003" sid="lid_B_L_003" type="JOINT">
+                                        <matrix sid="transform">0.8251843 -0.5481609 0.1363476 -1.49012e-8 0.5407346 0.8363729 0.08992502 0.01658502 -0.1633308 -4.76778e-4 0.9865713 5.58794e-9 0 0 0 1</matrix>
+                                        <extra>
+                                          <technique profile="blender">
+                                            <connect sid="connect" type="bool">1</connect>
+                                            <collections type="string">Face</collections>
+                                            <roll sid="roll" type="float">-0.008499979</roll>
+                                            <tip_x sid="tip_x" type="float">0.007399976</tip_x>
+                                            <tip_y sid="tip_y" type="float">0.0133</tip_y>
+                                            <tip_z sid="tip_z" type="float">0.005800008</tip_z>
+                                          </technique>
+                                        </extra>
+                                      </node>
+                                      <extra>
+                                        <technique profile="blender">
+                                          <connect sid="connect" type="bool">1</connect>
+                                          <collections type="string">Face</collections>
+                                          <roll sid="roll" type="float">-0.07479995</roll>
+                                        </technique>
+                                      </extra>
+                                    </node>
+                                    <extra>
+                                      <technique profile="blender">
+                                        <connect sid="connect" type="bool">1</connect>
+                                        <collections type="string">Face</collections>
+                                        <roll sid="roll" type="float">0.1015</roll>
+                                      </technique>
+                                    </extra>
+                                  </node>
+                                  <extra>
+                                    <technique profile="blender">
+                                      <connect sid="connect" type="bool">1</connect>
+                                      <collections type="string">Face</collections>
+                                      <roll sid="roll" type="float">0.07559996</roll>
+                                    </technique>
+                                  </extra>
+                                </node>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Face</collections>
+                                    <roll sid="roll" type="float">0.2194</roll>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Face</collections>
+                                  <roll sid="roll" type="float">-0.09399998</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                                <roll sid="roll" type="float">0.1837</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <roll sid="roll" type="float">-0.2079</roll>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_brow_B_R" name="brow.B.R" sid="brow_B_R" type="JOINT">
+                          <matrix sid="transform">-0.2310965 0.567803 -0.7900594 -0.0791 -0.7789784 0.3785358 0.499903 0.1207 0.5829124 0.730965 0.3548281 0.09899999 0 0 0 1</matrix>
+                          <node id="metarig_brow_B_R_001" name="brow.B.R.001" sid="brow_B_R_001" type="JOINT">
+                            <matrix sid="transform">0.7348312 0.02959511 -0.6776041 1.56462e-7 0.2754382 0.8999367 0.3380061 0.01532227 0.6198041 -0.4350155 0.6531497 8.9407e-8 0 0 0 1</matrix>
+                            <node id="metarig_brow_B_R_002" name="brow.B.R.002" sid="brow_B_R_002" type="JOINT">
+                              <matrix sid="transform">0.7615582 -0.5187107 -0.3885463 -1.49012e-8 0.5900024 0.8029735 0.08444344 0.01497932 0.2681907 -0.2935519 0.9175517 -1.67638e-8 0 0 0 1</matrix>
+                              <node id="metarig_brow_B_R_003" name="brow.B.R.003" sid="brow_B_R_003" type="JOINT">
+                                <matrix sid="transform">0.8423264 -0.1576398 -0.5153986 2.98023e-8 0.35641 0.8802519 0.3132543 0.01907303 0.4042994 -0.4475557 0.797644 1.08033e-7 0 0 0 1</matrix>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Face</collections>
+                                    <roll sid="roll" type="float">-0.1405</roll>
+                                    <tip_x sid="tip_x" type="float">0.01669996</tip_x>
+                                    <tip_y sid="tip_y" type="float">0.00209999</tip_y>
+                                    <tip_z sid="tip_z" type="float">-0.01190006</tip_z>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Face</collections>
+                                  <roll sid="roll" type="float">-0.08469998</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                                <roll sid="roll" type="float">-0.01919996</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <roll sid="roll" type="float">-0.04119998</roll>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_lid_T_R" name="lid.T.R" sid="lid_T_R" type="JOINT">
+                          <matrix sid="transform">-0.2413017 0.5244631 -0.8165243 -0.0768 -0.8569433 0.2797112 0.4329082 0.1134001 0.4554355 0.8041765 0.3819403 0.09709999 0 0 0 1</matrix>
+                          <node id="metarig_lid_T_R_001" name="lid.T.R.001" sid="lid_T_R_001" type="JOINT">
+                            <matrix sid="transform">0.6228944 -0.1147063 -0.773851 -5.21541e-8 0.3840927 0.9066001 0.1747835 0.01716048 0.6815246 -0.4061021 0.6087739 8.9407e-8 0 0 0 1</matrix>
+                            <node id="metarig_lid_T_R_002" name="lid.T.R.002" sid="lid_T_R_002" type="JOINT">
+                              <matrix sid="transform">0.7597435 -0.509133 -0.404442 0 0.6338966 0.7184607 0.2863377 0.01533392 0.1447918 -0.4739177 0.8685836 5.7742e-8 0 0 0 1</matrix>
+                              <node id="metarig_lid_T_R_003" name="lid.T.R.003" sid="lid_T_R_003" type="JOINT">
+                                <matrix sid="transform">0.8464845 -0.02653214 -0.5317518 -1.49012e-8 0.1576411 0.966464 0.202723 0.01301194 0.5085404 -0.2554279 0.8222794 4.47035e-8 0 0 0 1</matrix>
+                                <node id="metarig_lid_B_R" name="lid.B.R" sid="lid_B_R" type="JOINT">
+                                  <matrix sid="transform">-0.8289835 -0.4792586 0.2882668 -7.45058e-8 0.1549159 -0.6920356 -0.7050449 0.01893841 0.5373897 -0.5398133 0.6479308 7.45058e-8 0 0 0 1</matrix>
+                                  <node id="metarig_lid_B_R_001" name="lid.B.R.001" sid="lid_B_R_001" type="JOINT">
+                                    <matrix sid="transform">0.982494 0.06359802 -0.1751028 0 -0.08991599 0.9850814 -0.1467291 0.01363047 0.1631588 0.159905 0.9735552 6.70552e-8 0 0 0 1</matrix>
+                                    <node id="metarig_lid_B_R_002" name="lid.B.R.002" sid="lid_B_R_002" type="JOINT">
+                                      <matrix sid="transform">0.890603 0.3558989 -0.2831295 -1.49012e-8 -0.4438794 0.8157507 -0.3708395 0.0161524 0.09898168 0.4559461 0.8844862 -4.70318e-8 0 0 0 1</matrix>
+                                      <node id="metarig_lid_B_R_003" name="lid.B.R.003" sid="lid_B_R_003" type="JOINT">
+                                        <matrix sid="transform">0.8251843 0.5481609 -0.1363476 1.49012e-8 -0.5407346 0.8363729 0.08992502 0.01658502 0.1633308 -4.76778e-4 0.9865713 5.58794e-9 0 0 0 1</matrix>
+                                        <extra>
+                                          <technique profile="blender">
+                                            <connect sid="connect" type="bool">1</connect>
+                                            <collections type="string">Face</collections>
+                                            <roll sid="roll" type="float">0.008499979</roll>
+                                            <tip_x sid="tip_x" type="float">-0.007399976</tip_x>
+                                            <tip_y sid="tip_y" type="float">0.0133</tip_y>
+                                            <tip_z sid="tip_z" type="float">0.005800008</tip_z>
+                                          </technique>
+                                        </extra>
+                                      </node>
+                                      <extra>
+                                        <technique profile="blender">
+                                          <connect sid="connect" type="bool">1</connect>
+                                          <collections type="string">Face</collections>
+                                          <roll sid="roll" type="float">0.07479995</roll>
+                                        </technique>
+                                      </extra>
+                                    </node>
+                                    <extra>
+                                      <technique profile="blender">
+                                        <connect sid="connect" type="bool">1</connect>
+                                        <collections type="string">Face</collections>
+                                        <roll sid="roll" type="float">-0.1015</roll>
+                                      </technique>
+                                    </extra>
+                                  </node>
+                                  <extra>
+                                    <technique profile="blender">
+                                      <connect sid="connect" type="bool">1</connect>
+                                      <collections type="string">Face</collections>
+                                      <roll sid="roll" type="float">-0.07559996</roll>
+                                    </technique>
+                                  </extra>
+                                </node>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Face</collections>
+                                    <roll sid="roll" type="float">-0.2194</roll>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Face</collections>
+                                  <roll sid="roll" type="float">0.09399998</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                                <roll sid="roll" type="float">-0.1837</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <roll sid="roll" type="float">0.2079</roll>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_forehead_L" name="forehead.L" sid="forehead_L" type="JOINT">
+                          <matrix sid="transform">0.02497897 0.07783228 0.9966534 0.0168 0.3687895 -0.9273632 0.0631782 0.1891 0.9291772 0.3659772 -0.05186833 0.1078 0 0 0 1</matrix>
+                          <node id="metarig_forehead_L_001" name="forehead.L.001" sid="forehead_L_001" type="JOINT">
+                            <matrix sid="transform">0.9629161 0.08340338 -0.2565861 -0.01133607 -0.1092082 0.990116 -0.08799881 -0.007927898 0.2467107 0.1127568 0.9625071 0.03210768 0 0 0 1</matrix>
+                            <node id="metarig_forehead_L_002" name="forehead.L.002" sid="forehead_L_002" type="JOINT">
+                              <matrix sid="transform">0.8445427 -0.003397942 -0.5354775 -0.01526798 0.01049814 0.9998929 0.01021262 -0.002126202 0.5353853 -0.01424649 0.8444878 0.03001899 0 0 0 1</matrix>
+                              <node id="metarig_temple_L" name="temple.L" sid="temple_L" type="JOINT">
+                                <matrix sid="transform">0.7420805 -0.3452996 -0.5745301 -0.01547834 0.1076149 0.9073634 -0.4063379 0.004905086 0.6616161 0.2397075 0.7104961 0.03906877 0 0 0 1</matrix>
+                                <node id="metarig_jaw_L" name="jaw.L" sid="jaw_L" type="JOINT">
+                                  <matrix sid="transform">0.9326599 -0.2502272 -0.2598689 7.45058e-9 0.2524163 0.9672831 -0.025482 0.07872877 0.2577432 -0.04182915 0.9653075 0 0 0 0 1</matrix>
+                                  <node id="metarig_jaw_L_001" name="jaw.L.001" sid="jaw_L_001" type="JOINT">
+                                    <matrix sid="transform">0.5869588 -0.5284312 -0.613384 0 0.7481463 0.6435893 0.1614625 0.0778918 0.3094455 -0.5536728 0.7731041 0 0 0 0 1</matrix>
+                                    <node id="metarig_chin_L" name="chin.L" sid="chin_L" type="JOINT">
+                                      <matrix sid="transform">0.255224 -0.9573711 -0.1352816 -7.45058e-9 -0.3673182 -0.2254312 0.9023625 0.0861054 -0.8943924 -0.180613 -0.4091953 -1.49012e-8 0 0 0 1</matrix>
+                                      <node id="metarig_cheek_B_L" name="cheek.B.L" sid="cheek_B_L" type="JOINT">
+                                        <matrix sid="transform">0.7191592 0.6877609 -0.09897007 3.72529e-9 0.04411303 0.0969563 0.9943108 0.05680769 0.6934438 -0.7194336 0.03938776 0 0 0 0 1</matrix>
+                                        <node id="metarig_cheek_B_L_001" name="cheek.B.L.001" sid="cheek_B_L_001" type="JOINT">
+                                          <matrix sid="transform">0.7539785 -0.352613 0.5542384 2.98023e-8 0.624629 0.6460357 -0.4387216 0.05032907 -0.2033589 0.6769801 0.7073494 1.19209e-7 0 0 0 1</matrix>
+                                          <node id="metarig_brow_T_L" name="brow.T.L" sid="brow_T_L" type="JOINT">
+                                            <matrix sid="transform">0.8812971 -0.01064286 0.4724429 -7.45058e-9 0.4398962 0.383725 -0.81194 0.06941527 -0.1726468 0.9233861 0.3428575 5.21541e-8 0 0 0 1</matrix>
+                                            <node id="metarig_brow_T_L_001" name="brow.T.L.001" sid="brow_T_L_001" type="JOINT">
+                                              <matrix sid="transform">-0.2906914 -0.7498444 0.5943334 5.96046e-8 -0.257486 0.659548 0.7061852 0.04016097 -0.9215202 0.05224934 -0.3847993 3.72529e-8 0 0 0 1</matrix>
+                                              <node id="metarig_brow_T_L_002" name="brow.T.L.002" sid="brow_T_L_002" type="JOINT">
+                                                <matrix sid="transform">0.6418416 0.1651476 0.7488429 -2.98023e-8 -0.547235 0.7827321 0.2964197 0.03318266 -0.5371902 -0.6000475 0.5927645 -4.47035e-8 0 0 0 1</matrix>
+                                                <node id="metarig_brow_T_L_003" name="brow.T.L.003" sid="brow_T_L_003" type="JOINT">
+                                                  <matrix sid="transform">0.8459856 0.4267156 0.3197221 8.9407e-8 -0.4740619 0.876411 0.08467129 0.04087487 -0.2440774 -0.2231987 0.9437207 -1.49012e-8 0 0 0 1</matrix>
+                                                  <extra>
+                                                    <technique profile="blender">
+                                                      <connect sid="connect" type="bool">1</connect>
+                                                      <collections type="string">Face</collections>
+                                                      <roll sid="roll" type="float">-0.04229998</roll>
+                                                      <tip_x sid="tip_x" type="float">-0.02149999</tip_x>
+                                                      <tip_y sid="tip_y" type="float">9.99987e-4</tip_y>
+                                                      <tip_z sid="tip_z" type="float">-0.01660001</tip_z>
+                                                    </technique>
+                                                  </extra>
+                                                </node>
+                                                <extra>
+                                                  <technique profile="blender">
+                                                    <connect sid="connect" type="bool">1</connect>
+                                                    <collections type="string">Face</collections>
+                                                    <roll sid="roll" type="float">0.07239997</roll>
+                                                  </technique>
+                                                </extra>
+                                              </node>
+                                              <extra>
+                                                <technique profile="blender">
+                                                  <connect sid="connect" type="bool">1</connect>
+                                                  <collections type="string">Face</collections>
+                                                  <roll sid="roll" type="float">0.2372</roll>
+                                                </technique>
+                                              </extra>
+                                            </node>
+                                            <extra>
+                                              <technique profile="blender">
+                                                <connect sid="connect" type="bool">1</connect>
+                                                <collections type="string">Face</collections>
+                                                <roll sid="roll" type="float">0.199</roll>
+                                              </technique>
+                                            </extra>
+                                          </node>
+                                          <extra>
+                                            <technique profile="blender">
+                                              <connect sid="connect" type="bool">1</connect>
+                                              <collections type="string">Face</collections>
+                                            </technique>
+                                          </extra>
+                                        </node>
+                                        <extra>
+                                          <technique profile="blender">
+                                            <connect sid="connect" type="bool">1</connect>
+                                            <collections type="string">Face</collections>
+                                            <roll sid="roll" type="float">0.00149995</roll>
+                                          </technique>
+                                        </extra>
+                                      </node>
+                                      <extra>
+                                        <technique profile="blender">
+                                          <connect sid="connect" type="bool">1</connect>
+                                          <collections type="string">Face</collections>
+                                          <roll sid="roll" type="float">-0.2078</roll>
+                                        </technique>
+                                      </extra>
+                                    </node>
+                                    <extra>
+                                      <technique profile="blender">
+                                        <connect sid="connect" type="bool">1</connect>
+                                        <collections type="string">Face</collections>
+                                        <roll sid="roll" type="float">0.1223</roll>
+                                      </technique>
+                                    </extra>
+                                  </node>
+                                  <extra>
+                                    <technique profile="blender">
+                                      <connect sid="connect" type="bool">1</connect>
+                                      <collections type="string">Face</collections>
+                                      <roll sid="roll" type="float">-0.08989995</roll>
+                                    </technique>
+                                  </extra>
+                                </node>
+                                <extra>
+                                  <technique profile="blender">
+                                    <collections type="string">Face</collections>
+                                    <roll sid="roll" type="float">-0.09130001</roll>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <collections type="string">Face</collections>
+                                  <roll sid="roll" type="float">0.4509</roll>
+                                  <tip_x sid="tip_x" type="float">0.01109999</tip_x>
+                                  <tip_y sid="tip_y" type="float">-0.0273</tip_y>
+                                  <tip_z sid="tip_z" type="float">-0.05529999</tip_z>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <collections type="string">Face</collections>
+                                <roll sid="roll" type="float">0.9928</roll>
+                                <tip_x sid="tip_x" type="float">0.01089996</tip_x>
+                                <tip_y sid="tip_y" type="float">-0.02469998</tip_y>
+                                <tip_z sid="tip_z" type="float">-0.05009996</tip_z>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <roll sid="roll" type="float">1.4313</roll>
+                              <tip_x sid="tip_x" type="float">0.004699945</tip_x>
+                              <tip_y sid="tip_y" type="float">-0.02209997</tip_y>
+                              <tip_z sid="tip_z" type="float">-0.05599999</tip_z>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_forehead_R" name="forehead.R" sid="forehead_R" type="JOINT">
+                          <matrix sid="transform">0.02497897 -0.07783228 -0.9966534 -0.0168 -0.3687895 -0.9273632 0.0631782 0.1891 -0.9291772 0.3659772 -0.05186833 0.1078 0 0 0 1</matrix>
+                          <node id="metarig_forehead_R_001" name="forehead.R.001" sid="forehead_R_001" type="JOINT">
+                            <matrix sid="transform">0.9629161 -0.08340338 0.2565861 0.01133607 0.1092082 0.990116 -0.08799881 -0.007927898 -0.2467107 0.1127568 0.9625071 0.03210768 0 0 0 1</matrix>
+                            <node id="metarig_forehead_R_002" name="forehead.R.002" sid="forehead_R_002" type="JOINT">
+                              <matrix sid="transform">0.8445427 0.003397942 0.5354775 0.01526798 -0.01049814 0.9998929 0.01021262 -0.002126202 -0.5353853 -0.01424649 0.8444878 0.03001899 0 0 0 1</matrix>
+                              <node id="metarig_temple_R" name="temple.R" sid="temple_R" type="JOINT">
+                                <matrix sid="transform">0.7420805 0.3452996 0.5745301 0.01547834 -0.1076149 0.9073634 -0.4063379 0.004905086 -0.6616161 0.2397075 0.7104961 0.03906877 0 0 0 1</matrix>
+                                <node id="metarig_jaw_R" name="jaw.R" sid="jaw_R" type="JOINT">
+                                  <matrix sid="transform">0.9326599 0.2502272 0.2598689 -7.45058e-9 -0.2524163 0.9672831 -0.025482 0.07872877 -0.2577432 -0.04182915 0.9653075 0 0 0 0 1</matrix>
+                                  <node id="metarig_jaw_R_001" name="jaw.R.001" sid="jaw_R_001" type="JOINT">
+                                    <matrix sid="transform">0.5869588 0.5284312 0.613384 0 -0.7481463 0.6435893 0.1614625 0.0778918 -0.3094455 -0.5536728 0.7731041 0 0 0 0 1</matrix>
+                                    <node id="metarig_chin_R" name="chin.R" sid="chin_R" type="JOINT">
+                                      <matrix sid="transform">0.255224 0.9573711 0.1352816 7.45058e-9 0.3673182 -0.2254312 0.9023625 0.0861054 0.8943924 -0.180613 -0.4091953 -1.49012e-8 0 0 0 1</matrix>
+                                      <node id="metarig_cheek_B_R" name="cheek.B.R" sid="cheek_B_R" type="JOINT">
+                                        <matrix sid="transform">0.7191592 -0.6877609 0.09897007 -3.72529e-9 -0.04411303 0.0969563 0.9943108 0.05680769 -0.6934438 -0.7194336 0.03938776 0 0 0 0 1</matrix>
+                                        <node id="metarig_cheek_B_R_001" name="cheek.B.R.001" sid="cheek_B_R_001" type="JOINT">
+                                          <matrix sid="transform">0.7539785 0.352613 -0.5542384 -2.98023e-8 -0.624629 0.6460357 -0.4387216 0.05032907 0.2033589 0.6769801 0.7073494 1.19209e-7 0 0 0 1</matrix>
+                                          <node id="metarig_brow_T_R" name="brow.T.R" sid="brow_T_R" type="JOINT">
+                                            <matrix sid="transform">0.8812971 0.01064286 -0.4724429 7.45058e-9 -0.4398962 0.383725 -0.81194 0.06941527 0.1726468 0.9233861 0.3428575 5.21541e-8 0 0 0 1</matrix>
+                                            <node id="metarig_brow_T_R_001" name="brow.T.R.001" sid="brow_T_R_001" type="JOINT">
+                                              <matrix sid="transform">-0.2906914 0.7498444 -0.5943334 -5.96046e-8 0.257486 0.659548 0.7061852 0.04016097 0.9215202 0.05224934 -0.3847993 3.72529e-8 0 0 0 1</matrix>
+                                              <node id="metarig_brow_T_R_002" name="brow.T.R.002" sid="brow_T_R_002" type="JOINT">
+                                                <matrix sid="transform">0.6418416 -0.1651476 -0.7488429 2.98023e-8 0.547235 0.7827321 0.2964197 0.03318266 0.5371902 -0.6000475 0.5927645 -4.47035e-8 0 0 0 1</matrix>
+                                                <node id="metarig_brow_T_R_003" name="brow.T.R.003" sid="brow_T_R_003" type="JOINT">
+                                                  <matrix sid="transform">0.8459856 -0.4267156 -0.3197221 -8.9407e-8 0.4740619 0.876411 0.08467129 0.04087487 0.2440774 -0.2231987 0.9437207 -1.49012e-8 0 0 0 1</matrix>
+                                                  <extra>
+                                                    <technique profile="blender">
+                                                      <connect sid="connect" type="bool">1</connect>
+                                                      <collections type="string">Face</collections>
+                                                      <roll sid="roll" type="float">0.04229998</roll>
+                                                      <tip_x sid="tip_x" type="float">0.02149999</tip_x>
+                                                      <tip_y sid="tip_y" type="float">9.99987e-4</tip_y>
+                                                      <tip_z sid="tip_z" type="float">-0.01660001</tip_z>
+                                                    </technique>
+                                                  </extra>
+                                                </node>
+                                                <extra>
+                                                  <technique profile="blender">
+                                                    <connect sid="connect" type="bool">1</connect>
+                                                    <collections type="string">Face</collections>
+                                                    <roll sid="roll" type="float">-0.07239997</roll>
+                                                  </technique>
+                                                </extra>
+                                              </node>
+                                              <extra>
+                                                <technique profile="blender">
+                                                  <connect sid="connect" type="bool">1</connect>
+                                                  <collections type="string">Face</collections>
+                                                  <roll sid="roll" type="float">-0.2372</roll>
+                                                </technique>
+                                              </extra>
+                                            </node>
+                                            <extra>
+                                              <technique profile="blender">
+                                                <connect sid="connect" type="bool">1</connect>
+                                                <collections type="string">Face</collections>
+                                                <roll sid="roll" type="float">-0.199</roll>
+                                              </technique>
+                                            </extra>
+                                          </node>
+                                          <extra>
+                                            <technique profile="blender">
+                                              <connect sid="connect" type="bool">1</connect>
+                                              <collections type="string">Face</collections>
+                                            </technique>
+                                          </extra>
+                                        </node>
+                                        <extra>
+                                          <technique profile="blender">
+                                            <connect sid="connect" type="bool">1</connect>
+                                            <collections type="string">Face</collections>
+                                            <roll sid="roll" type="float">-0.00149995</roll>
+                                          </technique>
+                                        </extra>
+                                      </node>
+                                      <extra>
+                                        <technique profile="blender">
+                                          <connect sid="connect" type="bool">1</connect>
+                                          <collections type="string">Face</collections>
+                                          <roll sid="roll" type="float">0.2078</roll>
+                                        </technique>
+                                      </extra>
+                                    </node>
+                                    <extra>
+                                      <technique profile="blender">
+                                        <connect sid="connect" type="bool">1</connect>
+                                        <collections type="string">Face</collections>
+                                        <roll sid="roll" type="float">-0.1223</roll>
+                                      </technique>
+                                    </extra>
+                                  </node>
+                                  <extra>
+                                    <technique profile="blender">
+                                      <connect sid="connect" type="bool">1</connect>
+                                      <collections type="string">Face</collections>
+                                      <roll sid="roll" type="float">0.08989995</roll>
+                                    </technique>
+                                  </extra>
+                                </node>
+                                <extra>
+                                  <technique profile="blender">
+                                    <collections type="string">Face</collections>
+                                    <roll sid="roll" type="float">0.09130001</roll>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <collections type="string">Face</collections>
+                                  <roll sid="roll" type="float">-0.4509</roll>
+                                  <tip_x sid="tip_x" type="float">-0.01109999</tip_x>
+                                  <tip_y sid="tip_y" type="float">-0.0273</tip_y>
+                                  <tip_z sid="tip_z" type="float">-0.05529999</tip_z>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <collections type="string">Face</collections>
+                                <roll sid="roll" type="float">-0.9928</roll>
+                                <tip_x sid="tip_x" type="float">-0.01089996</tip_x>
+                                <tip_y sid="tip_y" type="float">-0.02469998</tip_y>
+                                <tip_z sid="tip_z" type="float">-0.05009996</tip_z>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <roll sid="roll" type="float">-1.4313</roll>
+                              <tip_x sid="tip_x" type="float">-0.004699945</tip_x>
+                              <tip_y sid="tip_y" type="float">-0.02209997</tip_y>
+                              <tip_z sid="tip_z" type="float">-0.05599999</tip_z>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_eye_L" name="eye.L" sid="eye_L" type="JOINT">
+                          <matrix sid="transform">-1 0 8.74228e-8 0.0516 8.74228e-8 -7.69688e-8 0.9999999 0.1128 6.72883e-15 0.9999999 3.47283e-8 0.09619999 0 0 0 1</matrix>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <tip_x sid="tip_x" type="float">0</tip_x>
+                              <tip_y sid="tip_y" type="float">-0.02419996</tip_y>
+                              <tip_z sid="tip_z" type="float">0</tip_z>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_eye_R" name="eye.R" sid="eye_R" type="JOINT">
+                          <matrix sid="transform">-1 0 8.74228e-8 -0.0516 8.74228e-8 -7.69688e-8 0.9999999 0.1128 6.72883e-15 0.9999999 3.47283e-8 0.09619999 0 0 0 1</matrix>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <tip_x sid="tip_x" type="float">0</tip_x>
+                              <tip_y sid="tip_y" type="float">-0.02419996</tip_y>
+                              <tip_z sid="tip_z" type="float">0</tip_z>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_cheek_T_L" name="cheek.T.L" sid="cheek_T_L" type="JOINT">
+                          <matrix sid="transform">0.3131463 -0.424331 -0.8496366 0.0848 -0.8470897 -0.5292897 -0.04786637 0.1057 -0.4293929 0.7347075 -0.5251915 0.06929999 0 0 0 1</matrix>
+                          <node id="metarig_cheek_T_L_001" name="cheek.T.L.001" sid="cheek_T_L_001" type="JOINT">
+                            <matrix sid="transform">0.1051055 -0.7916318 -0.6018903 -4.09782e-8 -0.9789143 0.02424216 -0.202828 0.06669323 0.1751561 0.6105173 -0.7723916 7.45058e-9 0 0 0 1</matrix>
+                            <node id="metarig_nose_L" name="nose.L" sid="nose_L" type="JOINT">
+                              <matrix sid="transform">0.2442479 -0.7458547 0.6197125 2.98023e-8 -0.7741724 -0.5348221 -0.3385594 0.04852606 0.5839521 -0.397072 -0.7080494 3.72529e-8 0 0 0 1</matrix>
+                              <node id="metarig_nose_L_001" name="nose.L.001" sid="nose_L_001" type="JOINT">
+                                <matrix sid="transform">-0.9056096 -0.4046226 0.127089 1.86265e-9 -0.2740913 0.3297016 -0.9034219 0.04320106 0.3236436 -0.8529812 -0.4094844 -1.49012e-8 0 0 0 1</matrix>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Face</collections>
+                                    <roll sid="roll" type="float">0.107</roll>
+                                    <tip_x sid="tip_x" type="float">-0.01759999</tip_x>
+                                    <tip_y sid="tip_y" type="float">-0.0338</tip_y>
+                                    <tip_z sid="tip_z" type="float">0.00209999</tip_z>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Face</collections>
+                                  <roll sid="roll" type="float">0.09969997</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                                <roll sid="roll" type="float">0.1387</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <roll sid="roll" type="float">-0.009599983</roll>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_cheek_T_R" name="cheek.T.R" sid="cheek_T_R" type="JOINT">
+                          <matrix sid="transform">0.3131463 0.424331 0.8496366 -0.0848 0.8470897 -0.5292897 -0.04786637 0.1057 0.4293929 0.7347075 -0.5251915 0.06929999 0 0 0 1</matrix>
+                          <node id="metarig_cheek_T_R_001" name="cheek.T.R.001" sid="cheek_T_R_001" type="JOINT">
+                            <matrix sid="transform">0.1051055 0.7916318 0.6018903 4.09782e-8 0.9789143 0.02424216 -0.202828 0.06669323 -0.1751561 0.6105173 -0.7723916 7.45058e-9 0 0 0 1</matrix>
+                            <node id="metarig_nose_R" name="nose.R" sid="nose_R" type="JOINT">
+                              <matrix sid="transform">0.2442479 0.7458547 -0.6197125 -2.98023e-8 0.7741724 -0.5348221 -0.3385594 0.04852606 -0.5839521 -0.397072 -0.7080494 3.72529e-8 0 0 0 1</matrix>
+                              <node id="metarig_nose_R_001" name="nose.R.001" sid="nose_R_001" type="JOINT">
+                                <matrix sid="transform">-0.9056096 0.4046226 -0.127089 -1.86265e-9 0.2740913 0.3297016 -0.9034219 0.04320106 -0.3236436 -0.8529812 -0.4094844 -1.49012e-8 0 0 0 1</matrix>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Face</collections>
+                                    <roll sid="roll" type="float">-0.107</roll>
+                                    <tip_x sid="tip_x" type="float">0.01759999</tip_x>
+                                    <tip_y sid="tip_y" type="float">-0.0338</tip_y>
+                                    <tip_z sid="tip_z" type="float">0.00209999</tip_z>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Face</collections>
+                                  <roll sid="roll" type="float">-0.09969997</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                                <roll sid="roll" type="float">-0.1387</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <roll sid="roll" type="float">0.009599983</roll>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_teeth_T" name="teeth.T" sid="teeth_T" type="JOINT">
+                          <matrix sid="transform">1 0 0 0 0 8.1695e-8 0.9999999 0.04010008 0 -0.9999999 1.19209e-7 0.1321 0 0 0 1</matrix>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <tip_x sid="tip_x" type="float">0</tip_x>
+                              <tip_y sid="tip_y" type="float">0.04559999</tip_y>
+                              <tip_z sid="tip_z" type="float">0</tip_z>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_teeth_B" name="teeth.B" sid="teeth_B" type="JOINT">
+                          <matrix sid="transform">1 0 0 0 0 1.63032e-7 0.9999999 0.007899987 0 -0.9999999 1.19209e-7 0.1253 0 0 0 1</matrix>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                              <tip_x sid="tip_x" type="float">0</tip_x>
+                              <tip_y sid="tip_y" type="float">0.04569995</tip_y>
+                              <tip_z sid="tip_z" type="float">0</tip_z>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_tongue" name="tongue" sid="tongue" type="JOINT">
+                          <matrix sid="transform">1 0 0 0 0 0.2161123 0.9763685 0.01330005 0 -0.9763685 0.2161122 0.1107 0 0 0 1</matrix>
+                          <node id="metarig_tongue_001" name="tongue.001" sid="tongue_001" type="JOINT">
+                            <matrix sid="transform">1 0 0 0 0 0.9314314 0.3639172 0.02591233 0 -0.3639171 0.9314314 1.86265e-8 0 0 0 1</matrix>
+                            <node id="metarig_tongue_002" name="tongue.002" sid="tongue_002" type="JOINT">
+                              <matrix sid="transform">1 0 0 0 0 0.7407746 0.6717538 0.03441063 0 -0.6717537 0.7407746 5.96046e-8 0 0 0 1</matrix>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Face</collections>
+                                  <tip_x sid="tip_x" type="float">0</tip_x>
+                                  <tip_y sid="tip_y" type="float">0.02229994</tip_y>
+                                  <tip_z sid="tip_z" type="float">-0.02759993</tip_z>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <connect sid="connect" type="bool">1</connect>
+                                <collections type="string">Face</collections>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Face</collections>
+                            </technique>
+                          </extra>
+                        </node>
+                        <extra>
+                          <technique profile="blender">
+                            <collections type="string">Face</collections>
+                            <tip_x sid="tip_x" type="float">0</tip_x>
+                            <tip_y sid="tip_y" type="float">0</tip_y>
+                            <tip_z sid="tip_z" type="float">0.09119999</tip_z>
+                          </technique>
+                        </extra>
+                      </node>
+                      <extra>
+                        <technique profile="blender">
+                          <connect sid="connect" type="bool">1</connect>
+                          <collections type="string">Torso</collections>
+                          <tip_x sid="tip_x" type="float">0</tip_x>
+                          <tip_y sid="tip_y" type="float">0</tip_y>
+                          <tip_z sid="tip_z" type="float">0.1983</tip_z>
+                        </technique>
+                      </extra>
+                    </node>
+                    <extra>
+                      <technique profile="blender">
+                        <connect sid="connect" type="bool">1</connect>
+                        <collections type="string">Torso</collections>
+                      </technique>
+                    </extra>
+                  </node>
+                  <extra>
+                    <technique profile="blender">
+                      <collections type="string">Torso</collections>
+                    </technique>
+                  </extra>
+                </node>
+                <node id="metarig_shoulder_L" name="shoulder.L" sid="shoulder_L" type="JOINT">
+                  <matrix sid="transform">0.5070949 0.8618901 5.29096e-4 0.0183 -0.02468914 0.01391235 0.9995984 0.1372211 0.8615367 -0.5069042 0.0283342 0.07825094 0 0 0 1</matrix>
+                  <node id="metarig_upper_arm_L" name="upper_arm.L" sid="upper_arm_L" type="JOINT">
+                    <matrix sid="transform">-0.2437728 0.2497256 0.9371297 0.007791542 -0.4139028 0.847073 -0.3333947 0.200791 -0.8770744 -0.4691531 -0.1031312 -0.02038499 0 0 0 1</matrix>
+                    <node id="metarig_forearm_L" name="forearm.L" sid="forearm_L" type="JOINT">
+                      <matrix sid="transform">0.9967154 0.0800764 -0.01209189 -4.47035e-8 -0.07910067 0.9306066 -0.357372 0.2885098 -0.01736426 0.3571547 0.933884 -7.45058e-9 0 0 0 1</matrix>
+                      <node id="metarig_hand_L" name="hand.L" sid="hand_L" type="JOINT">
+                        <matrix sid="transform">0.9983858 0.05651045 -0.005690787 -8.9407e-8 -0.05615449 0.9971564 0.05025778 0.2628357 0.008514702 -0.0498571 0.9987201 0 0 0 0 1</matrix>
+                        <node id="metarig_palm_01_L" name="palm.01.L" sid="palm_01_L" type="JOINT">
+                          <matrix sid="transform">-0.01501735 -0.004446864 0.9998773 -0.005152345 0.1504799 0.9885908 0.006656796 0.03941137 -0.9884991 0.1505613 -0.01417686 0.02298145 0 0 0 1</matrix>
+                          <node id="metarig_f_index_01_L" name="f_index.01.L" sid="f_index_01_L" type="JOINT">
+                            <matrix sid="transform">0.9880433 0.1475986 0.04455119 0 -0.1240664 0.9327172 -0.3385942 0.06962603 -0.0915297 0.3290184 0.9398772 1.19209e-7 0 0 0 1</matrix>
+                            <node id="metarig_f_index_02_L" name="f_index.02.L" sid="f_index_02_L" type="JOINT">
+                              <matrix sid="transform">0.9998966 0.005004329 -0.01348503 0 -0.007036305 0.9878686 -0.1551321 0.04504001 0.0125451 0.155211 0.9878018 -5.96046e-8 0 0 0 1</matrix>
+                              <node id="metarig_f_index_03_L" name="f_index.03.L" sid="f_index_03_L" type="JOINT">
+                                <matrix sid="transform">0.9976881 0.06394842 -0.02299899 -7.45058e-9 -0.06749631 0.9718347 -0.2257908 0.02822348 0.007912241 0.2268212 0.9739042 -1.19209e-7 0 0 0 1</matrix>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Fingers</collections>
+                                    <roll sid="roll" type="float">-1.676</roll>
+                                    <tip_x sid="tip_x" type="float">0.005200028</tip_x>
+                                    <tip_y sid="tip_y" type="float">9e-4</tip_y>
+                                    <tip_z sid="tip_z" type="float">-0.02219998</tip_z>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Fingers</collections>
+                                  <roll sid="roll" type="float">-1.8799</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <collections type="string">Fingers</collections>
+                                <roll sid="roll" type="float">-2.0315</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <node id="metarig_thumb_01_L" name="thumb.01.L" sid="thumb_01_L" type="JOINT">
+                            <matrix sid="transform">-0.1239446 -0.2769292 0.952863 -0.003506392 0.4059616 0.8620756 0.3033495 -0.008324265 -0.9054461 0.4244244 0.00557299 0.02435854 0 0 0 1</matrix>
+                            <node id="metarig_thumb_02_L" name="thumb.02.L" sid="thumb_02_L" type="JOINT">
+                              <matrix sid="transform">0.989123 0.1428131 -0.0352121 0 -0.1466449 0.938845 -0.311553 0.04174465 -0.0114352 0.3133279 0.9495761 -2.98023e-8 0 0 0 1</matrix>
+                              <node id="metarig_thumb_03_L" name="thumb.03.L" sid="thumb_03_L" type="JOINT">
+                                <matrix sid="transform">0.9965989 0.08235857 0.002753427 -1.19209e-7 -0.08222437 0.9960728 -0.03283612 0.0334464 -0.005446933 0.03249805 0.9994569 0 0 0 0 1</matrix>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Fingers</collections>
+                                    <roll sid="roll" type="float">-0.5826</roll>
+                                    <tip_x sid="tip_x" type="float">0.01379996</tip_x>
+                                    <tip_y sid="tip_y" type="float">-0.004099965</tip_y>
+                                    <tip_z sid="tip_z" type="float">-0.01499998</tip_z>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Fingers</collections>
+                                  <roll sid="roll" type="float">-0.4798</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <collections type="string">Fingers</collections>
+                                <roll sid="roll" type="float">-0.1587</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Fingers</collections>
+                              <roll sid="roll" type="float">-2.4928</roll>
+                              <tip_x sid="tip_x" type="float">0.05430001</tip_x>
+                              <tip_y sid="tip_y" type="float">-0.01729995</tip_y>
+                              <tip_z sid="tip_z" type="float">-0.03999996</tip_z>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_palm_02_L" name="palm.02.L" sid="palm_02_L" type="JOINT">
+                          <matrix sid="transform">8.98808e-4 -0.02068195 0.9997856 -0.007675231 0.06504387 0.9976703 0.02057976 0.04197371 -0.9978821 0.06501144 0.002241943 0.006141618 0 0 0 1</matrix>
+                          <node id="metarig_f_middle_01_L" name="f_middle.01.L" sid="f_middle_01_L" type="JOINT">
+                            <matrix sid="transform">0.9977886 0.06458379 0.01570248 -1.49012e-8 -0.05197023 0.9053763 -0.4214176 0.06818718 -0.0414334 0.4196697 0.9067308 5.96046e-8 0 0 0 1</matrix>
+                            <node id="metarig_f_middle_02_L" name="f_middle.02.L" sid="f_middle_02_L" type="JOINT">
+                              <matrix sid="transform">0.9969602 0.01564638 -0.07632731 0 -0.03319614 0.9715649 -0.2344344 0.04954052 0.07048889 0.2362555 0.9691311 0 0 0 0 1</matrix>
+                              <node id="metarig_f_middle_03_L" name="f_middle.03.L" sid="f_middle_03_L" type="JOINT">
+                                <matrix sid="transform">0.9983848 0.03787643 -0.04234371 -7.45058e-9 -0.04255726 0.9923663 -0.1157488 0.03219593 0.03763633 0.1173639 0.9923756 5.96046e-8 0 0 0 1</matrix>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Fingers</collections>
+                                    <roll sid="roll" type="float">-1.7483</roll>
+                                    <tip_x sid="tip_x" type="float">0.003700017</tip_x>
+                                    <tip_y sid="tip_y" type="float">-2e-4</tip_y>
+                                    <tip_z sid="tip_z" type="float">-0.02240002</tip_z>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Fingers</collections>
+                                  <roll sid="roll" type="float">-1.8283</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <collections type="string">Fingers</collections>
+                                <roll sid="roll" type="float">-2.0067</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Fingers</collections>
+                              <roll sid="roll" type="float">-2.5274</roll>
+                              <tip_x sid="tip_x" type="float">0.05479997</tip_x>
+                              <tip_y sid="tip_y" type="float">-0.01119995</tip_y>
+                              <tip_z sid="tip_z" type="float">-0.03900003</tip_z>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_palm_03_L" name="palm.03.L" sid="palm_03_L" type="JOINT">
+                          <matrix sid="transform">0.03795677 -0.04270047 0.9983667 -0.00701648 -0.06382997 0.9969428 0.04506633 0.0400362 -0.9972387 -0.0654363 0.03511516 -0.009342298 0 0 0 1</matrix>
+                          <node id="metarig_f_ring_01_L" name="f_ring.01.L" sid="f_ring_01_L" type="JOINT">
+                            <matrix sid="transform">0.9997748 0.00116555 -0.02118767 -3.72529e-9 -0.01244992 0.8407907 -0.5412169 0.06979746 0.01718359 0.5413587 0.8406161 -8.9407e-8 0 0 0 1</matrix>
+                            <node id="metarig_f_ring_02_L" name="f_ring.02.L" sid="f_ring_02_L" type="JOINT">
+                              <matrix sid="transform">0.9982719 0.03816226 -0.04468334 -3.72529e-9 -0.04435481 0.9881414 -0.1469999 0.0448167 0.03854363 0.1487278 0.9881266 -5.96046e-8 0 0 0 1</matrix>
+                              <node id="metarig_f_ring_03_L" name="f_ring.03.L" sid="f_ring_03_L" type="JOINT">
+                                <matrix sid="transform">0.9938876 0.05931497 -0.09310941 7.45058e-9 -0.08526374 0.9481696 -0.3061122 0.03180097 0.07012649 0.3121799 0.9474314 -5.96046e-8 0 0 0 1</matrix>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Fingers</collections>
+                                    <roll sid="roll" type="float">-1.6582</roll>
+                                    <tip_x sid="tip_x" type="float">-0.001299977</tip_x>
+                                    <tip_y sid="tip_y" type="float">3.99999e-4</tip_y>
+                                    <tip_z sid="tip_z" type="float">-0.01850008</tip_z>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Fingers</collections>
+                                  <roll sid="roll" type="float">-1.8946</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <collections type="string">Fingers</collections>
+                                <roll sid="roll" type="float">-2.0082</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Fingers</collections>
+                              <roll sid="roll" type="float">-2.5843</roll>
+                              <tip_x sid="tip_x" type="float">0.05769997</tip_x>
+                              <tip_y sid="tip_y" type="float">-0.002399981</tip_y>
+                              <tip_z sid="tip_z" type="float">-0.03919994</tip_z>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_palm_04_L" name="palm.04.L" sid="palm_04_L" type="JOINT">
+                          <matrix sid="transform">0.01095242 -0.002686113 0.9999365 -0.004746377 -0.1884806 0.9820659 0.004702598 0.03599274 -0.9820158 -0.1885201 0.01024972 -0.02411249 0 0 0 1</matrix>
+                          <node id="metarig_f_pinky_01_L" name="f_pinky.01.L" sid="f_pinky_01_L" type="JOINT">
+                            <matrix sid="transform">0.9917781 -0.05357714 -0.1162127 -3.72529e-9 -0.03617201 0.7537302 -0.6561877 0.07480228 0.1227497 0.6549963 0.7455953 2.98023e-8 0 0 0 1</matrix>
+                            <node id="metarig_f_pinky_02_L" name="f_pinky.02.L" sid="f_pinky_02_L" type="JOINT">
+                              <matrix sid="transform">0.9992428 0.03147107 -0.02288549 7.45058e-9 -0.03334528 0.9956726 -0.08674282 0.02787624 0.02005656 0.08744028 0.9959678 0 0 0 0 1</matrix>
+                              <node id="metarig_f_pinky_03_L" name="f_pinky.03.L" sid="f_pinky_03_L" type="JOINT">
+                                <matrix sid="transform">0.9990903 0.02745197 -0.03263325 0 -0.03265928 0.9846264 -0.171593 0.02259237 0.02742098 0.1725027 0.9846273 0 0 0 0 1</matrix>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Fingers</collections>
+                                    <roll sid="roll" type="float">-1.7639</roll>
+                                    <tip_x sid="tip_x" type="float">-6.99997e-4</tip_x>
+                                    <tip_y sid="tip_y" type="float">2.00003e-4</tip_y>
+                                    <tip_z sid="tip_z" type="float">-0.01499998</tip_z>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Fingers</collections>
+                                  <roll sid="roll" type="float">-1.9059</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <collections type="string">Fingers</collections>
+                                <roll sid="roll" type="float">-1.9749</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Fingers</collections>
+                              <roll sid="roll" type="float">-2.5155</roll>
+                              <tip_x sid="tip_x" type="float">0.05989998</tip_x>
+                              <tip_y sid="tip_y" type="float">0.006699979</tip_y>
+                              <tip_z sid="tip_z" type="float">-0.04429996</tip_z>
+                            </technique>
+                          </extra>
+                        </node>
+                        <extra>
+                          <technique profile="blender">
+                            <connect sid="connect" type="bool">1</connect>
+                            <collections type="string">Arm.L (IK)</collections>
+                            <roll sid="roll" type="float">2.2103</roll>
+                            <tip_x sid="tip_x" type="float">0.06400001</tip_x>
+                            <tip_y sid="tip_y" type="float">-0.007999956</tip_y>
+                            <tip_z sid="tip_z" type="float">-0.04760003</tip_z>
+                          </technique>
+                        </extra>
+                      </node>
+                      <extra>
+                        <technique profile="blender">
+                          <connect sid="connect" type="bool">1</connect>
+                          <collections type="string">Arm.L (IK)</collections>
+                          <roll sid="roll" type="float">2.1535</roll>
+                        </technique>
+                      </extra>
+                    </node>
+                    <extra>
+                      <technique profile="blender">
+                        <collections type="string">Arm.L (IK)</collections>
+                        <roll sid="roll" type="float">2.0724</roll>
+                      </technique>
+                    </extra>
+                  </node>
+                  <extra>
+                    <technique profile="blender">
+                      <collections type="string">Torso</collections>
+                      <roll sid="roll" type="float">4e-4</roll>
+                      <tip_x sid="tip_x" type="float">0.1511</tip_x>
+                      <tip_y sid="tip_y" type="float">0.08889997</tip_y>
+                      <tip_z sid="tip_z" type="float">-1.00017e-4</tip_z>
+                    </technique>
+                  </extra>
+                </node>
+                <node id="metarig_shoulder_R" name="shoulder.R" sid="shoulder_R" type="JOINT">
+                  <matrix sid="transform">0.5070949 -0.8618901 -5.29096e-4 -0.0183 0.02468914 0.01391235 0.9995984 0.1372211 -0.8615367 -0.5069042 0.0283342 0.07825094 0 0 0 1</matrix>
+                  <node id="metarig_upper_arm_R" name="upper_arm.R" sid="upper_arm_R" type="JOINT">
+                    <matrix sid="transform">-0.2437728 -0.2497256 -0.9371297 -0.007791542 0.4139028 0.847073 -0.3333947 0.200791 0.8770744 -0.4691531 -0.1031312 -0.02038499 0 0 0 1</matrix>
+                    <node id="metarig_forearm_R" name="forearm.R" sid="forearm_R" type="JOINT">
+                      <matrix sid="transform">0.9967154 -0.0800764 0.01209189 4.47035e-8 0.07910067 0.9306066 -0.357372 0.2885098 0.01736426 0.3571547 0.933884 -7.45058e-9 0 0 0 1</matrix>
+                      <node id="metarig_hand_R" name="hand.R" sid="hand_R" type="JOINT">
+                        <matrix sid="transform">0.9983858 -0.05651045 0.005690787 8.9407e-8 0.05615449 0.9971564 0.05025778 0.2628357 -0.008514702 -0.0498571 0.9987201 0 0 0 0 1</matrix>
+                        <node id="metarig_palm_01_R" name="palm.01.R" sid="palm_01_R" type="JOINT">
+                          <matrix sid="transform">-0.01501735 0.004446864 -0.9998773 0.005152345 -0.1504799 0.9885908 0.006656796 0.03941137 0.9884991 0.1505613 -0.01417686 0.02298145 0 0 0 1</matrix>
+                          <node id="metarig_f_index_01_R" name="f_index.01.R" sid="f_index_01_R" type="JOINT">
+                            <matrix sid="transform">0.9883642 -0.1454206 -0.04459673 0 0.1220233 0.9330918 -0.3383045 0.06962603 0.09080929 0.3289262 0.9399794 1.19209e-7 0 0 0 1</matrix>
+                            <node id="metarig_f_index_02_R" name="f_index.02.R" sid="f_index_02_R" type="JOINT">
+                              <matrix sid="transform">0.9998474 -0.01066464 0.01382945 1.49012e-8 0.01269123 0.9876925 -0.1558921 0.04504859 -0.0119967 0.1560439 0.9876772 -5.96046e-8 0 0 0 1</matrix>
+                              <node id="metarig_f_index_03_R" name="f_index.03.R" sid="f_index_03_R" type="JOINT">
+                                <matrix sid="transform">0.9979188 -0.06054239 0.0222085 0 0.06399597 0.9721639 -0.2253937 0.02821785 -0.007944426 0.2263458 0.9740147 -5.96046e-8 0 0 0 1</matrix>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Fingers</collections>
+                                    <roll sid="roll" type="float">1.676</roll>
+                                    <tip_x sid="tip_x" type="float">-0.005200028</tip_x>
+                                    <tip_y sid="tip_y" type="float">9e-4</tip_y>
+                                    <tip_z sid="tip_z" type="float">-0.02219998</tip_z>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Fingers</collections>
+                                  <roll sid="roll" type="float">1.8799</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <collections type="string">Fingers</collections>
+                                <roll sid="roll" type="float">2.0315</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <node id="metarig_thumb_01_R" name="thumb.01.R" sid="thumb_01_R" type="JOINT">
+                            <matrix sid="transform">-0.1239446 0.2769292 -0.952863 0.003506392 -0.4059616 0.8620756 0.3033495 -0.008324265 0.9054461 0.4244244 0.00557299 0.02435854 0 0 0 1</matrix>
+                            <node id="metarig_thumb_02_R" name="thumb.02.R" sid="thumb_02_R" type="JOINT">
+                              <matrix sid="transform">0.989123 -0.1428131 0.0352121 0 0.1466449 0.938845 -0.311553 0.04174465 0.0114352 0.3133279 0.9495761 -2.98023e-8 0 0 0 1</matrix>
+                              <node id="metarig_thumb_03_R" name="thumb.03.R" sid="thumb_03_R" type="JOINT">
+                                <matrix sid="transform">0.9965989 -0.08235857 -0.002753427 1.19209e-7 0.08222437 0.9960728 -0.03283612 0.0334464 0.005446933 0.03249805 0.9994569 0 0 0 0 1</matrix>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Fingers</collections>
+                                    <roll sid="roll" type="float">0.5826</roll>
+                                    <tip_x sid="tip_x" type="float">-0.01379996</tip_x>
+                                    <tip_y sid="tip_y" type="float">-0.004099965</tip_y>
+                                    <tip_z sid="tip_z" type="float">-0.01499998</tip_z>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Fingers</collections>
+                                  <roll sid="roll" type="float">0.4798</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <collections type="string">Fingers</collections>
+                                <roll sid="roll" type="float">0.1587</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Fingers</collections>
+                              <roll sid="roll" type="float">2.4928</roll>
+                              <tip_x sid="tip_x" type="float">-0.05430001</tip_x>
+                              <tip_y sid="tip_y" type="float">-0.01729995</tip_y>
+                              <tip_z sid="tip_z" type="float">-0.03999996</tip_z>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_palm_02_R" name="palm.02.R" sid="palm_02_R" type="JOINT">
+                          <matrix sid="transform">8.98808e-4 0.02068195 -0.9997856 0.007675231 -0.06504387 0.9976703 0.02057976 0.04197371 0.9978821 0.06501144 0.002241943 0.006141618 0 0 0 1</matrix>
+                          <node id="metarig_f_middle_01_R" name="f_middle.01.R" sid="f_middle_01_R" type="JOINT">
+                            <matrix sid="transform">0.997916 -0.0625816 -0.01571283 1.49012e-8 0.05015574 0.9055474 -0.4212699 0.06818718 0.04059247 0.4196039 0.9067992 5.96046e-8 0 0 0 1</matrix>
+                            <node id="metarig_f_middle_02_R" name="f_middle.02.R" sid="f_middle_02_R" type="JOINT">
+                              <matrix sid="transform">0.9968321 -0.02067984 0.07679847 0 0.03821855 0.9713624 -0.2345082 0.04954916 -0.06974956 0.2367004 0.9690757 -5.96046e-8 0 0 0 1</matrix>
+                              <node id="metarig_f_middle_03_R" name="f_middle.03.R" sid="f_middle_03_R" type="JOINT">
+                                <matrix sid="transform">0.998512 -0.03479813 0.04198456 -3.72529e-9 0.0394576 0.9924874 -0.115809 0.03219117 -0.03763921 0.1172932 0.9923837 -5.96046e-8 0 0 0 1</matrix>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Fingers</collections>
+                                    <roll sid="roll" type="float">1.7483</roll>
+                                    <tip_x sid="tip_x" type="float">-0.003700017</tip_x>
+                                    <tip_y sid="tip_y" type="float">-2e-4</tip_y>
+                                    <tip_z sid="tip_z" type="float">-0.02240002</tip_z>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Fingers</collections>
+                                  <roll sid="roll" type="float">1.8283</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <collections type="string">Fingers</collections>
+                                <roll sid="roll" type="float">2.0067</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Fingers</collections>
+                              <roll sid="roll" type="float">2.5274</roll>
+                              <tip_x sid="tip_x" type="float">-0.05479997</tip_x>
+                              <tip_y sid="tip_y" type="float">-0.01119995</tip_y>
+                              <tip_z sid="tip_z" type="float">-0.03900003</tip_z>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_palm_03_R" name="palm.03.R" sid="palm_03_R" type="JOINT">
+                          <matrix sid="transform">0.0380179 0.04270256 -0.9983641 0.00701648 0.06525633 0.996848 0.04512268 0.04004616 0.997144 -0.06686508 0.03511144 -0.009242803 0 0 0 1</matrix>
+                          <node id="metarig_f_ring_01_R" name="f_ring.01.R" sid="f_ring_01_R" type="JOINT">
+                            <matrix sid="transform">0.9997917 3.74354e-5 0.02041322 -3.72529e-9 0.01102038 0.8407611 -0.5412943 0.06979412 -0.01718291 0.5414064 0.8405855 2.98023e-8 0 0 0 1</matrix>
+                            <node id="metarig_f_ring_02_R" name="f_ring.02.R" sid="f_ring_02_R" type="JOINT">
+                              <matrix sid="transform">0.998272 -0.03816227 0.04468334 3.72529e-9 0.04435481 0.9881415 -0.1469999 0.04481655 -0.03854363 0.1487277 0.9881266 -1.19209e-7 0 0 0 1</matrix>
+                              <node id="metarig_f_ring_03_R" name="f_ring.03.R" sid="f_ring_03_R" type="JOINT">
+                                <matrix sid="transform">0.9938875 -0.05931497 0.09310945 -1.11759e-8 0.08526375 0.9481696 -0.3061122 0.03180096 -0.07012652 0.3121799 0.9474313 -1.19209e-7 0 0 0 1</matrix>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Fingers</collections>
+                                    <roll sid="roll" type="float">1.6582</roll>
+                                    <tip_x sid="tip_x" type="float">0.001299977</tip_x>
+                                    <tip_y sid="tip_y" type="float">3.99999e-4</tip_y>
+                                    <tip_z sid="tip_z" type="float">-0.01850008</tip_z>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Fingers</collections>
+                                  <roll sid="roll" type="float">1.8946</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <collections type="string">Fingers</collections>
+                                <roll sid="roll" type="float">2.0082</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Fingers</collections>
+                              <roll sid="roll" type="float">2.5843</roll>
+                              <tip_x sid="tip_x" type="float">-0.05769997</tip_x>
+                              <tip_y sid="tip_y" type="float">-0.002299964</tip_y>
+                              <tip_z sid="tip_z" type="float">-0.03919994</tip_z>
+                            </technique>
+                          </extra>
+                        </node>
+                        <node id="metarig_palm_04_R" name="palm.04.R" sid="palm_04_R" type="JOINT">
+                          <matrix sid="transform">0.01095242 0.002686113 -0.9999365 0.004746377 0.1884806 0.9820659 0.004702598 0.03599274 0.9820158 -0.1885201 0.01024972 -0.02411249 0 0 0 1</matrix>
+                          <node id="metarig_f_pinky_01_R" name="f_pinky.01.R" sid="f_pinky_01_R" type="JOINT">
+                            <matrix sid="transform">0.9917781 0.05357714 0.1162127 3.72529e-9 0.03617201 0.7537302 -0.6561877 0.07480228 -0.1227497 0.6549963 0.7455953 2.98023e-8 0 0 0 1</matrix>
+                            <node id="metarig_f_pinky_02_R" name="f_pinky.02.R" sid="f_pinky_02_R" type="JOINT">
+                              <matrix sid="transform">0.9992428 -0.03147107 0.02288549 -7.45058e-9 0.03334528 0.9956726 -0.08674282 0.02787624 -0.02005656 0.08744028 0.9959678 0 0 0 0 1</matrix>
+                              <node id="metarig_f_pinky_03_R" name="f_pinky.03.R" sid="f_pinky_03_R" type="JOINT">
+                                <matrix sid="transform">0.9990903 -0.02745197 0.03263325 0 0.03265928 0.9846264 -0.171593 0.02259237 -0.02742098 0.1725027 0.9846273 0 0 0 0 1</matrix>
+                                <extra>
+                                  <technique profile="blender">
+                                    <connect sid="connect" type="bool">1</connect>
+                                    <collections type="string">Fingers</collections>
+                                    <roll sid="roll" type="float">1.7639</roll>
+                                    <tip_x sid="tip_x" type="float">6.99997e-4</tip_x>
+                                    <tip_y sid="tip_y" type="float">2.00003e-4</tip_y>
+                                    <tip_z sid="tip_z" type="float">-0.01499998</tip_z>
+                                  </technique>
+                                </extra>
+                              </node>
+                              <extra>
+                                <technique profile="blender">
+                                  <connect sid="connect" type="bool">1</connect>
+                                  <collections type="string">Fingers</collections>
+                                  <roll sid="roll" type="float">1.9059</roll>
+                                </technique>
+                              </extra>
+                            </node>
+                            <extra>
+                              <technique profile="blender">
+                                <collections type="string">Fingers</collections>
+                                <roll sid="roll" type="float">1.9749</roll>
+                              </technique>
+                            </extra>
+                          </node>
+                          <extra>
+                            <technique profile="blender">
+                              <collections type="string">Fingers</collections>
+                              <roll sid="roll" type="float">2.5155</roll>
+                              <tip_x sid="tip_x" type="float">-0.05989998</tip_x>
+                              <tip_y sid="tip_y" type="float">0.006699979</tip_y>
+                              <tip_z sid="tip_z" type="float">-0.04429996</tip_z>
+                            </technique>
+                          </extra>
+                        </node>
+                        <extra>
+                          <technique profile="blender">
+                            <connect sid="connect" type="bool">1</connect>
+                            <collections type="string">Arm.R (IK)</collections>
+                            <roll sid="roll" type="float">-2.2103</roll>
+                            <tip_x sid="tip_x" type="float">-0.06400001</tip_x>
+                            <tip_y sid="tip_y" type="float">-0.007999956</tip_y>
+                            <tip_z sid="tip_z" type="float">-0.04760003</tip_z>
+                          </technique>
+                        </extra>
+                      </node>
+                      <extra>
+                        <technique profile="blender">
+                          <connect sid="connect" type="bool">1</connect>
+                          <collections type="string">Arm.R (IK)</collections>
+                          <roll sid="roll" type="float">-2.1535</roll>
+                        </technique>
+                      </extra>
+                    </node>
+                    <extra>
+                      <technique profile="blender">
+                        <collections type="string">Arm.R (IK)</collections>
+                        <roll sid="roll" type="float">-2.0724</roll>
+                      </technique>
+                    </extra>
+                  </node>
+                  <extra>
+                    <technique profile="blender">
+                      <collections type="string">Torso</collections>
+                      <roll sid="roll" type="float">-4e-4</roll>
+                      <tip_x sid="tip_x" type="float">-0.1511</tip_x>
+                      <tip_y sid="tip_y" type="float">0.08889997</tip_y>
+                      <tip_z sid="tip_z" type="float">-1.00017e-4</tip_z>
+                    </technique>
+                  </extra>
+                </node>
+                <node id="metarig_breast_L" name="breast.L" sid="breast_L" type="JOINT">
+                  <matrix sid="transform">-1 0 8.74228e-8 0.1184 8.73871e-8 -0.0285599 0.9995921 -0.004881199 2.49679e-9 0.9995918 0.02856002 -0.04275685 0 0 0 1</matrix>
+                  <extra>
+                    <technique profile="blender">
+                      <collections type="string">Torso</collections>
+                      <tip_x sid="tip_x" type="float">0</tip_x>
+                      <tip_y sid="tip_y" type="float">-0.1392</tip_y>
+                      <tip_z sid="tip_z" type="float">0</tip_z>
+                    </technique>
+                  </extra>
+                </node>
+                <node id="metarig_breast_R" name="breast.R" sid="breast_R" type="JOINT">
+                  <matrix sid="transform">-1 0 8.74228e-8 -0.1184 8.73871e-8 -0.0285599 0.9995921 -0.004881199 2.49679e-9 0.9995918 0.02856002 -0.04275685 0 0 0 1</matrix>
+                  <extra>
+                    <technique profile="blender">
+                      <collections type="string">Torso</collections>
+                      <tip_x sid="tip_x" type="float">0</tip_x>
+                      <tip_y sid="tip_y" type="float">-0.1392</tip_y>
+                      <tip_z sid="tip_z" type="float">0</tip_z>
+                    </technique>
+                  </extra>
+                </node>
+                <extra>
+                  <technique profile="blender">
+                    <connect sid="connect" type="bool">1</connect>
+                    <collections type="string">Torso</collections>
+                    <tip_x sid="tip_x" type="float">0</tip_x>
+                    <tip_y sid="tip_y" type="float">0.005499958</tip_y>
+                    <tip_z sid="tip_z" type="float">0.1924999</tip_z>
+                  </technique>
+                </extra>
+              </node>
+              <extra>
+                <technique profile="blender">
+                  <connect sid="connect" type="bool">1</connect>
+                  <collections type="string">Torso</collections>
+                </technique>
+              </extra>
+            </node>
+            <extra>
+              <technique profile="blender">
+                <connect sid="connect" type="bool">1</connect>
+                <collections type="string">Torso</collections>
+              </technique>
+            </extra>
+          </node>
+          <node id="metarig_pelvis_L" name="pelvis.L" sid="pelvis_L" type="JOINT">
+            <matrix sid="transform">-0.4217721 0.536322 -0.7310726 0 -0.05253243 0.79049 0.6102181 2.14204e-8 0.9051789 0.2957781 -0.3052322 7.45058e-9 0 0 0 1</matrix>
+            <extra>
+              <technique profile="blender">
+                <collections type="string">Torso</collections>
+                <roll sid="roll" type="float">-1.0756</roll>
+                <tip_x sid="tip_x" type="float">0.1112</tip_x>
+                <tip_y sid="tip_y" type="float">-0.1003</tip_y>
+                <tip_z sid="tip_z" type="float">0.1434</tip_z>
+              </technique>
+            </extra>
+          </node>
+          <node id="metarig_pelvis_R" name="pelvis.R" sid="pelvis_R" type="JOINT">
+            <matrix sid="transform">-0.4217721 -0.536322 0.7310726 0 0.05253243 0.79049 0.6102181 2.14204e-8 -0.9051789 0.2957781 -0.3052322 7.45058e-9 0 0 0 1</matrix>
+            <extra>
+              <technique profile="blender">
+                <collections type="string">Torso</collections>
+                <roll sid="roll" type="float">1.0756</roll>
+                <tip_x sid="tip_x" type="float">-0.1112</tip_x>
+                <tip_y sid="tip_y" type="float">-0.1003</tip_y>
+                <tip_z sid="tip_z" type="float">0.1434</tip_z>
+              </technique>
+            </extra>
+          </node>
+          <node id="metarig_thigh_L" name="thigh.L" sid="thigh_L" type="JOINT">
+            <matrix sid="transform">1 0 0 0.098 0 -0.9464231 -0.3229288 0.07081852 0 0.3229288 -0.9464203 0.02594228 0 0 0 1</matrix>
+            <node id="metarig_shin_L" name="shin.L" sid="shin_L" type="JOINT">
+              <matrix sid="transform">1 0 0 -7.45058e-9 0 0.9846729 -0.1744108 0.5363695 0 0.1744108 0.984673 -1.86265e-9 0 0 0 1</matrix>
+              <node id="metarig_foot_L" name="foot.L" sid="foot_L" type="JOINT">
+                <matrix sid="transform">1 0 0 0 0 0.4437741 0.8961387 0.4542148 0 -0.8961388 0.4437742 3.72529e-9 0 0 0 1</matrix>
+                <node id="metarig_toe_L" name="toe.L" sid="toe_L" type="JOINT">
+                  <matrix sid="transform">-1 -3.55271e-15 8.74228e-8 -7.45058e-9 -4.63339e-8 0.847999 -0.5299978 0.1292459 -7.41344e-8 -0.5299976 -0.8479992 7.45058e-9 0 0 0 1</matrix>
+                  <extra>
+                    <technique profile="blender">
+                      <connect sid="connect" type="bool">1</connect>
+                      <collections type="string">Leg.L (IK)</collections>
+                      <tip_x sid="tip_x" type="float">0</tip_x>
+                      <tip_y sid="tip_y" type="float">-0.0672</tip_y>
+                      <tip_z sid="tip_z" type="float">0</tip_z>
+                    </technique>
+                  </extra>
+                </node>
+                <node id="metarig_heel_02_L" name="heel.02.L" sid="heel_02_L" type="JOINT">
+                  <matrix sid="transform">0 1 0 -0.03800001 0.8479996 0 -0.5299971 0.01997023 -0.5299971 0 -0.8479996 0.0879905 0 0 0 1</matrix>
+                  <extra>
+                    <technique profile="blender">
+                      <collections type="string">Leg.L (IK)</collections>
+                      <tip_x sid="tip_x" type="float">0.07999998</tip_x>
+                      <tip_y sid="tip_y" type="float">0</tip_y>
+                      <tip_z sid="tip_z" type="float">0</tip_z>
+                    </technique>
+                  </extra>
+                </node>
+                <extra>
+                  <technique profile="blender">
+                    <connect sid="connect" type="bool">1</connect>
+                    <collections type="string">Leg.L (IK)</collections>
+                  </technique>
+                </extra>
+              </node>
+              <extra>
+                <technique profile="blender">
+                  <connect sid="connect" type="bool">1</connect>
+                  <collections type="string">Leg.L (IK)</collections>
+                </technique>
+              </extra>
+            </node>
+            <extra>
+              <technique profile="blender">
+                <collections type="string">Leg.L (IK)</collections>
+              </technique>
+            </extra>
+          </node>
+          <node id="metarig_thigh_R" name="thigh.R" sid="thigh_R" type="JOINT">
+            <matrix sid="transform">1 0 0 -0.098 0 -0.9464231 -0.3229288 0.07081852 0 0.3229288 -0.9464203 0.02594228 0 0 0 1</matrix>
+            <node id="metarig_shin_R" name="shin.R" sid="shin_R" type="JOINT">
+              <matrix sid="transform">1 0 0 7.45058e-9 0 0.9846729 -0.1744108 0.5363695 0 0.1744108 0.984673 -1.86265e-9 0 0 0 1</matrix>
+              <node id="metarig_foot_R" name="foot.R" sid="foot_R" type="JOINT">
+                <matrix sid="transform">1 0 0 0 0 0.4437741 0.8961387 0.4542148 0 -0.8961388 0.4437742 3.72529e-9 0 0 0 1</matrix>
+                <node id="metarig_toe_R" name="toe.R" sid="toe_R" type="JOINT">
+                  <matrix sid="transform">-1 -3.55271e-15 8.74228e-8 7.45058e-9 -4.63339e-8 0.847999 -0.5299978 0.1292459 -7.41344e-8 -0.5299976 -0.8479992 7.45058e-9 0 0 0 1</matrix>
+                  <extra>
+                    <technique profile="blender">
+                      <connect sid="connect" type="bool">1</connect>
+                      <collections type="string">Leg.R (IK)</collections>
+                      <tip_x sid="tip_x" type="float">0</tip_x>
+                      <tip_y sid="tip_y" type="float">-0.0672</tip_y>
+                      <tip_z sid="tip_z" type="float">0</tip_z>
+                    </technique>
+                  </extra>
+                </node>
+                <node id="metarig_heel_02_R" name="heel.02.R" sid="heel_02_R" type="JOINT">
+                  <matrix sid="transform">0 -1 0 0.03800001 -0.8479996 0 -0.5299971 0.01997023 0.5299971 0 -0.8479996 0.0879905 0 0 0 1</matrix>
+                  <extra>
+                    <technique profile="blender">
+                      <collections type="string">Leg.R (IK)</collections>
+                      <tip_x sid="tip_x" type="float">-0.07999998</tip_x>
+                      <tip_y sid="tip_y" type="float">0</tip_y>
+                      <tip_z sid="tip_z" type="float">0</tip_z>
+                    </technique>
+                  </extra>
+                </node>
+                <extra>
+                  <technique profile="blender">
+                    <connect sid="connect" type="bool">1</connect>
+                    <collections type="string">Leg.R (IK)</collections>
+                  </technique>
+                </extra>
+              </node>
+              <extra>
+                <technique profile="blender">
+                  <connect sid="connect" type="bool">1</connect>
+                  <collections type="string">Leg.R (IK)</collections>
+                </technique>
+              </extra>
+            </node>
+            <extra>
+              <technique profile="blender">
+                <collections type="string">Leg.R (IK)</collections>
+              </technique>
+            </extra>
+          </node>
+          <extra>
+            <technique profile="blender">
+              <collections type="string">Torso</collections>
+            </technique>
+          </extra>
+        </node>
+        <extra>
+          <technique profile="blender">
+            <collections sid="collections" type="string">Face
+Face (Primary)
+Face (Secondary)
+Torso
+Torso (Tweak)
+Fingers
+Fingers (Detail)
+Arm.L (IK)
+Arm.L (FK)
+Arm.L (Tweak)
+Arm.R (IK)
+Arm.R (FK)
+Arm.R (Tweak)
+Leg.L (IK)
+Leg.L (FK)
+Leg.L (Tweak)
+Leg.R (IK)
+Leg.R (FK)
+Leg.R (Tweak)
+Root</collections>
+            <visible_collections sid="visible_collections" type="string">Face
+Face (Primary)
+Face (Secondary)
+Torso
+Torso (Tweak)
+Fingers
+Fingers (Detail)
+Arm.L (IK)
+Arm.L (FK)
+Arm.L (Tweak)
+Arm.R (IK)
+Arm.R (FK)
+Arm.R (Tweak)
+Leg.L (IK)
+Leg.L (FK)
+Leg.L (Tweak)
+Leg.R (IK)
+Leg.R (FK)
+Leg.R (Tweak)
+Root</visible_collections>
+            <active_collection sid="active_collection" type="string">Face</active_collection>
+          </technique>
+        </extra>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>

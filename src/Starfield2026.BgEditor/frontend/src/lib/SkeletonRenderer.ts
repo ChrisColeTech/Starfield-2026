@@ -2,28 +2,15 @@
  * SkeletonRenderer — renders bone data as lines + joint spheres in Three.js.
  *
  * Bones are drawn head→tail with extended tails (matching Blender's stick mode).
- * Joint spheres mark bone heads. Colors match bone collection groups.
+ * Joint spheres mark bone heads. Colors come from auto-detected bone collections.
  */
 
 import * as THREE from 'three'
-import type { BoneData, BoneCollectionDef } from '../data/skeletons'
-import { BONE_COLLECTIONS } from '../data/skeletons'
+import type { BoneData } from '../data/skeletons'
+import { detectBoneCollections } from '../data/skeletons'
 
-const JOINT_RADIUS = 1.2
-const MAX_TAIL = 30.0
-const LEAF_LENGTH = 5.0
-const LINE_WIDTH_FACTOR = 1  // BufferGeometry line width (always 1 in WebGL)
-
-/** Build a color lookup: boneName → hex color */
-function buildColorMap(collections: BoneCollectionDef[]): Map<string, string> {
-    const map = new Map<string, string>()
-    for (const col of collections) {
-        for (const name of col.bones) {
-            map.set(name, col.color)
-        }
-    }
-    return map
-}
+const MAX_TAIL = 0.3  // Blender units (meters)
+const LEAF_LENGTH = 0.05
 
 /** Extend stub tails toward first child (matching Blender's logic) */
 function computeExtendedBones(bones: BoneData[]): Array<BoneData & { displayTail: [number, number, number] }> {
@@ -42,13 +29,12 @@ function computeExtendedBones(bones: BoneData[]): Array<BoneData & { displayTail
         let displayTail: [number, number, number]
 
         if (kids && kids.length > 0) {
-            // Extend toward first child head
             const child = kids[0]
             const dx = child.head[0] - bone.head[0]
             const dy = child.head[1] - bone.head[1]
             const dz = child.head[2] - bone.head[2]
             const len = Math.sqrt(dx * dx + dy * dy + dz * dz)
-            if (len > 0.01) {
+            if (len > 0.001) {
                 if (len > MAX_TAIL) {
                     const s = MAX_TAIL / len
                     displayTail = [bone.head[0] + dx * s, bone.head[1] + dy * s, bone.head[2] + dz * s]
@@ -59,21 +45,20 @@ function computeExtendedBones(bones: BoneData[]): Array<BoneData & { displayTail
                 displayTail = [...bone.tail]
             }
         } else {
-            // Leaf bone: extend along parent direction
             const parent = bone.parent ? byName.get(bone.parent) : undefined
             if (parent) {
                 const dx = bone.head[0] - parent.head[0]
                 const dy = bone.head[1] - parent.head[1]
                 const dz = bone.head[2] - parent.head[2]
                 const len = Math.sqrt(dx * dx + dy * dy + dz * dz)
-                if (len > 0.01) {
+                if (len > 0.001) {
                     const s = LEAF_LENGTH / len
                     displayTail = [bone.head[0] + dx * s, bone.head[1] + dy * s, bone.head[2] + dz * s]
                 } else {
-                    displayTail = [bone.head[0], bone.head[1] + LEAF_LENGTH, bone.head[2]]
+                    displayTail = [bone.head[0], bone.head[1], bone.head[2] + LEAF_LENGTH]
                 }
             } else {
-                displayTail = [bone.head[0], bone.head[1] + LEAF_LENGTH, bone.head[2]]
+                displayTail = [bone.head[0], bone.head[1], bone.head[2] + LEAF_LENGTH]
             }
         }
 
@@ -83,17 +68,33 @@ function computeExtendedBones(bones: BoneData[]): Array<BoneData & { displayTail
 
 /**
  * Create a Three.js Group containing the skeleton visualization.
- * Data is Y-up; a 90° X rotation is applied to match Blender's Z-up display.
+ * Rigify data is already Z-up (Blender native), so no rotation is needed.
  */
 export function createSkeletonGroup(bones: BoneData[]): THREE.Group {
     const group = new THREE.Group()
     group.name = 'SkeletonRig'
 
-    const colorMap = buildColorMap(BONE_COLLECTIONS)
+    // Auto-detect collections and build color map
+    const collections = detectBoneCollections(bones)
+    const colorMap = new Map<string, string>()
+    for (const col of collections) {
+        for (const name of col.bones) {
+            colorMap.set(name, col.color)
+        }
+    }
+
     const extBones = computeExtendedBones(bones)
 
-    // Sphere geometry shared by all joints
-    const sphereGeo = new THREE.SphereGeometry(JOINT_RADIUS, 8, 6)
+    // Compute bounding box to auto-scale joint radius
+    let minY = Infinity, maxY = -Infinity
+    for (const b of bones) {
+        minY = Math.min(minY, b.head[2]) // Z is up in Blender
+        maxY = Math.max(maxY, b.head[2])
+    }
+    const rigHeight = maxY - minY
+    const jointRadius = Math.max(0.005, rigHeight * 0.008)
+
+    const sphereGeo = new THREE.SphereGeometry(jointRadius, 8, 6)
 
     for (const bone of extBones) {
         const hex = colorMap.get(bone.name) || '#aaaaaa'
@@ -111,14 +112,14 @@ export function createSkeletonGroup(bones: BoneData[]): THREE.Group {
             new THREE.Vector3(bone.head[0], bone.head[1], bone.head[2]),
             new THREE.Vector3(bone.displayTail[0], bone.displayTail[1], bone.displayTail[2]),
         ])
-        const lineMat = new THREE.LineBasicMaterial({ color, linewidth: LINE_WIDTH_FACTOR })
+        const lineMat = new THREE.LineBasicMaterial({ color })
         const line = new THREE.Line(lineGeo, lineMat)
         line.userData.boneName = bone.name
         group.add(line)
     }
 
-    // Y-up → Z-up: 90° X rotation (matches Blender Collada import behavior)
-    group.rotation.x = -Math.PI / 2
+    // No rotation needed — Rigify data is already Z-up (Blender native)
+    // If loading Y-up data (e.g. game DAE), rotation should be applied externally.
 
     return group
 }
