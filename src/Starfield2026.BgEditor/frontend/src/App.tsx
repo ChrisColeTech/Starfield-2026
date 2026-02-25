@@ -6,6 +6,8 @@ import EditorPage from './pages/EditorPage'
 import AnimationsPage from './pages/AnimationsPage'
 import ToolsPage from './pages/ToolsPage'
 import ExtractionPage from './pages/ExtractionPage'
+import { useBackendEvents } from './hooks/useBackendEvents'
+import { ToastContainer } from './components/ToastContainer'
 
 const STORAGE_KEY = 'bgeditor-last-page'
 const VALID_PAGES = ['/', '/animations', '/tools', '/extraction']
@@ -64,6 +66,11 @@ function InitialRedirect({ lastPage }: { lastPage: string }) {
   return null
 }
 
+function BackendEventsProvider() {
+  useBackendEvents()
+  return null
+}
+
 export default function App() {
   const [lastPage, setLastPage] = useState<string | null>(null)
 
@@ -77,6 +84,7 @@ export default function App() {
     <>
       <NavigationPersistence />
       <InitialRedirect lastPage={lastPage} />
+      <BackendEventsProvider />
       <Header />
       <div className="flex flex-1 min-h-0">
         <Sidebar />
@@ -89,6 +97,7 @@ export default function App() {
           </Routes>
         </main>
       </div>
+      <ToastContainer />
     </>
   )
 }

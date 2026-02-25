@@ -1,5 +1,7 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import websocket from '@fastify/websocket'
+import type { WebSocket } from 'ws'
 import fs from 'fs'
 import path from 'path'
 import manifestRoutes from './routes/manifests.js'
@@ -17,9 +19,31 @@ const PORT = 3001
 const app = Fastify({ logger: true, bodyLimit: 100 * 1024 * 1024 })
 
 await app.register(cors, { origin: true })
+await app.register(websocket)
 await app.register(manifestRoutes, { assetsDir: path.resolve(ASSETS_DIR) })
 await app.register(textureRoutes)
 await app.register(extractionRoutes)
+
+// ─── WebSocket ───
+const wsClients = new Set<WebSocket>()
+
+function broadcast(type: string, data: Record<string, any>) {
+  const msg = JSON.stringify({ type, ...data })
+  for (const ws of wsClients) {
+    if (ws.readyState === 1) ws.send(msg)
+  }
+}
+
+app.get('/ws', { websocket: true }, (socket) => {
+  wsClients.add(socket)
+  console.log(`[WS] Client connected (${wsClients.size} total)`)
+  socket.on('close', () => {
+    wsClients.delete(socket)
+    console.log(`[WS] Client disconnected (${wsClients.size} total)`)
+  })
+})
+
+export { broadcast }
 
 // Serve model/texture files from any directory on disk.
 // The frontend encodes the manifest's `dir` (absolute path) as a base64url
@@ -124,6 +148,7 @@ app.post<{ Body: { modelPath?: string; manifestPath?: string; outputDir: string;
     const saved: string[] = []
 
     for (const angle of angles) {
+      broadcast('render:progress', { angle, status: 'rendering' })
       const camera = setupCamera(angle, bbox, width, height, 1.0, 0)
       renderer.render(renderScene, camera)
       const outPath = path.join(outputDir, `${angle.replace('/', '-')}.png`)
@@ -132,6 +157,7 @@ app.post<{ Body: { modelPath?: string; manifestPath?: string; outputDir: string;
     }
 
     renderer.dispose()
+    broadcast('render:complete', { outputDir, files: saved.map(f => path.basename(f)) })
     return reply.send({ saved })
   } catch (err: any) {
     return reply.status(500).send({ error: err.message })

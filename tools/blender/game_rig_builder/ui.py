@@ -60,10 +60,38 @@ class GAMERIG_OT_generate(bpy.types.Operator):
                 if bone and parent:
                     bone.parent = parent
 
+        # Extend stub tails toward first child for visibility
+        for bone in edit_bones:
+            children = bone.children
+            if children:
+                child_head = children[0].head
+                direction = child_head - bone.head
+                if direction.length > 0.01:
+                    bone.tail = child_head
+            else:
+                if bone.parent:
+                    direction = bone.head - bone.parent.head
+                    if direction.length > 0.01:
+                        bone.tail = bone.head + direction.normalized() * 5.0
+                    else:
+                        bone.tail = bone.head + Vector((0, 5.0, 0))
+                else:
+                    bone.tail = bone.head + Vector((0, 5.0, 0))
+
         bpy.ops.object.mode_set(mode='OBJECT')
+
+        # Create bone collection so bones appear in properties panel
+        col = arm_data.collections.new("Skeleton")
+        col.is_visible = True
+        for bone in arm_data.bones:
+            col.assign(bone)
 
         arm_obj.data.display_type = 'STICK'
         arm_obj.show_in_front = True
+
+        # Rotate to match Collada Y-up -> Blender Z-up
+        from math import radians
+        arm_obj.rotation_euler[0] = radians(90)
 
         _set_front_view(context)
 
