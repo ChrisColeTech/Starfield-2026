@@ -223,6 +223,7 @@ export default function Viewport() {
 
     const clipIdx = Math.min(activeClipIndex, storeAnimations.length - 1)
     const clip = storeAnimations[clipIdx]
+    if (!clip) return
 
     // Stop current action
     if (activeActionRef.current) {
