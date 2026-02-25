@@ -40,7 +40,7 @@ function createWindow() {
   })
 
   mainWindow.loadURL(FRONTEND_URL)
-  mainWindow.webContents.openDevTools()
+  // mainWindow.webContents.openDevTools()
 
   // Forward renderer console to terminal
   mainWindow.webContents.on('console-message', (_e, _level, message) => {
@@ -89,4 +89,14 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   app.quit()
+})
+
+// Kill frontend + backend when Electron exits (Windows)
+app.on('will-quit', () => {
+  try {
+    require('child_process').execSync(
+      'npx -y kill-port 5173 3001',
+      { stdio: 'ignore', timeout: 5000 }
+    )
+  } catch (_) { }
 })

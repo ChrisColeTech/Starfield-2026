@@ -71,20 +71,7 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
             var decoder = new TrinityModelDecoder(trmdlOnDisk);
             var exportData = decoder.CreateExportData();
 
-            // Phase 3: Export model immediately
-            string modelExt = _options.OutputFormat?.ToLowerInvariant() == "obj" ? ".obj" : ".dae";
-            string modelOut = Path.Combine(job.OutputPath, "model" + modelExt);
-
-            // For now, always export as DAE (OBJ export not implemented for TRPAK)
-            if (modelExt == ".obj")
-            {
-                modelOut = Path.Combine(job.OutputPath, "model.dae");
-            }
-
-            TrinityColladaExporter.Export(modelOut, exportData);
-            result.OutputFiles.Add(Path.GetFileName(modelOut));
-
-            // Phase 4: Decode and export textures immediately
+            // Phase 3: Decode and export textures
             string texOutDir = Path.Combine(job.OutputPath, "textures");
             Directory.CreateDirectory(texOutDir);
 
@@ -111,8 +98,10 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
                 }
             }
 
-            // Phase 5: Bake layered material textures
+            // Phase 4: Bake layered material textures BEFORE DAE export
+            // so per-material baked texture paths are picked up by the exporter
             var sharedAlbedoReps = TrinityTextureBaker.FindSharedAlbedoRepresentatives(exportData.Materials);
+            var alreadyBaked = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var mat in exportData.Materials)
             {
                 if (EyeTextureBaker.IsEyeMaterial(mat))
@@ -121,9 +110,22 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
                 }
                 else if (TrinityTextureBaker.NeedsLayerBaking(mat))
                 {
-                    TrinityTextureBaker.BakeLayeredTexture(mat, job.TempPath, texOutDir, sharedAlbedoReps);
+                    TrinityTextureBaker.BakeLayeredTexture(mat, job.TempPath, texOutDir, sharedAlbedoReps, alreadyBaked);
                 }
             }
+
+            // Phase 5: Export model (after baking so material texture refs are patched)
+            string modelExt = _options.OutputFormat?.ToLowerInvariant() == "obj" ? ".obj" : ".dae";
+            string modelOut = Path.Combine(job.OutputPath, "model" + modelExt);
+
+            // For now, always export as DAE (OBJ export not implemented for TRPAK)
+            if (modelExt == ".obj")
+            {
+                modelOut = Path.Combine(job.OutputPath, "model.dae");
+            }
+
+            TrinityColladaExporter.Export(modelOut, exportData);
+            result.OutputFiles.Add(Path.GetFileName(modelOut));
 
             // Phase 6: Extract and export animations immediately
             string clipOutDir = Path.Combine(job.OutputPath, _splitMode ? "clips" : "animations");
@@ -226,6 +228,34 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
 
             // Phase 7: Write manifest immediately
             string manifestModelFormat = Path.GetExtension(modelOut).TrimStart('.');
+            var manifestMaterials = exportData.Materials.Select(m => new ManifestMaterialEntry
+            {
+                Name = m.Name,
+                ShaderName = m.ShaderName,
+                Textures = m.Textures.Select(t => new ManifestMaterialTexture
+                {
+                    Name = t.Name,
+                    File = Path.GetFileName(t.FilePath)
+                }).ToList(),
+                Vec4Params = m.Vec4Params
+                    .Where(p => p.Name != null)
+                    .Select(p => new ManifestMaterialVec4
+                    {
+                        Name = p.Name,
+                        W = p.Value?.W ?? 0,
+                        X = p.Value?.X ?? 0,
+                        Y = p.Value?.Y ?? 0,
+                        Z = p.Value?.Z ?? 0
+                    }).ToList(),
+                FloatParams = m.FloatParams
+                    .Where(p => p.Name != null)
+                    .Select(p => new ManifestMaterialFloat
+                    {
+                        Name = p.Name,
+                        Value = p.Value
+                    }).ToList()
+            }).ToList();
+
             var manifest = new ExportManifest
             {
                 Name = job.Name,
@@ -236,7 +266,8 @@ public class TrpakFileGroupExtractor : IFileGroupExtractor
                 ModelFile = Path.GetFileName(modelOut),
                 AnimationMode = _splitMode ? "split" : "baked",
                 Textures = exportedTextures,
-                Clips = clipManifestEntries
+                Clips = clipManifestEntries,
+                Materials = manifestMaterials
             };
 
             string manifestPath = Path.Combine(job.OutputPath, "manifest.json");

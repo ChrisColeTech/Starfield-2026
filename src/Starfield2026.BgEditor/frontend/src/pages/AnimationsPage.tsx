@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useAnimationEditorStore } from '../store/animationEditorStore'
 import { useEditorStore } from '../store/editorStore'
 import Viewport from '../components/Viewport'
 import { SEMANTIC_TAGS } from '../types/animation'
@@ -39,27 +38,27 @@ function RenderToggle({ label, enabled, onChange }: { label: string; enabled: bo
 }
 
 export default function AnimationsPage() {
-  const folderPath = useAnimationEditorStore(s => s.folderPath)
-  const manifest = useAnimationEditorStore(s => s.manifest)
-  const loading = useAnimationEditorStore(s => s.loading)
-  const error = useAnimationEditorStore(s => s.error)
-  const activeModelIndex = useAnimationEditorStore(s => s.activeModelIndex)
-  const activeClipIndex = useAnimationEditorStore(s => s.activeClipIndex)
-  const clipLoading = useAnimationEditorStore(s => s.clipLoading)
-  const loadFolder = useAnimationEditorStore(s => s.loadFolder)
-  const selectClip = useAnimationEditorStore(s => s.selectClip)
-  const tagClip = useAnimationEditorStore(s => s.tagClip)
+  const folderPath = useEditorStore(s => s.folderPath)
+  const manifest = useEditorStore(s => s.animManifest)
+  const loading = useEditorStore(s => s.loading)
+  const error = useEditorStore(s => s.error)
+  const activeModelIndex = useEditorStore(s => s.activeModelIndex)
+  const activeClipIndex = useEditorStore(s => s.activeClipIndex)
+  const clipLoading = useEditorStore(s => s.clipLoading)
+  const loadFolder = useEditorStore(s => s.loadFolder)
+  const selectClip = useEditorStore(s => s.selectClip)
+  const tagClip = useEditorStore(s => s.tagClip)
 
   const animationPlaying = useEditorStore(s => s.animationPlaying)
   const setAnimationPlaying = useEditorStore(s => s.setAnimationPlaying)
 
   // Scan browser state from store (persists across page nav)
-  const scanDir = useAnimationEditorStore(s => s.scanDir)
-  const manifests = useAnimationEditorStore(s => s.manifests)
-  const scanning = useAnimationEditorStore(s => s.scanning)
-  const selectedManifestIndex = useAnimationEditorStore(s => s.selectedManifestIndex)
-  const scanFolder = useAnimationEditorStore(s => s.scanFolder)
-  const selectManifest = useAnimationEditorStore(s => s.selectManifest)
+  const scanDir = useEditorStore(s => s.scanDir)
+  const manifests = useEditorStore(s => s.manifests)
+  const scanning = useEditorStore(s => s.scanning)
+  const selectedManifestIndex = useEditorStore(s => s.selectedManifestIndex)
+  const scanFolder = useEditorStore(s => s.scanFolder)
+  const selectManifest = useEditorStore(s => s.selectManifest)
 
   // Panel state
   const [leftOpen, setLeftOpen] = useState(true)

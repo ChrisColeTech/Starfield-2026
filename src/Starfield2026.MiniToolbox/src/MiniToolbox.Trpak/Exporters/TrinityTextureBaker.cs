@@ -27,7 +27,7 @@ public static class TrinityTextureBaker
     /// Returns true if it has a LayerMaskMap texture + BaseColorLayer params
     /// and is NOT EyeClearCoat (handled by EyeTextureBaker).
     /// </summary>
-    public static bool NeedsLayerBaking(TrinityMaterial material)
+    public static bool NeedsLayerBaking(TrinityMaterial material, bool verbose = false)
     {
         // EyeClearCoat is handled separately
         if (EyeTextureBaker.IsEyeMaterial(material))
@@ -38,10 +38,17 @@ public static class TrinityTextureBaker
         if (!hasLayerMask)
             return false;
 
+        // Multi-layer mode: BaseColorLayer1-4
         bool hasBaseColorLayer = material.Vec4Params.Any(p =>
             p.Name != null && p.Name.StartsWith("BaseColorLayer", StringComparison.OrdinalIgnoreCase));
+        if (hasBaseColorLayer)
+            return true;
 
-        return hasBaseColorLayer;
+        // Single-color tint mode: BaseColor (used by hair, skin, clothing palette variants)
+        bool hasBaseColor = material.Vec4Params.Any(p =>
+            string.Equals(p.Name, "BaseColor", StringComparison.OrdinalIgnoreCase));
+
+        return hasBaseColor;
     }
 
     /// <summary>
@@ -119,23 +126,15 @@ public static class TrinityTextureBaker
 
     /// <summary>
     /// Bake the layered material's albedo from LayerMaskMap + color parameters.
-    /// Overwrites the existing BaseColorMap PNG with the composited result.
-    /// Returns the path to the baked texture, or null if baking fails.
+    /// Each material gets its own per-material baked file ({materialName}_alb.png).
+    /// Patches the material's BaseColorMap TextureRef to point to the new file
+    /// so the DAE exporter picks up the correct texture for each submesh.
+    /// Returns the path to the baked texture, or null if baking fails/skipped.
     /// </summary>
     public static string? BakeLayeredTexture(TrinityMaterial material, string tempRoot, string texOutDir,
-        Dictionary<string, string>? sharedAlbedoReps = null)
+        Dictionary<string, string>? sharedAlbedoReps = null, HashSet<string>? alreadyBaked = null)
     {
         if (!NeedsLayerBaking(material)) return null;
-
-        // When multiple materials share the same albedo with different layer colors,
-        // only the chosen representative (most colorful) should bake.
-        string albFileName = GetAlbedoFileName(material);
-        if (sharedAlbedoReps != null && sharedAlbedoReps.TryGetValue(albFileName, out var repName))
-        {
-            if (!string.Equals(material.Name, repName, StringComparison.OrdinalIgnoreCase))
-                return null; // Not the chosen representative — skip silently
-            Console.WriteLine($"  Layer bake: {albFileName} using representative material {repName} [{material.ShaderName}]");
-        }
 
         // Find the LayerMaskMap texture
         var lymRef = material.Textures.FirstOrDefault(t =>
@@ -153,6 +152,64 @@ public static class TrinityTextureBaker
         var baseColors = ExtractBaseColors(material);
         var emissionColors = ExtractEmissionColors(material);
         var emissionIntensities = ExtractEmissionIntensities(material);
+
+        // Extract BaseColor param (layer 0 / remainder color)
+        var baseColorParam = material.Vec4Params.FirstOrDefault(p =>
+            string.Equals(p.Name, "BaseColor", StringComparison.OrdinalIgnoreCase));
+        Vector3 baseColor0 = baseColorParam?.Value != null
+            ? new Vector3(baseColorParam.Value.W, baseColorParam.Value.X, baseColorParam.Value.Y)
+            : Vector3.One;
+
+        // Check if there's anything to bake (base colors OR emission with intensity)
+        bool hasAnyBaseColor = false;
+        for (int i = 0; i < 4; i++)
+        {
+            if (baseColors[i].LengthSquared() > 0.001f)
+            {
+                hasAnyBaseColor = true;
+                break;
+            }
+        }
+
+        bool hasAnyEmission = false;
+        for (int i = 0; i < 5; i++)
+        {
+            if (emissionColors[i].LengthSquared() > 0.001f && emissionIntensities[i] > 0.001f)
+            {
+                hasAnyEmission = true;
+                break;
+            }
+        }
+
+        bool hasAnyColor = hasAnyBaseColor || hasAnyEmission;
+
+        // Emission-dominant: base layers are all black but emission has color.
+        // In this case, use max(base, emission) instead of additive to prevent
+        // white remainder from washing out the emission colors.
+        bool emissionDominant = !hasAnyBaseColor && hasAnyEmission;
+
+        // Per-material filename
+        string outFileName = SanitizeFileName(material.Name) + "_alb.png";
+        string outPath = Path.Combine(texOutDir, outFileName);
+
+        if (!hasAnyColor)
+        {
+            // All layers are black with no emission — don't bake
+            return null;
+        }
+
+        // Load original albedo BNTX as the base layer for the remainder.
+        // The compositing formula uses the original texture where the mask is zero,
+        // and layer colors where the mask has values.
+        Image<Rgba32>? albedoImage = null;
+        var albRef = material.Textures.FirstOrDefault(t =>
+            string.Equals(t.Name, "BaseColorMap", StringComparison.OrdinalIgnoreCase));
+        if (albRef != null)
+        {
+            string? albBntxPath = FindBntxFile(albRef.FilePath, tempRoot);
+            if (albBntxPath != null && File.Exists(albBntxPath))
+                albedoImage = DecodeBntxToImage(albBntxPath);
+        }
 
         // Bake the composited texture
         int width = maskImage.Width;
@@ -173,12 +230,29 @@ public static class TrinityTextureBaker
                 float maskSum = maskR + maskG + maskB + maskA;
                 float remainder = Math.Clamp(1f - maskSum, 0f, 1f);
 
-                // Blend base colors using mask channels (linear space)
+                // Sample original albedo pixel for remainder (unmasked areas keep original texture)
+                Vector3 remainderColor;
+                if (albedoImage != null)
+                {
+                    // Map to albedo image coordinates (may differ in resolution)
+                    int ax = x * albedoImage.Width / width;
+                    int ay = y * albedoImage.Height / height;
+                    ax = Math.Min(ax, albedoImage.Width - 1);
+                    ay = Math.Min(ay, albedoImage.Height - 1);
+                    var albPixel = albedoImage[ax, ay];
+                    remainderColor = new Vector3(albPixel.R / 255f, albPixel.G / 255f, albPixel.B / 255f);
+                }
+                else
+                {
+                    remainderColor = baseColor0;
+                }
+
+                // Blend: layer colors where masked, original albedo where unmasked
                 Vector3 color = baseColors[0] * maskR
                               + baseColors[1] * maskG
                               + baseColors[2] * maskB
                               + baseColors[3] * maskA
-                              + Vector3.One * remainder;
+                              + remainderColor * remainder;
 
                 // Add emission contribution
                 Vector3 emission = emissionColors[0] * emissionIntensities[0] * maskR
@@ -188,13 +262,6 @@ public static class TrinityTextureBaker
                                  + emissionColors[4] * emissionIntensities[4] * remainder;
 
                 color += emission;
-
-                // Apply sRGB gamma correction (linear → sRGB)
-                color = new Vector3(
-                    LinearToSrgb(color.X),
-                    LinearToSrgb(color.Y),
-                    LinearToSrgb(color.Z));
-
                 color = Vector3.Clamp(color, Vector3.Zero, Vector3.One);
 
                 result[x, y] = new Rgba32(
@@ -206,36 +273,60 @@ public static class TrinityTextureBaker
         }
 
         maskImage.Dispose();
-
-        // Save the baked texture — but only overwrite if existing albedo is a blank placeholder
-        string outPath = Path.Combine(texOutDir, albFileName);
-
-        if (File.Exists(outPath) && !IsBlankAlbedo(outPath))
-        {
-            // Existing albedo has real content (skin, clothing, etc.) — don't overwrite
-            Console.WriteLine($"  Skipped layer bake: {Path.GetFileName(outPath)} (albedo has content) [{material.ShaderName}]");
-            return null;
-        }
+        albedoImage?.Dispose();
 
         result.SaveAsPng(outPath);
 
-        Console.WriteLine($"  Baked layer texture: {Path.GetFileName(outPath)} ({width}x{height}) [{material.ShaderName}]");
+        // Patch the material's BaseColorMap texture reference to point to the baked file
+        var albRefPatch = material.Textures.FirstOrDefault(t =>
+            string.Equals(t.Name, "BaseColorMap", StringComparison.OrdinalIgnoreCase));
+        if (albRefPatch != null)
+            albRefPatch.FilePath = Path.GetFileNameWithoutExtension(outFileName);
+
+        Console.WriteLine($"  Baked layer texture: {outFileName} ({width}x{height}) [{material.ShaderName}]");
         return outPath;
+    }
+
+    private static string SanitizeFileName(string name)
+    {
+        // Replace any invalid filename chars
+        foreach (char c in Path.GetInvalidFileNameChars())
+            name = name.Replace(c, '_');
+        return name;
     }
 
     private static Vector3[] ExtractBaseColors(TrinityMaterial material)
     {
         var colors = new Vector3[4];
+
+        // Try multi-layer mode first: BaseColorLayer1-4
+        bool hasMultiLayer = false;
         for (int i = 0; i < 4; i++)
         {
             string paramName = $"BaseColorLayer{i + 1}";
             var param = material.Vec4Params.FirstOrDefault(p =>
                 string.Equals(p.Name, paramName, StringComparison.OrdinalIgnoreCase));
             if (param?.Value != null)
+            {
                 colors[i] = new Vector3(param.Value.W, param.Value.X, param.Value.Y);
+                hasMultiLayer = true;
+            }
             else
+            {
                 colors[i] = Vector3.Zero;
+            }
         }
+
+        // Fallback: single BaseColor tint (hair, skin, clothing)
+        // In single-color mode, the mask R channel drives the tint blend
+        if (!hasMultiLayer)
+        {
+            var baseColor = material.Vec4Params.FirstOrDefault(p =>
+                string.Equals(p.Name, "BaseColor", StringComparison.OrdinalIgnoreCase));
+            if (baseColor?.Value != null)
+                colors[0] = new Vector3(baseColor.Value.W, baseColor.Value.X, baseColor.Value.Y);
+        }
+
         return colors;
     }
 
@@ -363,5 +454,93 @@ public static class TrinityTextureBaker
         if (linear <= 0.0031308f)
             return linear * 12.92f;
         return 1.055f * MathF.Pow(linear, 1f / 2.4f) - 0.055f;
+    }
+
+    private static float GetFloatParam(TrinityMaterial material, string name)
+    {
+        var param = material.FloatParams.FirstOrDefault(p =>
+            string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+        return param?.Value ?? 0f;
+    }
+
+    /// <summary>
+    /// Apply hue shift to turn white/gray albedo into colored body parts.
+    /// The game shader uses HueShiftBias + MidAreaHueOffset/DarkAreaHueOffset
+    /// to tint the base albedo at runtime. We bake this into the texture.
+    /// The shift uses luminance to blend between mid and dark area offsets,
+    /// and forces saturation on near-gray pixels so the hue is visible.
+    /// </summary>
+    private static Vector3 ApplyHueShift(Vector3 rgb, float bias, float midHueOffset, float midShift,
+                                          float darkHueOffset, float darkShift)
+    {
+        // Convert RGB to HSL
+        float r = rgb.X, g = rgb.Y, b = rgb.Z;
+        float max = MathF.Max(r, MathF.Max(g, b));
+        float min = MathF.Min(r, MathF.Min(g, b));
+        float l = (max + min) * 0.5f;
+        float s = 0f;
+        float h = 0f;
+
+        if (max != min)
+        {
+            float d = max - min;
+            s = l > 0.5f ? d / (2f - max - min) : d / (max + min);
+
+            if (max == r)
+                h = ((g - b) / d + (g < b ? 6f : 0f)) / 6f;
+            else if (max == g)
+                h = ((b - r) / d + 2f) / 6f;
+            else
+                h = ((r - g) / d + 4f) / 6f;
+        }
+
+        // Blend between mid and dark hue offsets based on luminance
+        // Dark (l<0.3) = dark offset, Mid (l~0.5) = mid offset, Light = mid offset
+        float t = Math.Clamp((l - 0.2f) / 0.3f, 0f, 1f); // 0=dark, 1=mid/light
+        float hueOffset = darkHueOffset * (1f - t) + midHueOffset * t;
+        float satShift = darkShift * (1f - t) + midShift * t;
+
+        // Apply hue shift (offset is in degrees, convert to 0-1 range)
+        h += (hueOffset / 360f) * bias;
+        h = h % 1f;
+        if (h < 0) h += 1f;
+
+        // Apply saturation shift
+        s = Math.Clamp(s + satShift * bias, 0f, 1f);
+
+        // Force saturation on near-gray pixels so hue shift produces visible color
+        if (s < 0.1f && bias > 0.1f)
+            s = Math.Clamp(bias * 0.5f, 0f, 1f);
+
+        // Convert HSL back to RGB
+        return HslToRgb(h, s, l);
+    }
+
+    private static Vector3 HslToRgb(float h, float s, float l)
+    {
+        if (s < 0.001f)
+            return new Vector3(l, l, l);
+
+        float q = l < 0.5f ? l * (1f + s) : l + s - l * s;
+        float p = 2f * l - q;
+
+        float r = HueToRgb(p, q, h + 1f / 3f);
+        float g = HueToRgb(p, q, h);
+        float b = HueToRgb(p, q, h - 1f / 3f);
+
+        return new Vector3(
+            Math.Clamp(r, 0f, 1f),
+            Math.Clamp(g, 0f, 1f),
+            Math.Clamp(b, 0f, 1f));
+    }
+
+    private static float HueToRgb(float p, float q, float t)
+    {
+        if (t < 0f) t += 1f;
+        if (t > 1f) t -= 1f;
+        if (t < 1f / 6f) return p + (q - p) * 6f * t;
+        if (t < 1f / 2f) return q;
+        if (t < 2f / 3f) return p + (q - p) * (2f / 3f - t) * 6f;
+        return p;
     }
 }

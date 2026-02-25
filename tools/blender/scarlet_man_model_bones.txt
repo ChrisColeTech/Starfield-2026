@@ -1,0 +1,1413 @@
+DAE: D:/Projects/Starfield-2026/src/Starfield2026.Assets/Models/Characters/scarlet/characters/man/tr0020_00/model.dae
+================================================================================
+
+JOINT HIERARCHY
+--------------------------------------------------------------------------------
+chara_root (parent: None)  pos=(0.0000, 0.0000, 0.0000)
+  origin (parent: chara_root)  pos=(0.0000, 0.0000, 0.0000)
+    foot_base (parent: origin)  pos=(0.0000, 0.1533, 0.0000)
+      waist (parent: foot_base)  pos=(0.8235, 0.0000, 0.0000)
+        spine_01 (parent: waist)  pos=(0.0001, 0.0000, 0.0000)
+          spine_02 (parent: spine_01)  pos=(0.1446, 0.0000, 0.0000)
+            spine_03 (parent: spine_02)  pos=(0.1446, 0.0000, 0.0000)
+              neck (parent: spine_03)  pos=(0.1550, 0.0000, -0.0000)
+                look (parent: neck)  pos=(0.0889, 0.0000, -0.0000)
+                  head (parent: look)  pos=(0.0001, 0.0000, 0.0000)
+                    eyescale (parent: head)  pos=(0.1370, 0.0000, 0.0287)
+                      left_eyeball_segoff (parent: eyescale)  pos=(0.0006, -0.0221, 0.0156)
+                        left_pupil_01 (parent: left_eyeball_segoff)  pos=(0.0730, 0.0000, 0.0000)
+                          left_pupil_02 (parent: left_pupil_01)  pos=(0.0001, 0.0000, 0.0000)
+                        left_eyehilight_01 (parent: left_eyeball_segoff)  pos=(0.0001, 0.0000, -0.0000)
+                          left_eyehilight_02 (parent: left_eyehilight_01)  pos=(0.0767, 0.0000, 0.0000)
+                      right_eyeball_segoff (parent: eyescale)  pos=(0.0006, 0.0221, 0.0156)
+                        right_pupil_01 (parent: right_eyeball_segoff)  pos=(0.0730, 0.0000, 0.0000)
+                          right_pupil_02 (parent: right_pupil_01)  pos=(0.0001, 0.0000, 0.0000)
+                        right_eyehilight_01 (parent: right_eyeball_segoff)  pos=(0.0001, -0.0000, 0.0000)
+                          right_eyehilight_02 (parent: right_eyehilight_01)  pos=(0.0768, 0.0000, 0.0000)
+                    hair_a (parent: head)  pos=(0.2436, -0.0915, 0.0919)
+                    hair_b_01 (parent: head)  pos=(0.2870, -0.0698, -0.0452)
+                      hair_b_02 (parent: hair_b_01)  pos=(0.0500, -0.0000, 0.0000)
+                    hair_c_01 (parent: head)  pos=(0.2320, 0.0000, 0.1049)
+                      hair_c_02 (parent: hair_c_01)  pos=(0.0275, -0.0000, 0.0000)
+                    hair_d_01 (parent: head)  pos=(0.3055, -0.0001, 0.0528)
+                      hair_d_02 (parent: hair_d_01)  pos=(0.0602, 0.0000, -0.0000)
+                    hair_e_01 (parent: head)  pos=(0.3143, -0.0053, -0.0217)
+                      hair_e_02 (parent: hair_e_01)  pos=(0.0600, 0.0000, 0.0000)
+                    hair_f (parent: head)  pos=(0.2333, 0.0765, 0.1084)
+                    hair_g (parent: head)  pos=(0.2756, 0.1029, 0.0317)
+                    hair_h (parent: head)  pos=(0.2596, 0.1024, -0.0806)
+              left_shoulder (parent: spine_03)  pos=(0.1232, -0.0664, -0.0091)
+                left_arm_width (parent: left_shoulder)  pos=(-0.0663, -0.0271, -0.0000)
+                  left_arm_01 (parent: left_arm_width)  pos=(0.2000, -0.0000, 0.0000)
+                    left_arm_02 (parent: left_arm_01)  pos=(0.2598, 0.0000, -0.0000)
+                      left_hand (parent: left_arm_02)  pos=(0.2368, -0.0000, 0.0000)
+                        left_thumb_01 (parent: left_hand)  pos=(0.0254, -0.0141, 0.0347)
+                          left_thumb_02 (parent: left_thumb_01)  pos=(0.0425, 0.0000, -0.0000)
+                            left_thumb_03 (parent: left_thumb_02)  pos=(0.0425, 0.0000, 0.0000)
+                        left_index_01 (parent: left_hand)  pos=(0.0926, -0.0009, 0.0325)
+                          left_index_02 (parent: left_index_01)  pos=(0.0397, 0.0000, -0.0000)
+                            left_index_03 (parent: left_index_02)  pos=(0.0337, 0.0000, -0.0000)
+                        left_middle_01 (parent: left_hand)  pos=(0.0976, 0.0029, -0.0000)
+                          left_middle_02 (parent: left_middle_01)  pos=(0.0444, 0.0000, -0.0000)
+                            left_middle_03 (parent: left_middle_02)  pos=(0.0373, -0.0000, 0.0000)
+                        left_ring_01 (parent: left_hand)  pos=(0.0897, -0.0020, -0.0278)
+                          left_ring_02 (parent: left_ring_01)  pos=(0.0385, 0.0000, -0.0000)
+                            left_ring_03 (parent: left_ring_02)  pos=(0.0345, 0.0000, -0.0000)
+                        left_pinky_01 (parent: left_hand)  pos=(0.0799, -0.0020, -0.0547)
+                          left_pinky_02 (parent: left_pinky_01)  pos=(0.0300, 0.0000, 0.0000)
+                            left_pinky_03 (parent: left_pinky_02)  pos=(0.0280, -0.0000, 0.0000)
+                        left_attach_off (parent: left_hand)  pos=(0.1069, -0.0640, -0.0000)
+                        left_attach_on (parent: left_hand)  pos=(0.1070, -0.0640, -0.0000)
+                      left_hand_roll (parent: left_arm_02)  pos=(0.2367, -0.0000, 0.0000)
+                      left_arm_02_sub (parent: left_arm_02)  pos=(0.0001, -0.0000, 0.0000)
+                      left_arm_02_roll (parent: left_arm_02)  pos=(0.1104, -0.0000, 0.0000)
+                      left_sleeve (parent: left_arm_02)  pos=(0.2093, -0.0121, 0.0000)
+                    left_arm_01_roll (parent: left_arm_01)  pos=(0.0001, 0.0000, -0.0000)
+                left_collar (parent: left_shoulder)  pos=(0.0236, 0.0060, 0.0788)
+              left_cloth_a_00 (parent: spine_03)  pos=(-0.0800, -0.0650, 0.1200)
+                left_cloth_a_01 (parent: left_cloth_a_00)  pos=(0.1758, -0.0000, -0.0010)
+                  left_cloth_a_02 (parent: left_cloth_a_01)  pos=(0.2700, 0.0000, 0.0000)
+              left_cloth_b_00 (parent: spine_03)  pos=(-0.0770, -0.1800, 0.0500)
+                left_cloth_b_01 (parent: left_cloth_b_00)  pos=(0.1690, 0.0010, -0.0009)
+                  left_cloth_b_02 (parent: left_cloth_b_01)  pos=(0.2700, -0.0000, 0.0000)
+                  left_pocket (parent: left_cloth_b_01)  pos=(0.2919, -0.0046, -0.0010)
+              left_cloth_c_00 (parent: spine_03)  pos=(-0.0606, -0.1470, -0.0800)
+                left_cloth_c_01 (parent: left_cloth_c_00)  pos=(0.1655, -0.0002, 0.0002)
+                  left_cloth_c_02 (parent: left_cloth_c_01)  pos=(0.2700, -0.0000, -0.0000)
+              left_cloth_d_00 (parent: spine_03)  pos=(-0.0520, -0.0550, -0.1370)
+                left_cloth_d_01 (parent: left_cloth_d_00)  pos=(0.1658, 0.0000, 0.0000)
+                  left_cloth_d_02 (parent: left_cloth_d_01)  pos=(0.2700, -0.0000, -0.0000)
+              right_shoulder (parent: spine_03)  pos=(0.1232, 0.0664, -0.0091)
+                right_arm_width (parent: right_shoulder)  pos=(-0.0663, 0.0271, -0.0000)
+                  right_arm_01 (parent: right_arm_width)  pos=(0.2000, 0.0000, -0.0000)
+                    right_arm_02 (parent: right_arm_01)  pos=(0.2598, 0.0000, 0.0000)
+                      right_hand (parent: right_arm_02)  pos=(0.2368, -0.0000, -0.0000)
+                        right_thumb_01 (parent: right_hand)  pos=(0.0254, 0.0141, 0.0347)
+                          right_thumb_02 (parent: right_thumb_01)  pos=(0.0425, -0.0000, 0.0000)
+                            right_thumb_03 (parent: right_thumb_02)  pos=(0.0425, -0.0000, -0.0000)
+                        right_index_01 (parent: right_hand)  pos=(0.0926, 0.0008, 0.0325)
+                          right_index_02 (parent: right_index_01)  pos=(0.0397, 0.0000, -0.0000)
+                            right_index_03 (parent: right_index_02)  pos=(0.0337, 0.0000, 0.0000)
+                        right_middle_01 (parent: right_hand)  pos=(0.0976, -0.0029, -0.0000)
+                          right_middle_02 (parent: right_middle_01)  pos=(0.0444, -0.0000, -0.0000)
+                            right_middle_03 (parent: right_middle_02)  pos=(0.0373, -0.0000, -0.0000)
+                        right_ring_01 (parent: right_hand)  pos=(0.0897, 0.0020, -0.0278)
+                          right_ring_02 (parent: right_ring_01)  pos=(0.0385, 0.0000, -0.0000)
+                            right_ring_03 (parent: right_ring_02)  pos=(0.0345, -0.0000, 0.0000)
+                        right_pinky_01 (parent: right_hand)  pos=(0.0799, 0.0020, -0.0547)
+                          right_pinky_02 (parent: right_pinky_01)  pos=(0.0300, -0.0000, -0.0000)
+                            right_pinky_03 (parent: right_pinky_02)  pos=(0.0280, 0.0000, -0.0000)
+                        right_attach_off (parent: right_hand)  pos=(0.1069, 0.0639, -0.0000)
+                        right_attach_on (parent: right_hand)  pos=(0.1070, 0.0639, -0.0000)
+                      right_hand_roll (parent: right_arm_02)  pos=(0.2367, 0.0000, 0.0000)
+                      right_arm_02_sub (parent: right_arm_02)  pos=(0.0001, 0.0000, 0.0000)
+                      right_arm_02_roll (parent: right_arm_02)  pos=(0.1104, 0.0000, 0.0000)
+                      right_sleeve (parent: right_arm_02)  pos=(0.2093, 0.0121, 0.0000)
+                    right_arm_01_roll (parent: right_arm_01)  pos=(0.0001, 0.0000, 0.0000)
+                right_collar (parent: right_shoulder)  pos=(0.0236, -0.0060, 0.0788)
+              collar (parent: spine_03)  pos=(0.2028, 0.0000, -0.0539)
+              right_cloth_a_00 (parent: spine_03)  pos=(-0.0800, 0.0650, 0.1200)
+                right_cloth_a_01 (parent: right_cloth_a_00)  pos=(0.1758, 0.0000, -0.0000)
+                  right_cloth_a_02 (parent: right_cloth_a_01)  pos=(0.2700, -0.0000, 0.0000)
+              right_cloth_b_00 (parent: spine_03)  pos=(-0.0770, 0.1800, 0.0500)
+                right_cloth_b_01 (parent: right_cloth_b_00)  pos=(0.1690, -0.0000, 0.0000)
+                  right_cloth_b_02 (parent: right_cloth_b_01)  pos=(0.2700, -0.0000, 0.0000)
+                  right_pocket (parent: right_cloth_b_01)  pos=(0.2919, -0.0046, 0.0009)
+              right_cloth_c_00 (parent: spine_03)  pos=(-0.0606, 0.1470, -0.0800)
+                right_cloth_c_01 (parent: right_cloth_c_00)  pos=(0.1655, -0.0000, 0.0000)
+                  right_cloth_c_02 (parent: right_cloth_c_01)  pos=(0.2700, 0.0000, 0.0000)
+              right_cloth_d_00 (parent: spine_03)  pos=(-0.0520, 0.0550, -0.1370)
+                right_cloth_d_01 (parent: right_cloth_d_00)  pos=(0.1658, 0.0000, 0.0000)
+                  right_cloth_d_02 (parent: right_cloth_d_01)  pos=(0.2700, 0.0000, -0.0000)
+        hips (parent: waist)  pos=(-0.0001, 0.0000, 0.0000)
+          leg_width (parent: hips)  pos=(0.1039, 0.0000, 0.0000)
+            left_leg_01 (parent: leg_width)  pos=(0.0000, 0.0890, 0.0000)
+              left_leg_02 (parent: left_leg_01)  pos=(0.3598, 0.0000, 0.0000)
+                left_foot (parent: left_leg_02)  pos=(0.3597, -0.0000, 0.0000)
+                  left_toe (parent: left_foot)  pos=(0.1201, -0.0000, -0.1130)
+                left_leg_02_sub (parent: left_leg_02)  pos=(-0.0001, -0.0000, 0.0000)
+            right_leg_01 (parent: leg_width)  pos=(0.0000, -0.0890, 0.0000)
+              right_leg_02 (parent: right_leg_01)  pos=(0.3598, 0.0000, 0.0000)
+                right_foot (parent: right_leg_02)  pos=(0.3597, -0.0000, 0.0000)
+                  right_toe (parent: right_foot)  pos=(0.1201, 0.0000, -0.1130)
+                right_leg_02_sub (parent: right_leg_02)  pos=(-0.0001, -0.0000, 0.0000)
+  lod_group (parent: chara_root)  pos=(0.0000, 0.0000, 0.0000)
+    lod0 (parent: lod_group)  pos=(0.0000, 0.0000, 0.0000)
+      sorting_group_01 (parent: lod0)  pos=(0.0000, 0.0000, 0.0000)
+        eyelight_mesh (parent: sorting_group_01)  pos=(0.0000, 0.0000, 0.0000)
+        lens_mesh (parent: sorting_group_01)  pos=(0.0000, 0.0000, 0.0000)
+      eyeball_mesh (parent: lod0)  pos=(0.0000, 0.0000, 0.0000)
+      body_mesh (parent: lod0)  pos=(0.0000, 0.0000, 0.0000)
+      outer_mesh (parent: lod0)  pos=(0.0000, 0.0000, 0.0000)
+      hairstyle_mesh (parent: lod0)  pos=(0.0000, 0.0000, 0.0000)
+      hairup01_mesh (parent: lod0)  pos=(0.0000, 0.0000, 0.0000)
+      hairup02_mesh (parent: lod0)  pos=(0.0000, 0.0000, 0.0000)
+      morph_base (parent: lod0)  pos=(0.0000, 0.0000, 0.0000)
+        eyebrow_mesh (parent: morph_base)  pos=(0.0000, 0.0000, 0.0000)
+        tooth_mesh (parent: morph_base)  pos=(0.0000, 0.0000, 0.0000)
+        tongue_mesh (parent: morph_base)  pos=(0.0000, 0.0000, 0.0000)
+        face_m1_mesh (parent: morph_base)  pos=(0.0000, 0.0000, 0.0000)
+        face_m2_mesh (parent: morph_base)  pos=(0.0000, 0.0000, 0.0000)
+        eyelash_m2_mesh (parent: morph_base)  pos=(0.0000, 0.0000, 0.0000)
+        face_m3_mesh (parent: morph_base)  pos=(0.0000, 0.0000, 0.0000)
+        eyelash_m3_mesh (parent: morph_base)  pos=(0.0000, 0.0000, 0.0000)
+        face_m4_mesh (parent: morph_base)  pos=(0.0000, 0.0000, 0.0000)
+        face_base_mesh (parent: morph_base)  pos=(0.0000, 0.0000, 0.0000)
+    lod1 (parent: lod_group)  pos=(0.0000, 0.0000, 0.0000)
+      eyeball_mesh_lod1 (parent: lod1)  pos=(0.0000, 0.0000, 0.0000)
+      body_mesh_lod1 (parent: lod1)  pos=(0.0000, 0.0000, 0.0000)
+      outer_mesh_lod1 (parent: lod1)  pos=(0.0000, 0.0000, 0.0000)
+      hairstyle_mesh_lod1 (parent: lod1)  pos=(0.0000, 0.0000, 0.0000)
+      hairup01_mesh_lod1 (parent: lod1)  pos=(0.0000, 0.0000, 0.0000)
+      hairup02_mesh_lod1 (parent: lod1)  pos=(0.0000, 0.0000, 0.0000)
+      morph_base_lod1 (parent: lod1)  pos=(0.0000, 0.0000, 0.0000)
+        face_m1_mesh_lod1 (parent: morph_base_lod1)  pos=(0.0000, 0.0000, 0.0000)
+        eyelash_m2_mesh_lod1 (parent: morph_base_lod1)  pos=(0.0000, 0.0000, 0.0000)
+        eyebrow_mesh_lod1 (parent: morph_base_lod1)  pos=(0.0000, 0.0000, 0.0000)
+    lod2 (parent: lod_group)  pos=(0.0000, 0.0000, 0.0000)
+      eyeball_mesh_lod2 (parent: lod2)  pos=(0.0000, 0.0000, 0.0000)
+      body_mesh_lod2 (parent: lod2)  pos=(0.0000, 0.0000, 0.0000)
+      outer_mesh_lod2 (parent: lod2)  pos=(0.0000, 0.0000, 0.0000)
+      hairstyle_mesh_lod2 (parent: lod2)  pos=(0.0000, 0.0000, 0.0000)
+      hairup01_mesh_lod2 (parent: lod2)  pos=(0.0000, 0.0000, 0.0000)
+      hairup02_mesh_lod2 (parent: lod2)  pos=(0.0000, 0.0000, 0.0000)
+      morph_base_lod2 (parent: lod2)  pos=(0.0000, 0.0000, 0.0000)
+        face_m1_mesh_lod2 (parent: morph_base_lod2)  pos=(0.0000, 0.0000, 0.0000)
+        eyelash_m2_mesh_lod2 (parent: morph_base_lod2)  pos=(0.0000, 0.0000, 0.0000)
+        eyebrow_mesh_lod2 (parent: morph_base_lod2)  pos=(0.0000, 0.0000, 0.0000)
+
+Total joints: 172
+
+NON-JOINT NODES
+--------------------------------------------------------------------------------
+eyelight_mesh_shape:eye_lens type=NODE (parent: None)
+lens_mesh_shape:eye_lens type=NODE (parent: None)
+eyeball_mesh_shape:eye type=NODE (parent: None)
+body_mesh_shape:body type=NODE (parent: None)
+body_mesh_shape:body_skin type=NODE (parent: None)
+outer_mesh_shape:obj type=NODE (parent: None)
+hairstyle_mesh_shape:hairstyle type=NODE (parent: None)
+hairstyle_mesh_shape:hairstyle_skin type=NODE (parent: None)
+hairup01_mesh_shape:hairup type=NODE (parent: None)
+hairup02_mesh_shape:hairup type=NODE (parent: None)
+eyebrow_mesh_shape:eyebrow type=NODE (parent: None)
+tooth_mesh_shape:face type=NODE (parent: None)
+tongue_mesh_shape:face type=NODE (parent: None)
+eyelash_m2_mesh_shape:eyelash type=NODE (parent: None)
+eyelash_m3_mesh_shape:eyelash type=NODE (parent: None)
+face_base_mesh_shape:face_skin type=NODE (parent: None)
+face_base_mesh_shape:face type=NODE (parent: None)
+
+Total non-joint nodes: 17
+
+SKIN JOINT LIST (from controller)
+--------------------------------------------------------------------------------
+  chara_root
+  origin
+  foot_base
+  waist
+  spine_01
+  spine_02
+  spine_03
+  neck
+  look
+  head
+  eyescale
+  left_eyeball_segoff
+  left_pupil_01
+  left_pupil_02
+  left_eyehilight_01
+  left_eyehilight_02
+  right_eyeball_segoff
+  right_pupil_01
+  right_pupil_02
+  right_eyehilight_01
+  right_eyehilight_02
+  hair_a
+  hair_b_01
+  hair_b_02
+  hair_c_01
+  hair_c_02
+  hair_d_01
+  hair_d_02
+  hair_e_01
+  hair_e_02
+  hair_f
+  hair_g
+  hair_h
+  left_shoulder
+  left_arm_width
+  left_arm_01
+  left_arm_02
+  left_hand
+  left_thumb_01
+  left_thumb_02
+  left_thumb_03
+  left_index_01
+  left_index_02
+  left_index_03
+  left_middle_01
+  left_middle_02
+  left_middle_03
+  left_ring_01
+  left_ring_02
+  left_ring_03
+  left_pinky_01
+  left_pinky_02
+  left_pinky_03
+  left_attach_off
+  left_attach_on
+  left_hand_roll
+  left_arm_02_sub
+  left_arm_02_roll
+  left_sleeve
+  left_arm_01_roll
+  left_collar
+  left_cloth_a_00
+  left_cloth_a_01
+  left_cloth_a_02
+  left_cloth_b_00
+  left_cloth_b_01
+  left_cloth_b_02
+  left_pocket
+  left_cloth_c_00
+  left_cloth_c_01
+  left_cloth_c_02
+  left_cloth_d_00
+  left_cloth_d_01
+  left_cloth_d_02
+  right_shoulder
+  right_arm_width
+  right_arm_01
+  right_arm_02
+  right_hand
+  right_thumb_01
+  right_thumb_02
+  right_thumb_03
+  right_index_01
+  right_index_02
+  right_index_03
+  right_middle_01
+  right_middle_02
+  right_middle_03
+  right_ring_01
+  right_ring_02
+  right_ring_03
+  right_pinky_01
+  right_pinky_02
+  right_pinky_03
+  right_attach_off
+  right_attach_on
+  right_hand_roll
+  right_arm_02_sub
+  right_arm_02_roll
+  right_sleeve
+  right_arm_01_roll
+  right_collar
+  collar
+  right_cloth_a_00
+  right_cloth_a_01
+  right_cloth_a_02
+  right_cloth_b_00
+  right_cloth_b_01
+  right_cloth_b_02
+  right_pocket
+  right_cloth_c_00
+  right_cloth_c_01
+  right_cloth_c_02
+  right_cloth_d_00
+  right_cloth_d_01
+  right_cloth_d_02
+  hips
+  leg_width
+  left_leg_01
+  left_leg_02
+  left_foot
+  left_toe
+  left_leg_02_sub
+  right_leg_01
+  right_leg_02
+  right_foot
+  right_toe
+  right_leg_02_sub
+  lod_group
+  lod0
+  sorting_group_01
+  eyelight_mesh
+  lens_mesh
+  eyeball_mesh
+  body_mesh
+  outer_mesh
+  hairstyle_mesh
+  hairup01_mesh
+  hairup02_mesh
+  morph_base
+  eyebrow_mesh
+  tooth_mesh
+  tongue_mesh
+  face_m1_mesh
+  face_m2_mesh
+  eyelash_m2_mesh
+  face_m3_mesh
+  eyelash_m3_mesh
+  face_m4_mesh
+  face_base_mesh
+  lod1
+  eyeball_mesh_lod1
+  body_mesh_lod1
+  outer_mesh_lod1
+  hairstyle_mesh_lod1
+  hairup01_mesh_lod1
+  hairup02_mesh_lod1
+  morph_base_lod1
+  face_m1_mesh_lod1
+  eyelash_m2_mesh_lod1
+  eyebrow_mesh_lod1
+  lod2
+  eyeball_mesh_lod2
+  body_mesh_lod2
+  outer_mesh_lod2
+  hairstyle_mesh_lod2
+  hairup01_mesh_lod2
+  hairup02_mesh_lod2
+  morph_base_lod2
+  face_m1_mesh_lod2
+  eyelash_m2_mesh_lod2
+  eyebrow_mesh_lod2
+
+Total skin joints: 172
+
+FULL TRANSFORM MATRICES
+--------------------------------------------------------------------------------
+
+chara_root (parent: None):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+origin (parent: chara_root):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+foot_base (parent: origin):
+    [  0.000000,  -1.000000,   0.000000,   0.000000]
+    [  1.000000,   0.000000,   0.000000,   0.153323]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+waist (parent: foot_base):
+    [  1.000000,   0.000000,   0.000000,   0.823523]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+spine_01 (parent: waist):
+    [  1.000000,   0.000000,   0.000000,   0.000107]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+spine_02 (parent: spine_01):
+    [  1.000000,   0.000000,   0.000000,   0.144599]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+spine_03 (parent: spine_02):
+    [  0.992131,   0.000000,   0.125206,   0.144599]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [ -0.125206,   0.000000,   0.992131,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+neck (parent: spine_03):
+    [  0.960895,   0.000000,  -0.276913,   0.154989]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.276913,   0.000000,   0.960895,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+look (parent: neck):
+    [  0.988005,   0.000000,   0.154425,   0.088910]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [ -0.154425,   0.000000,   0.988005,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+head (parent: look):
+    [  1.000000,   0.000000,   0.000000,   0.000100]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+eyescale (parent: head):
+    [  1.300000,   0.000000,   0.000000,   0.137039]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.028668]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_eyeball_segoff (parent: eyescale):
+    [ -0.111160,   0.033023,   0.993254,   0.000638]
+    [ -0.361822,  -0.932199,  -0.009500,  -0.022053]
+    [  0.925596,  -0.360437,   0.115572,   0.015627]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_pupil_01 (parent: left_eyeball_segoff):
+    [  1.000000,   0.000000,   0.000000,   0.073000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_pupil_02 (parent: left_pupil_01):
+    [  1.000000,   0.000000,   0.000000,   0.000100]
+    [  0.000000,   0.999448,   0.033229,   0.000000]
+    [  0.000000,  -0.033229,   0.999448,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_eyehilight_01 (parent: left_eyeball_segoff):
+    [  0.998626,   0.030517,  -0.042589,   0.000100]
+    [ -0.027955,   0.997836,   0.059511,   0.000000]
+    [  0.044313,  -0.058239,   0.997319,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_eyehilight_02 (parent: left_eyehilight_01):
+    [  1.000000,   0.000000,   0.000000,   0.076699]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_eyeball_segoff (parent: eyescale):
+    [ -0.111158,  -0.033022,   0.993254,   0.000638]
+    [  0.361816,  -0.932201,   0.009500,   0.022053]
+    [  0.925599,   0.360431,   0.115569,   0.015627]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_pupil_01 (parent: right_eyeball_segoff):
+    [  1.000000,   0.000000,   0.000000,   0.073000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_pupil_02 (parent: right_pupil_01):
+    [  1.000000,   0.000000,   0.000000,   0.000100]
+    [  0.000000,   0.999448,  -0.033227,   0.000000]
+    [  0.000000,   0.033227,   0.999448,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_eyehilight_01 (parent: right_eyeball_segoff):
+    [  0.998014,  -0.030451,  -0.055137,   0.000100]
+    [  0.033789,   0.997587,   0.060651,  -0.000000]
+    [  0.053157,  -0.062393,   0.996635,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_eyehilight_02 (parent: right_eyehilight_01):
+    [  1.000000,   0.000000,   0.000000,   0.076844]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hair_a (parent: head):
+    [  0.334361,   0.567989,  -0.752058,   0.243570]
+    [ -0.132221,  -0.761822,  -0.634149,  -0.091527]
+    [ -0.933124,   0.311473,  -0.179623,   0.091919]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hair_b_01 (parent: head):
+    [ -0.122762,   0.511648,  -0.850380,   0.287043]
+    [  0.257397,  -0.811126,  -0.525188,  -0.069844]
+    [ -0.958476,  -0.283358,  -0.032121,  -0.045203]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hair_b_02 (parent: hair_b_01):
+    [  0.991091,   0.132925,  -0.008301,   0.050000]
+    [ -0.133149,   0.987456,  -0.084866,  -0.000000]
+    [ -0.003084,   0.085215,   0.996358,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hair_c_01 (parent: head):
+    [  0.586518,  -0.803529,  -0.101679,   0.231978]
+    [ -0.059947,   0.082127,  -0.994817,   0.000000]
+    [  0.807715,   0.589573,   0.000000,   0.104902]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hair_c_02 (parent: hair_c_01):
+    [ -0.320887,   0.947115,  -0.002229,   0.027550]
+    [ -0.943601,  -0.319897,  -0.085341,  -0.000000]
+    [ -0.081541,  -0.025281,   0.996349,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hair_d_01 (parent: head):
+    [  0.318405,   0.947955,  -0.000000,   0.305530]
+    [  0.140822,  -0.047300,  -0.988904,  -0.000147]
+    [ -0.937437,   0.314872,  -0.148553,   0.052797]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hair_d_02 (parent: hair_d_01):
+    [  0.916187,   0.394476,   0.070634,   0.060203]
+    [ -0.396649,   0.917766,   0.019357,   0.000000]
+    [ -0.057190,  -0.045751,   0.997314,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hair_e_01 (parent: head):
+    [ -0.220875,   0.975302,   0.000000,   0.314255]
+    [  0.086526,   0.019595,  -0.996057,  -0.005337]
+    [ -0.971457,  -0.220003,  -0.088717,  -0.021732]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hair_e_02 (parent: hair_e_01):
+    [  0.876549,   0.481272,   0.006231,   0.060049]
+    [ -0.481192,   0.876546,  -0.011070,   0.000000]
+    [ -0.010789,   0.006705,   0.999919,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hair_f (parent: head):
+    [  0.296696,   0.609269,   0.735366,   0.233267]
+    [  0.188868,   0.717392,  -0.670580,   0.076503]
+    [ -0.936109,   0.337846,   0.097776,   0.108358]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hair_g (parent: head):
+    [ -0.089974,   0.579539,   0.809963,   0.275599]
+    [  0.168326,   0.810411,  -0.561161,   0.102912]
+    [ -0.981617,   0.085848,  -0.170467,   0.031682]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hair_h (parent: head):
+    [ -0.383427,   0.375969,   0.843582,   0.259631]
+    [ -0.501705,   0.682083,  -0.532028,   0.102441]
+    [ -0.775419,  -0.627224,  -0.072904,  -0.080649]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_shoulder (parent: spine_03):
+    [  0.000000,   0.992131,  -0.125206,   0.123177]
+    [ -1.000000,   0.000000,  -0.000000,  -0.066408]
+    [ -0.000000,   0.125206,   0.992131,  -0.009104]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_arm_width (parent: left_shoulder):
+    [  1.000000,   0.000000,   0.000002,  -0.066301]
+    [  0.000000,   1.000000,  -0.000006,  -0.027107]
+    [ -0.000002,   0.000006,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_arm_01 (parent: left_arm_width):
+    [  1.000000,   0.000000,   0.000000,   0.200020]
+    [  0.000000,   1.000000,   0.000000,  -0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_arm_02 (parent: left_arm_01):
+    [  1.000000,   0.000000,   0.000000,   0.259822]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_hand (parent: left_arm_02):
+    [  1.000000,   0.000000,   0.000000,   0.236830]
+    [  0.000000,   1.000000,   0.000000,  -0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_thumb_01 (parent: left_hand):
+    [  0.487226,   0.838107,  -0.245330,   0.025417]
+    [ -0.748568,   0.545505,   0.376921,  -0.014064]
+    [  0.449730,   0.000001,   0.893165,   0.034704]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_thumb_02 (parent: left_thumb_01):
+    [  0.989871,  -0.021932,   0.140266,   0.042471]
+    [  0.023266,   0.999698,  -0.007876,   0.000000]
+    [ -0.140051,   0.011060,   0.990083,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_thumb_03 (parent: left_thumb_02):
+    [  0.999696,  -0.002985,   0.024471,   0.042471]
+    [  0.003008,   0.999995,  -0.000937,   0.000000]
+    [ -0.024468,   0.001010,   0.999700,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_index_01 (parent: left_hand):
+    [  0.999999,   0.001742,   0.000000,   0.092623]
+    [ -0.001742,   0.999999,   0.000012,  -0.000854]
+    [  0.000000,  -0.000012,   1.000000,   0.032509]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_index_02 (parent: left_index_01):
+    [  1.000000,   0.000000,   0.000000,   0.039682]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_index_03 (parent: left_index_02):
+    [  1.000000,   0.000000,   0.000000,   0.033714]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_middle_01 (parent: left_hand):
+    [  0.999999,   0.001742,   0.000000,   0.097563]
+    [ -0.001742,   0.999999,   0.000012,   0.002857]
+    [  0.000000,  -0.000012,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_middle_02 (parent: left_middle_01):
+    [  1.000000,   0.000000,   0.000000,   0.044420]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_middle_03 (parent: left_middle_02):
+    [  1.000000,   0.000000,   0.000000,   0.037339]
+    [  0.000000,   1.000000,   0.000000,  -0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_ring_01 (parent: left_hand):
+    [  0.999999,   0.001742,   0.000000,   0.089720]
+    [ -0.001742,   0.999999,   0.000012,  -0.002025]
+    [  0.000000,  -0.000012,   1.000000,  -0.027770]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_ring_02 (parent: left_ring_01):
+    [  1.000000,   0.000000,   0.000000,   0.038528]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_ring_03 (parent: left_ring_02):
+    [  1.000000,   0.000000,   0.000000,   0.034511]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_pinky_01 (parent: left_hand):
+    [  0.999999,   0.001742,   0.000000,   0.079936]
+    [ -0.001742,   0.999999,   0.000012,  -0.001952]
+    [  0.000000,  -0.000012,   1.000000,  -0.054673]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_pinky_02 (parent: left_pinky_01):
+    [  1.000000,   0.000000,   0.000000,   0.029969]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_pinky_03 (parent: left_pinky_02):
+    [  1.000000,   0.000000,   0.000000,   0.028006]
+    [  0.000000,   1.000000,   0.000000,  -0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_attach_off (parent: left_hand):
+    [  1.000000,   0.000000,   0.000000,   0.106873]
+    [  0.000000,   1.000000,   0.000000,  -0.063951]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_attach_on (parent: left_hand):
+    [  1.000000,   0.000000,   0.000000,   0.106980]
+    [  0.000000,   1.000000,   0.000000,  -0.063951]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_hand_roll (parent: left_arm_02):
+    [  1.000000,   0.000000,   0.000000,   0.236729]
+    [  0.000000,   1.000000,   0.000000,  -0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_arm_02_sub (parent: left_arm_02):
+    [  0.000000,   0.000000,   1.000000,   0.000101]
+    [  0.000000,   1.000000,   0.000000,  -0.000000]
+    [ -1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_arm_02_roll (parent: left_arm_02):
+    [  1.000000,   0.000000,   0.000000,   0.110411]
+    [  0.000000,   1.000000,   0.000000,  -0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_sleeve (parent: left_arm_02):
+    [ -1.000000,   0.000000,  -0.000000,   0.209277]
+    [  0.000000,   1.000000,   0.000000,  -0.012095]
+    [  0.000000,   0.000000,  -1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_arm_01_roll (parent: left_arm_01):
+    [  1.000000,   0.000000,   0.000000,   0.000101]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_collar (parent: left_shoulder):
+    [  0.986079,  -0.104640,  -0.129219,   0.023592]
+    [  0.164280,   0.733127,   0.659953,   0.005991]
+    [  0.025677,  -0.671994,   0.740111,   0.078810]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_cloth_a_00 (parent: spine_03):
+    [ -0.995800,   0.010543,   0.090939,  -0.080000]
+    [  0.090806,  -0.012486,   0.995790,  -0.065000]
+    [  0.011634,   0.999866,   0.011477,   0.120000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_cloth_a_01 (parent: left_cloth_a_00):
+    [  0.988070,  -0.020299,   0.152661,   0.175846]
+    [ -0.005976,   0.985475,   0.169713,  -0.000027]
+    [ -0.153889,  -0.168601,   0.973597,  -0.000972]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_cloth_a_02 (parent: left_cloth_a_01):
+    [  1.000000,   0.000000,   0.000000,   0.270000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_cloth_b_00 (parent: spine_03):
+    [ -0.992729,   0.037569,  -0.114359,  -0.077000]
+    [ -0.081328,  -0.909744,   0.407126,  -0.180000]
+    [ -0.088742,   0.413466,   0.906185,   0.050000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_cloth_b_01 (parent: left_cloth_b_00):
+    [  0.991749,  -0.128197,   0.000000,   0.169038]
+    [  0.127691,   0.987832,   0.088789,   0.000995]
+    [ -0.011382,  -0.088056,   0.996050,  -0.000853]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_cloth_b_02 (parent: left_cloth_b_01):
+    [  1.000000,   0.000000,   0.000000,   0.270000]
+    [  0.000000,   1.000000,   0.000000,  -0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_pocket (parent: left_cloth_b_01):
+    [ -0.999334,   0.034899,  -0.010645,   0.291900]
+    [  0.034897,   0.999391,   0.000372,  -0.004580]
+    [  0.010651,   0.000000,  -0.999943,  -0.001040]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_cloth_c_00 (parent: spine_03):
+    [ -0.986292,   0.128344,  -0.103715,  -0.060600]
+    [ -0.048696,  -0.826920,  -0.560207,  -0.147000]
+    [ -0.157663,  -0.547477,   0.821834,  -0.080000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_cloth_c_01 (parent: left_cloth_c_00):
+    [  0.978986,  -0.192862,  -0.066264,   0.165548]
+    [  0.195419,   0.980113,   0.034493,  -0.000183]
+    [  0.058293,  -0.046717,   0.997206,   0.000160]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_cloth_c_02 (parent: left_cloth_c_01):
+    [  1.000000,   0.000000,   0.000000,   0.270000]
+    [  0.000000,   1.000000,   0.000000,  -0.000000]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_cloth_d_00 (parent: spine_03):
+    [ -0.994460,   0.098788,   0.035908,  -0.052000]
+    [ -0.036180,  -0.000963,  -0.999345,  -0.055000]
+    [ -0.098689,  -0.995108,   0.004532,  -0.137000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_cloth_d_01 (parent: left_cloth_d_00):
+    [  0.975468,  -0.220122,  -0.002909,   0.165835]
+    [  0.219078,   0.971968,  -0.085340,   0.000000]
+    [  0.021612,   0.082609,   0.996348,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_cloth_d_02 (parent: left_cloth_d_01):
+    [  1.000000,   0.000000,   0.000000,   0.270000]
+    [  0.000000,   1.000000,   0.000000,  -0.000000]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_shoulder (parent: spine_03):
+    [  0.000000,  -0.992131,  -0.125206,   0.123177]
+    [  1.000000,  -0.000000,   0.000002,   0.066408]
+    [ -0.000002,  -0.125206,   0.992131,  -0.009104]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_arm_width (parent: right_shoulder):
+    [  1.000000,   0.000000,   0.000000,  -0.066301]
+    [  0.000000,   1.000000,   0.000000,   0.027110]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_arm_01 (parent: right_arm_width):
+    [  1.000000,   0.000000,   0.000000,   0.200020]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_arm_02 (parent: right_arm_01):
+    [  1.000000,   0.000000,   0.000000,   0.259822]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_hand (parent: right_arm_02):
+    [  1.000000,   0.000000,   0.000000,   0.236830]
+    [  0.000000,   1.000000,   0.000000,  -0.000001]
+    [  0.000000,   0.000000,   1.000000,  -0.000001]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_thumb_01 (parent: right_hand):
+    [  0.487161,  -0.838166,  -0.245257,   0.025417]
+    [  0.748647,   0.545414,  -0.376897,   0.014060]
+    [  0.449669,  -0.000002,   0.893195,   0.034704]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_thumb_02 (parent: right_thumb_01):
+    [  0.989879,   0.022078,   0.140185,   0.042477]
+    [ -0.023417,   0.999694,   0.007912,  -0.000000]
+    [ -0.139967,  -0.011115,   0.990094,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_thumb_03 (parent: right_thumb_02):
+    [  0.999696,   0.002993,   0.024466,   0.042468]
+    [ -0.003017,   0.999995,   0.000938,  -0.000000]
+    [ -0.024463,  -0.001011,   0.999700,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_index_01 (parent: right_hand):
+    [  0.999998,  -0.001764,   0.000000,   0.092623]
+    [  0.001764,   0.999998,   0.000000,   0.000850]
+    [  0.000000,   0.000000,   1.000000,   0.032509]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_index_02 (parent: right_index_01):
+    [  1.000000,  -0.000016,  -0.000000,   0.039682]
+    [  0.000016,   1.000000,  -0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_index_03 (parent: right_index_02):
+    [  1.000000,   0.000087,   0.000000,   0.033714]
+    [ -0.000087,   1.000000,  -0.000000,   0.000000]
+    [ -0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_middle_01 (parent: right_hand):
+    [  0.999998,  -0.001801,   0.000000,   0.097563]
+    [  0.001801,   0.999998,   0.000000,  -0.002860]
+    [ -0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_middle_02 (parent: right_middle_01):
+    [  1.000000,   0.000194,   0.000000,   0.044420]
+    [ -0.000194,   1.000000,  -0.000000,  -0.000000]
+    [ -0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_middle_03 (parent: right_middle_02):
+    [  1.000000,  -0.000188,  -0.000003,   0.037339]
+    [  0.000188,   1.000000,  -0.000000,  -0.000000]
+    [  0.000003,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_ring_01 (parent: right_hand):
+    [  0.999998,  -0.001817,   0.000001,   0.089720]
+    [  0.001817,   0.999998,   0.000000,   0.002020]
+    [ -0.000001,   0.000000,   1.000000,  -0.027770]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_ring_02 (parent: right_ring_01):
+    [  1.000000,   0.000078,  -0.000003,   0.038529]
+    [ -0.000078,   1.000000,   0.000000,   0.000000]
+    [  0.000003,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_ring_03 (parent: right_ring_02):
+    [  1.000000,  -0.000126,   0.000004,   0.034511]
+    [  0.000126,   1.000000,   0.000000,  -0.000000]
+    [ -0.000004,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_pinky_01 (parent: right_hand):
+    [  0.999999,  -0.001668,  -0.000002,   0.079936]
+    [  0.001668,   0.999999,  -0.000000,   0.001950]
+    [  0.000002,   0.000000,   1.000000,  -0.054673]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_pinky_02 (parent: right_pinky_01):
+    [  1.000000,  -0.000117,   0.000004,   0.029969]
+    [  0.000117,   1.000000,   0.000000,  -0.000000]
+    [ -0.000004,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_pinky_03 (parent: right_pinky_02):
+    [  1.000000,  -0.000041,  -0.000004,   0.028007]
+    [  0.000041,   1.000000,  -0.000000,   0.000000]
+    [  0.000004,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_attach_off (parent: right_hand):
+    [ -1.000000,   0.000000,   0.000019,   0.106874]
+    [ -0.000000,  -1.000000,   0.000000,   0.063950]
+    [  0.000019,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_attach_on (parent: right_hand):
+    [ -1.000000,   0.000000,   0.000019,   0.106980]
+    [ -0.000000,  -1.000000,   0.000000,   0.063950]
+    [  0.000019,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_hand_roll (parent: right_arm_02):
+    [  1.000000,   0.000000,   0.000000,   0.236728]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_arm_02_sub (parent: right_arm_02):
+    [  0.000007,  -0.000006,   1.000000,   0.000101]
+    [  0.000000,   1.000000,   0.000006,   0.000000]
+    [ -1.000000,  -0.000000,   0.000007,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_arm_02_roll (parent: right_arm_02):
+    [  1.000000,   0.000000,   0.000000,   0.110411]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_sleeve (parent: right_arm_02):
+    [ -1.000000,   0.000000,   0.000000,   0.209277]
+    [  0.000000,   1.000000,   0.000000,   0.012090]
+    [ -0.000000,   0.000000,  -1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_arm_01_roll (parent: right_arm_01):
+    [  1.000000,   0.000000,   0.000000,   0.000101]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_collar (parent: right_shoulder):
+    [  0.986078,   0.104643,  -0.129225,   0.023591]
+    [ -0.164286,   0.733126,  -0.659952,  -0.005992]
+    [  0.025679,   0.671994,   0.740111,   0.078810]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+collar (parent: spine_03):
+    [  0.809797,   0.000000,   0.586711,   0.202776]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [ -0.586711,   0.000000,   0.809797,  -0.053874]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_cloth_a_00 (parent: spine_03):
+    [ -0.996290,   0.010463,  -0.085427,  -0.080005]
+    [ -0.085304,   0.011717,   0.996286,   0.065000]
+    [  0.011425,   0.999877,  -0.010781,   0.119999]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_cloth_a_01 (parent: right_cloth_a_00):
+    [  0.988906,  -0.058152,  -0.136684,   0.175843]
+    [ -0.005945,   0.903952,  -0.427593,   0.000000]
+    [  0.148422,   0.423662,   0.893578,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_cloth_a_02 (parent: right_cloth_a_01):
+    [  1.000000,   0.000000,   0.000000,   0.270001]
+    [  0.000000,   1.000000,   0.000000,  -0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_cloth_b_00 (parent: spine_03):
+    [ -0.991901,   0.049657,   0.116904,  -0.076997]
+    [  0.088734,   0.929466,   0.358077,   0.180000]
+    [ -0.090877,   0.365550,  -0.926345,   0.050000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_cloth_b_01 (parent: right_cloth_b_00):
+    [  0.992528,  -0.122016,   0.000031,   0.169045]
+    [  0.122016,   0.992528,   0.000327,  -0.000000]
+    [ -0.000071,  -0.000321,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_cloth_b_02 (parent: right_cloth_b_01):
+    [  1.000000,   0.000000,   0.000000,   0.270001]
+    [  0.000000,   1.000000,   0.000000,  -0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_pocket (parent: right_cloth_b_01):
+    [ -0.999334,   0.034743,   0.011139,   0.291901]
+    [  0.035262,   0.998106,   0.050402,  -0.004614]
+    [ -0.009366,   0.050761,  -0.998667,   0.000872]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_cloth_c_00 (parent: spine_03):
+    [ -0.986533,   0.125517,   0.104876,  -0.060601]
+    [  0.048325,   0.836234,  -0.546239,   0.147000]
+    [ -0.156263,  -0.533814,  -0.831038,  -0.080000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_cloth_c_01 (parent: right_cloth_c_00):
+    [  0.978826,  -0.200492,  -0.041270,   0.165546]
+    [  0.197430,   0.871460,   0.448976,  -0.000000]
+    [ -0.054051,  -0.447617,   0.892590,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_cloth_c_02 (parent: right_cloth_c_01):
+    [  1.000000,   0.000000,   0.000000,   0.270002]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_cloth_d_00 (parent: spine_03):
+    [ -0.994460,   0.098790,  -0.035908,  -0.051997]
+    [  0.036180,   0.000963,  -0.999345,   0.055000]
+    [ -0.098690,  -0.995108,  -0.004532,  -0.136999]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_cloth_d_01 (parent: right_cloth_d_00):
+    [  0.975469,  -0.216048,  -0.042238,   0.165837]
+    [  0.219074,   0.933882,   0.282614,   0.000000]
+    [ -0.021612,  -0.284935,   0.958303,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_cloth_d_02 (parent: right_cloth_d_01):
+    [  1.000000,   0.000000,   0.000000,   0.270001]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,  -0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hips (parent: waist):
+    [ -1.000000,  -0.000000,   0.000000,  -0.000107]
+    [  0.000000,  -1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+leg_width (parent: hips):
+    [  1.000000,   0.000000,   0.000000,   0.103915]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_leg_01 (parent: leg_width):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.089030]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_leg_02 (parent: left_leg_01):
+    [  1.000000,   0.000000,   0.000000,   0.359800]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_foot (parent: left_leg_02):
+    [  0.000000,  -0.000000,  -1.000000,   0.359700]
+    [  0.000000,   1.000000,  -0.000000,  -0.000000]
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_toe (parent: left_foot):
+    [  1.000000,  -0.000000,  -0.000000,   0.120120]
+    [  0.000000,   1.000000,  -0.000000,  -0.000000]
+    [  0.000000,   0.000000,   1.000000,  -0.113000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+left_leg_02_sub (parent: left_leg_02):
+    [  0.000000,  -0.000000,  -1.000000,  -0.000100]
+    [ -0.000000,   1.000000,  -0.000000,  -0.000000]
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_leg_01 (parent: leg_width):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,  -0.089030]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_leg_02 (parent: right_leg_01):
+    [  1.000000,   0.000000,   0.000000,   0.359800]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_foot (parent: right_leg_02):
+    [  0.000000,   0.000000,  -1.000000,   0.359700]
+    [  0.000000,   1.000000,   0.000000,  -0.000000]
+    [  1.000000,  -0.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_toe (parent: right_foot):
+    [  1.000000,  -0.000000,  -0.000000,   0.120120]
+    [  0.000000,   1.000000,  -0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,  -0.113000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+right_leg_02_sub (parent: right_leg_02):
+    [  0.000000,   0.000000,  -1.000000,  -0.000100]
+    [  0.000000,   1.000000,   0.000000,  -0.000000]
+    [  1.000000,  -0.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+lod_group (parent: chara_root):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+lod0 (parent: lod_group):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+sorting_group_01 (parent: lod0):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+eyelight_mesh (parent: sorting_group_01):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+lens_mesh (parent: sorting_group_01):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+eyeball_mesh (parent: lod0):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+body_mesh (parent: lod0):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+outer_mesh (parent: lod0):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hairstyle_mesh (parent: lod0):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hairup01_mesh (parent: lod0):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hairup02_mesh (parent: lod0):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+morph_base (parent: lod0):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+eyebrow_mesh (parent: morph_base):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+tooth_mesh (parent: morph_base):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+tongue_mesh (parent: morph_base):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+face_m1_mesh (parent: morph_base):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+face_m2_mesh (parent: morph_base):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+eyelash_m2_mesh (parent: morph_base):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+face_m3_mesh (parent: morph_base):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+eyelash_m3_mesh (parent: morph_base):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+face_m4_mesh (parent: morph_base):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+face_base_mesh (parent: morph_base):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+lod1 (parent: lod_group):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+eyeball_mesh_lod1 (parent: lod1):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+body_mesh_lod1 (parent: lod1):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+outer_mesh_lod1 (parent: lod1):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hairstyle_mesh_lod1 (parent: lod1):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hairup01_mesh_lod1 (parent: lod1):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hairup02_mesh_lod1 (parent: lod1):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+morph_base_lod1 (parent: lod1):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+face_m1_mesh_lod1 (parent: morph_base_lod1):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+eyelash_m2_mesh_lod1 (parent: morph_base_lod1):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+eyebrow_mesh_lod1 (parent: morph_base_lod1):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+lod2 (parent: lod_group):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+eyeball_mesh_lod2 (parent: lod2):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+body_mesh_lod2 (parent: lod2):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+outer_mesh_lod2 (parent: lod2):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hairstyle_mesh_lod2 (parent: lod2):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hairup01_mesh_lod2 (parent: lod2):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+hairup02_mesh_lod2 (parent: lod2):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+morph_base_lod2 (parent: lod2):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+face_m1_mesh_lod2 (parent: morph_base_lod2):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+eyelash_m2_mesh_lod2 (parent: morph_base_lod2):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]
+
+eyebrow_mesh_lod2 (parent: morph_base_lod2):
+    [  1.000000,   0.000000,   0.000000,   0.000000]
+    [  0.000000,   1.000000,   0.000000,   0.000000]
+    [  0.000000,   0.000000,   1.000000,   0.000000]
+    [  0.000000,   0.000000,   0.000000,   1.000000]

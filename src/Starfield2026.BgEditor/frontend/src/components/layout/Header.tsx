@@ -3,14 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import type { MenuDefinition } from '../../types';
 import { HeaderMenuBar } from './HeaderMenuBar';
 import { useEditorStore } from '../../store/editorStore';
-import { useAnimationEditorStore } from '../../store/animationEditorStore';
 
 export function Header() {
     const navigate = useNavigate();
     const location = useLocation();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // ── Editor store ──
+    // ── Store ──
     const loadManifest = useEditorStore(s => s.loadManifest);
     const sceneName = useEditorStore(s => s.sceneName);
     const resetAll = useEditorStore(s => s.resetAll);
@@ -19,23 +18,21 @@ export function Header() {
     const selectedTextureIndex = useEditorStore(s => s.selectedTextureIndex);
     const resetTexture = useEditorStore(s => s.resetTexture);
 
+    const animManifest = useEditorStore(s => s.animManifest);
+    const animDirty = useEditorStore(s => s.dirty);
+    const animSaving = useEditorStore(s => s.saving);
+    const animSave = useEditorStore(s => s.saveManifest);
+    const animAutoTag = useEditorStore(s => s.autoTag);
+
     const hasScene = !!sceneName;
     const hasModifications = textures.some(t => t.modifiedDataUrl !== t.originalDataUrl);
+    const hasAnimModel = !!animManifest;
 
     const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) loadManifest(file);
         e.target.value = '';
     };
-
-    // ── Animation store ──
-    const animManifest = useAnimationEditorStore(s => s.manifest);
-    const animDirty = useAnimationEditorStore(s => s.dirty);
-    const animSaving = useAnimationEditorStore(s => s.saving);
-    const animSave = useAnimationEditorStore(s => s.save);
-    const animAutoTag = useAnimationEditorStore(s => s.autoTag);
-
-    const hasAnimModel = !!animManifest;
 
     // ── Browse folder helper ──
     const browseFolder = useCallback(async (defaultPath?: string) => {
@@ -125,10 +122,8 @@ export function Header() {
                     label: 'Render Angles...',
                     disabled: !hasAnimModel && !hasScene,
                     onClick: async () => {
-                        // Try editor store first, then animation store
-                        const editorManifest = useEditorStore.getState().manifest;
-                        const animFolder = useAnimationEditorStore.getState().folderPath;
-                        const manifestDir = editorManifest?.dir || animFolder;
+                        const state = useEditorStore.getState();
+                        const manifestDir = state.manifest?.dir || state.folderPath;
                         if (!manifestDir) {
                             alert('No model loaded. Open a manifest first.');
                             return;

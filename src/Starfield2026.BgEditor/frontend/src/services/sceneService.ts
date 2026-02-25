@@ -329,15 +329,10 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   })
 }
 
-/**
- * Convert all mesh materials to MeshBasicMaterial, keeping the loader's texture assignments.
- * MeshPhongMaterial renders black in our setup, MeshBasicMaterial works reliably.
- */
 function fixMaterials(scene: THREE.Group): void {
   scene.traverse(node => {
     if (!(node instanceof THREE.Mesh)) return
 
-    // Debug: check geometry groups (multi-material face ranges)
     const groups = node.geometry?.groups
     const mats = Array.isArray(node.material) ? node.material : [node.material]
     console.log(`[SceneService] Mesh "${node.name}": ${mats.length} material(s), ${groups?.length ?? 0} geometry group(s)`)
@@ -349,15 +344,13 @@ function fixMaterials(scene: THREE.Group): void {
       const tex = (mat as THREE.MeshPhongMaterial).map
       if (tex) {
         tex.colorSpace = THREE.SRGBColorSpace
-        if (tex.image) tex.needsUpdate = true
+        tex.needsUpdate = true
       }
-      const basic = new THREE.MeshBasicMaterial({
-        map: tex || null,
-        side: THREE.DoubleSide,
-      })
-      basic.name = mat.name
-      console.log(`[SceneService]   mat[${i}] "${mat.name}" → texture: ${tex?.name || 'none'}, image: ${tex?.image ? 'OK' : 'pending'}`)
-      return basic
+      // Keep MeshPhongMaterial — it works with the viewport's lights
+      ; (mat as THREE.MeshPhongMaterial).side = THREE.DoubleSide
+      mat.needsUpdate = true
+      console.log(`[SceneService]   mat[${i}] "${mat.name}" (${mat.type}) → map: ${tex ? 'yes' : 'null'}, image: ${tex?.image ? `${tex.image.width}x${tex.image.height}` : 'none'}`)
+      return mat
     })
     node.material = newMats.length === 1 ? newMats[0] : newMats
   })

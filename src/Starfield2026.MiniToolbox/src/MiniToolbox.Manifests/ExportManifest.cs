@@ -45,4 +45,7 @@ public class ExportManifest
 
     /// <summary>Source file tracking (GDB1 extension). Null for other exporters.</summary>
     public ManifestSourceInfo? Source { get; set; }
+
+    /// <summary>Material definitions with shader, texture bindings, and parameters (TRPAK).</summary>
+    public List<ManifestMaterialEntry>? Materials { get; set; }
 }

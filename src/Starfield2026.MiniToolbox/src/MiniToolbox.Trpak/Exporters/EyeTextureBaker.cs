@@ -77,7 +77,7 @@ public static class EyeTextureBaker
                 float maskSum = maskR + maskG + maskB + maskA;
                 float remainder = Math.Clamp(1f - maskSum, 0f, 1f);
 
-                // Blend base colors using mask channels (linear space)
+                // Blend base colors using mask channels (sRGB space — both mask and color params are sRGB)
                 Vector3 color = baseColors[0] * maskR      // Layer 1 (pupil)
                               + baseColors[1] * maskG      // Layer 2
                               + baseColors[2] * maskB      // Layer 3 (iris)
@@ -93,13 +93,6 @@ public static class EyeTextureBaker
 
                 // Combine: base color + full emission (the game relies on emission for eye visibility)
                 color += emission;
-
-                // Apply sRGB gamma correction (linear → sRGB) for correct display
-                color = new Vector3(
-                    LinearToSrgb(color.X),
-                    LinearToSrgb(color.Y),
-                    LinearToSrgb(color.Z));
-
                 color = Vector3.Clamp(color, Vector3.Zero, Vector3.One);
 
                 result[x, y] = new Rgba32(

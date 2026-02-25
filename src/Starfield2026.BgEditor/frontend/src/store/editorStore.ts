@@ -2,12 +2,27 @@ import { create } from 'zustand'
 import type * as THREE from 'three'
 import type { LoadedTexture, TextureAdjustment } from '../types/editor'
 import { DEFAULT_ADJUSTMENT } from '../types/editor'
-import { loadScene } from '../services/sceneService'
+import type { SplitManifest } from '../types/animation'
+import { loadScene, loadModelOnly, loadBakedClip } from '../services/sceneService'
 import type { Manifest } from '../services/sceneService'
 import { applyAdjustment, updateThreeTexture } from '../services/textureProcessor'
 
+const API_BASE = 'http://localhost:3001'
+
+// ─────────────────────────── Types ───────────────────────────
+
+interface ManifestListEntry {
+  name: string
+  dir: string
+  assetsPath: string
+  modelFile: string
+  modelFormat: string
+  textures: string[]
+  clipCount: number
+}
+
 interface EditorState {
-  // Scene
+  // Scene (shared by Editor + Animations pages)
   sceneName: string | null
   manifest: Manifest | null
   scene: THREE.Group | null
@@ -17,11 +32,25 @@ interface EditorState {
   loading: boolean
   error: string | null
 
-  // Animation playback state
+  // Animation playback
   animationPlaying: boolean
   activeClipIndex: number
 
-  // Actions
+  // Animation editor (folder-based loading, tagging)
+  folderPath: string | null
+  animManifest: SplitManifest | null
+  dirty: boolean
+  saving: boolean
+  clipLoading: boolean
+  activeModelIndex: number
+
+  // Manifest scan browser
+  scanDir: string
+  manifests: ManifestListEntry[]
+  scanning: boolean
+  selectedManifestIndex: number
+
+  // Editor actions
   loadManifest: (file: File) => Promise<void>
   loadManifestFromPath: (filePath: string) => Promise<void>
   selectTexture: (index: number) => void
@@ -31,7 +60,19 @@ interface EditorState {
   applyToAll: () => void
   setAnimationPlaying: (playing: boolean) => void
   setActiveClipIndex: (index: number) => void
+
+  // Animation actions
+  scanFolder: (dir: string) => Promise<void>
+  selectManifest: (index: number) => void
+  loadFolder: (dir: string) => Promise<void>
+  selectClip: (index: number) => Promise<void>
+  tagClip: (index: number, semanticName: string | null) => void
+  autoTag: () => void
+  saveManifest: () => Promise<void>
+  resetAnimations: () => void
 }
+
+// ─────────────────────────── Helpers ───────────────────────────
 
 function processTexture(tex: LoadedTexture, adj: TextureAdjustment): LoadedTexture {
   const modifiedDataUrl = applyAdjustment(tex.originalImage, adj)
@@ -48,7 +89,39 @@ function resetTextureToOriginal(tex: LoadedTexture): LoadedTexture {
   }
 }
 
+/** Overworld character animation slot map — matches C# OhanaCli MapOverworldSlot */
+const OVERWORLD_SLOT_MAP: Record<number, string> = {
+  0: 'Idle',
+  1: 'Walk',
+  2: 'Run',
+  4: 'Jump',
+  5: 'Land',
+  7: 'ShortAction1',
+  8: 'LongAction1',
+  9: 'ShortAction2',
+  17: 'MediumAction',
+  20: 'Action',
+  23: 'Action2',
+  30: 'ShortAction3',
+  31: 'ShortAction4',
+  52: 'IdleVariant',
+  54: 'ShortAction5',
+  55: 'LongAction2',
+  56: 'ShortAction6',
+  59: 'Action3',
+  61: 'Action4',
+  72: 'Action5',
+  123: 'LongAction3',
+  124: 'Action6',
+  125: 'Action7',
+  127: 'Action8',
+  128: 'Action9',
+}
+
+// ─────────────────────────── Store ───────────────────────────
+
 export const useEditorStore = create<EditorState>()((set, get) => ({
+  // Scene state
   sceneName: null,
   manifest: null,
   scene: null,
@@ -60,13 +133,27 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   animationPlaying: true,
   activeClipIndex: 0,
 
+  // Animation editor state
+  folderPath: null,
+  animManifest: null,
+  dirty: false,
+  saving: false,
+  clipLoading: false,
+  activeModelIndex: 0,
+
+  // Scan browser state
+  scanDir: '',
+  manifests: [],
+  scanning: false,
+  selectedManifestIndex: -1,
+
+  // ─────────────── Editor actions ───────────────
+
   loadManifest: async (file: File) => {
-    // If Electron provides file.path, use loadManifestFromPath
     const filePath = (file as any).path as string | undefined
     if (filePath) {
       return get().loadManifestFromPath(filePath)
     }
-    // Fallback: read the File directly (e.g. drag & drop, non-Electron)
     set({ loading: true, error: null })
     try {
       const text = await file.text()
@@ -94,15 +181,13 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
   loadManifestFromPath: async (filePath: string) => {
     set({ loading: true, error: null })
     try {
-      // Derive dir from path (strip filename)
       const dir = filePath.replace(/[\\/][^\\/]+$/, '').replace(/\\/g, '/')
       console.log(`[EditorStore] loadManifestFromPath: dir="${dir}"`)
 
-      // Read manifest via backend which normalises the data
-      const res = await fetch(`http://localhost:3001/api/manifests/read?dir=${encodeURIComponent(dir)}`)
+      const res = await fetch(`${API_BASE}/api/manifests/read?dir=${encodeURIComponent(dir)}`)
       if (!res.ok) throw new Error(`Failed to read manifest: HTTP ${res.status}`)
       const manifest: Manifest = await res.json()
-      manifest.dir = dir  // ensure dir is the actual path
+      manifest.dir = dir
 
       const result = await loadScene(manifest)
       set({
@@ -164,5 +249,164 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
 
   setActiveClipIndex: (index: number) => {
     set({ activeClipIndex: index })
+  },
+
+  // ─────────────── Animation actions ───────────────
+
+  scanFolder: async (dir: string) => {
+    if (!dir.trim()) return
+    set({ scanning: true, scanDir: dir })
+    try {
+      const res = await fetch(`${API_BASE}/api/manifests?dir=${encodeURIComponent(dir)}`)
+      const data = await res.json()
+      set({ manifests: data, selectedManifestIndex: -1, scanning: false })
+    } catch {
+      set({ scanning: false })
+    }
+  },
+
+  selectManifest: (index: number) => {
+    const { manifests } = get()
+    set({ selectedManifestIndex: index })
+    const m = manifests[index]
+    if (m?.dir) get().loadFolder(m.dir)
+  },
+
+  loadFolder: async (dir: string) => {
+    set({ loading: true, error: null, folderPath: dir, dirty: false, activeClipIndex: -1 })
+
+    try {
+      const res = await fetch(`${API_BASE}/api/manifests/read?dir=${encodeURIComponent(dir)}`)
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }))
+        throw new Error(err.error || `HTTP ${res.status}`)
+      }
+      const manifest: SplitManifest = await res.json()
+
+      if (!manifest.models || manifest.models.length === 0) {
+        throw new Error('Manifest has no models')
+      }
+
+      const model = manifest.models[0]
+      const scene = await loadModelOnly(dir, model.modelFile)
+
+      set({
+        scene,
+        animations: [],
+        sceneName: model.name,
+        animationPlaying: false,
+        activeClipIndex: 0,
+        animManifest: manifest,
+        loading: false,
+        activeModelIndex: 0,
+      })
+
+      // Auto-select first clip
+      if (model.clips.length > 0) {
+        get().selectClip(0)
+      }
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : 'Failed to load folder',
+        loading: false,
+      })
+    }
+  },
+
+  selectClip: async (index: number) => {
+    const { animManifest, folderPath, activeModelIndex } = get()
+    if (!animManifest || !folderPath) return
+
+    const model = animManifest.models[activeModelIndex]
+    if (!model || index < 0 || index >= model.clips.length) return
+
+    set({ activeClipIndex: index, clipLoading: true })
+
+    try {
+      const clip = model.clips[index]
+      console.log(`[EditorStore] Loading baked clip ${index}: "${clip.name}" file="${clip.file}"`)
+
+      const { scene, animations } = await loadBakedClip(folderPath, model.modelFile, clip.file)
+
+      set({
+        scene,
+        animations,
+        sceneName: model.name,
+        activeClipIndex: 0,
+        animationPlaying: true,
+        clipLoading: false,
+      })
+    } catch (err) {
+      console.warn('[EditorStore] Failed to load baked clip:', err)
+      set({ clipLoading: false })
+    }
+  },
+
+  tagClip: (index: number, semanticName: string | null) => {
+    const { animManifest, activeModelIndex } = get()
+    if (!animManifest) return
+
+    const updated = structuredClone(animManifest)
+    const clip = updated.models[activeModelIndex]?.clips[index]
+    if (!clip) return
+
+    clip.semanticName = semanticName
+    clip.semanticSource = semanticName ? 'manual' : null
+
+    set({ animManifest: updated, dirty: true })
+  },
+
+  autoTag: () => {
+    const { animManifest, activeModelIndex } = get()
+    if (!animManifest) return
+
+    const updated = structuredClone(animManifest)
+    const model = updated.models[activeModelIndex]
+    if (!model) return
+
+    for (const clip of model.clips) {
+      if (clip.semanticName) continue
+      const tag = OVERWORLD_SLOT_MAP[clip.index]
+      if (tag) {
+        clip.semanticName = tag
+        clip.semanticSource = 'auto-index'
+      }
+    }
+
+    set({ animManifest: updated, dirty: true })
+  },
+
+  saveManifest: async () => {
+    const { animManifest, folderPath } = get()
+    if (!animManifest || !folderPath) return
+
+    set({ saving: true })
+    try {
+      const res = await fetch(`${API_BASE}/api/manifests/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dir: folderPath, manifest: animManifest }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }))
+        throw new Error(err.error || `HTTP ${res.status}`)
+      }
+      set({ saving: false, dirty: false })
+    } catch (err) {
+      console.error('[EditorStore] Save failed:', err)
+      set({ saving: false })
+    }
+  },
+
+  resetAnimations: () => {
+    set({
+      folderPath: null,
+      animManifest: null,
+      dirty: false,
+      saving: false,
+      clipLoading: false,
+      activeModelIndex: 0,
+      activeClipIndex: -1,
+    })
   },
 }))

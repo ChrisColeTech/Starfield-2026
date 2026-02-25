@@ -1,6 +1,7 @@
 using MiniToolbox.Core.Pipeline;
 using MiniToolbox.Core.Texture;
 using MiniToolbox.Hashes;
+using MiniToolbox.Manifests;
 using MiniToolbox.Trpak;
 using MiniToolbox.Trpak.Archive;
 using MiniToolbox.Trpak.Decoders;
@@ -92,6 +93,12 @@ public static class TrpakCommand
                     limit = int.Parse(args[++i]);
                     break;
             }
+        }
+
+        // Rebake mode: re-bake textures from existing .raw/ data
+        if (!string.IsNullOrWhiteSpace(rebakeDir))
+        {
+            return RunRebake(rebakeDir, filter, skip, limit, parallelism);
         }
 
         // Convert-dir mode doesn't need --arc
@@ -232,6 +239,7 @@ public static class TrpakCommand
         Console.WriteLine("  --filter       Only extract models whose path contains this string");
         Console.WriteLine("  --split        Export animations as clip-only DAEs (default)");
         Console.WriteLine("  --baked        Export animations with full baked geometry per clip");
+        Console.WriteLine("  --rebake <dir> Re-bake layered textures from .raw/ BNTX data in export dir");
     }
 
     private static int RunList(TrpfsLoader loader)
@@ -804,6 +812,157 @@ public static class TrpakCommand
     }
 
     /// <summary>
+    /// Re-bake layered textures for already-exported models using .raw/ BNTX data.
+    /// Iterates each model directory in the export root, finds its .trmdl in .raw/,
+    /// re-decodes materials, and runs the layer/eye bakers on blank albedos.
+    /// </summary>
+    private static int RunRebake(string exportDir, string? filter, int skip, int limit, int parallelism)
+    {
+        Console.WriteLine($"\nRebake: re-baking layered textures from .raw/ data");
+        Console.WriteLine($"  Export dir: {exportDir}");
+        if (filter != null)
+            Console.WriteLine($"  Filter: {filter}");
+
+        string rawRoot = Path.Combine(exportDir, ".raw");
+        if (!Directory.Exists(rawRoot))
+        {
+            Console.Error.WriteLine($"ERROR: .raw/ directory not found at {rawRoot}");
+            Console.Error.WriteLine("  The .raw/ directory contains source BNTX files needed for baking.");
+            Console.Error.WriteLine("  It is created during extraction with KeepRawFiles=true.");
+            return 1;
+        }
+
+        // Build index: modelName → raw hash directory (containing the .trmdl + BNTX files)
+        Console.WriteLine("  Building raw file index...");
+        var rawTrmdlIndex = new Dictionary<string, (string trmdlPath, string hashDir)>(StringComparer.OrdinalIgnoreCase);
+        foreach (var trmdlFile in Directory.EnumerateFiles(rawRoot, "*.trmdl", SearchOption.AllDirectories))
+        {
+            string modelName = Path.GetFileNameWithoutExtension(trmdlFile);
+            // Use the hash dir root (first subdir under .raw/) as tempRoot for BNTX search
+            string relPath = Path.GetRelativePath(rawRoot, trmdlFile);
+            string hashDirName = relPath.Split(Path.DirectorySeparatorChar)[0];
+            string hashDir = Path.Combine(rawRoot, hashDirName);
+            rawTrmdlIndex.TryAdd(modelName, (trmdlFile, hashDir));
+        }
+        Console.WriteLine($"  Found {rawTrmdlIndex.Count} raw .trmdl files.");
+
+        // Find all exported model directories
+        var modelDirs = Directory.GetDirectories(exportDir)
+            .Where(d => !Path.GetFileName(d).StartsWith(".")) // skip .raw
+            .Where(d => filter == null || Path.GetFileName(d).Contains(filter, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(d => Path.GetFileName(d))
+            .ToArray();
+
+        Console.WriteLine($"  Found {modelDirs.Length} exported model directories.");
+        if (modelDirs.Length == 0) return 0;
+
+        int baked = 0, skipped = 0, failed = 0, noRaw = 0;
+
+        for (int i = 0; i < modelDirs.Length; i++)
+        {
+            if (i < skip) continue;
+            if (baked + failed >= limit) break;
+
+            string modelDir = modelDirs[i];
+            string modelName = Path.GetFileName(modelDir);
+            string texDir = Path.Combine(modelDir, "textures");
+
+            if (!Directory.Exists(texDir))
+            {
+                skipped++;
+                continue;
+            }
+
+            // Find the raw .trmdl for this model
+            if (!rawTrmdlIndex.TryGetValue(modelName, out var rawInfo))
+            {
+                noRaw++;
+                continue;
+            }
+
+            try
+            {
+                // Decode model to get material data
+                var decoder = new TrinityModelDecoder(rawInfo.trmdlPath);
+                var exportData = decoder.CreateExportData();
+
+                if (exportData.Materials.Count == 0)
+                {
+                    skipped++;
+                    continue;
+                }
+
+                // Check if any material needs baking
+                bool anyNeedsBaking = exportData.Materials.Any(m =>
+                    TrinityTextureBaker.NeedsLayerBaking(m) || EyeTextureBaker.IsEyeMaterial(m));
+
+                if (!anyNeedsBaking)
+                {
+                    skipped++;
+                    continue;
+                }
+
+                // Run bakers — use the raw hash directory as tempRoot so FindBntxFile can locate BNTX sources
+                var sharedAlbedoReps = TrinityTextureBaker.FindSharedAlbedoRepresentatives(exportData.Materials);
+                var alreadyBaked = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                int bakedThisModel = 0;
+
+                foreach (var mat in exportData.Materials)
+                {
+                    try
+                    {
+                        if (EyeTextureBaker.IsEyeMaterial(mat))
+                        {
+                            EyeTextureBaker.BakeEyeTexture(mat, rawInfo.hashDir, texDir);
+                            bakedThisModel++;
+                        }
+                        else if (TrinityTextureBaker.NeedsLayerBaking(mat))
+                        {
+                            var result = TrinityTextureBaker.BakeLayeredTexture(mat, rawInfo.hashDir, texDir, sharedAlbedoReps, alreadyBaked);
+                            if (result != null) bakedThisModel++;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine($"    BAKE FAIL: {modelName}/{mat.Name}: {ex.Message}");
+                    }
+                }
+
+                // Write/update manifest with material data
+                WriteManifest(modelDir, modelName, exportData, texDir);
+
+                if (bakedThisModel > 0)
+                {
+                    // Re-export DAE with patched material texture refs
+                    string daeFile = Path.Combine(modelDir, "model.dae");
+                    TrinityColladaExporter.Export(daeFile, exportData);
+
+                    baked++;
+                    Console.Write($"\r  [{i + 1}/{modelDirs.Length}] {modelName}: baked {bakedThisModel} texture(s){new string(' ', 20)}");
+                }
+                else
+                {
+                    skipped++;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"\n  FAIL: {modelName}: {ex.Message}");
+                failed++;
+            }
+        }
+
+        Console.WriteLine($"\r  Done.{new string(' ', 70)}");
+        Console.WriteLine($"\n  Results:");
+        Console.WriteLine($"    Models baked: {baked}");
+        Console.WriteLine($"    Skipped:      {skipped} (no bakeable materials or already baked)");
+        Console.WriteLine($"    No raw data:  {noRaw}");
+        Console.WriteLine($"    Failed:       {failed}");
+
+        return failed > 0 && baked == 0 ? 1 : 0;
+    }
+
+    /// <summary>
     /// Convert extracted loose Trinity files to DAE + PNG textures.
     /// Iterates each subdirectory containing a .trmdl + .trmsh + .trmbf.
     /// </summary>
@@ -890,11 +1049,7 @@ public static class TrpakCommand
                     continue; // No geometry — skip
                 }
 
-                // Phase 2: Export DAE
-                string daeFile = Path.Combine(modelOutDir, "model.dae");
-                TrinityColladaExporter.Export(daeFile, exportData);
-
-                // Phase 3: Convert BNTX textures to PNG
+                // Phase 2: Convert BNTX textures to PNG
                 string texDir = Path.Combine(modelOutDir, "textures");
                 Directory.CreateDirectory(texDir);
 
@@ -913,8 +1068,10 @@ public static class TrpakCommand
                     catch { /* skip bad textures */ }
                 }
 
-                // Phase 4: Bake layered material textures (eye + general layer baking)
+                // Phase 3: Bake layered material textures BEFORE DAE export
+                // so per-material baked paths are picked up by the exporter
                 var sharedAlbedoReps = TrinityTextureBaker.FindSharedAlbedoRepresentatives(exportData.Materials);
+                var alreadyBaked = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var mat in exportData.Materials)
                 {
                     try
@@ -925,11 +1082,18 @@ public static class TrpakCommand
                         }
                         else if (TrinityTextureBaker.NeedsLayerBaking(mat))
                         {
-                            TrinityTextureBaker.BakeLayeredTexture(mat, dir, texDir, sharedAlbedoReps);
+                            TrinityTextureBaker.BakeLayeredTexture(mat, dir, texDir, sharedAlbedoReps, alreadyBaked);
                         }
                     }
                     catch { /* skip bake failures */ }
                 }
+
+                // Phase 4: Export DAE (after baking so material texture refs are patched)
+                string daeFile = Path.Combine(modelOutDir, "model.dae");
+                TrinityColladaExporter.Export(daeFile, exportData);
+
+                // Phase 5: Write manifest with material data
+                WriteManifest(modelOutDir, packName, exportData, texDir);
 
                 converted++;
             }
@@ -949,6 +1113,57 @@ public static class TrpakCommand
         Console.WriteLine($"    Output:    {outputDir}");
 
         return failed > 0 && converted == 0 ? 1 : 0;
+    }
+
+    private static void WriteManifest(string modelDir, string modelName, TrinityModelDecoder.ExportData exportData, string texDir)
+    {
+        var manifestMaterials = exportData.Materials.Select(m => new ManifestMaterialEntry
+        {
+            Name = m.Name,
+            ShaderName = m.ShaderName,
+            Textures = m.Textures.Select(t => new ManifestMaterialTexture
+            {
+                Name = t.Name,
+                File = Path.GetFileName(t.FilePath)
+            }).ToList(),
+            Vec4Params = m.Vec4Params
+                .Where(p => p.Name != null)
+                .Select(p => new ManifestMaterialVec4
+                {
+                    Name = p.Name,
+                    W = p.Value?.W ?? 0,
+                    X = p.Value?.X ?? 0,
+                    Y = p.Value?.Y ?? 0,
+                    Z = p.Value?.Z ?? 0
+                }).ToList(),
+            FloatParams = m.FloatParams
+                .Where(p => p.Name != null)
+                .Select(p => new ManifestMaterialFloat
+                {
+                    Name = p.Name,
+                    Value = p.Value
+                }).ToList()
+        }).ToList();
+
+        // Collect texture files
+        var texFiles = Directory.Exists(texDir)
+            ? Directory.GetFiles(texDir, "*.png").Select(f => "textures/" + Path.GetFileName(f)).ToList()
+            : new List<string>();
+
+        var manifest = new ExportManifest
+        {
+            Name = modelName,
+            Dir = modelDir.Replace('\\', '/'),
+            AssetsPath = modelName,
+            Format = "dae",
+            ModelFormat = "dae",
+            ModelFile = "model.dae",
+            Textures = texFiles,
+            Materials = manifestMaterials
+        };
+
+        string manifestPath = Path.Combine(modelDir, "manifest.json");
+        ManifestSerializer.Write(manifestPath, manifest);
     }
 
     /// <summary>

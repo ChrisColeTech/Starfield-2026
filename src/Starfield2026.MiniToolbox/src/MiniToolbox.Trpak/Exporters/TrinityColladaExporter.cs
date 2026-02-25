@@ -441,10 +441,73 @@ namespace MiniToolbox.Trpak.Exporters
                 // Prefer BaseColorMap (albedo) over other texture types
                 var albedo = mat.Textures.FirstOrDefault(t =>
                     string.Equals(t.Name, "BaseColorMap", StringComparison.OrdinalIgnoreCase));
-                if (albedo != null) return albedo.FilePath;
+                if (albedo != null)
+                {
+                    // Check if this BaseColorMap is actually an overlay texture (fresnel, mask, etc.)
+                    // and try to find a better albedo from a sibling material on the same mesh
+                    string albFile = Path.GetFileNameWithoutExtension(albedo.FilePath);
+                    if (IsOverlayTexture(albFile))
+                    {
+                        string? siblingAlb = FindSiblingAlbedo(materialName);
+                        if (siblingAlb != null) return siblingAlb;
+                    }
+                    return albedo.FilePath;
+                }
 
-                // Fall back to first texture
+                // Fall back to any texture with "alb" in the filename (albedo)
+                var albFallback = mat.Textures.FirstOrDefault(t =>
+                    t.FilePath != null && t.FilePath.Contains("_alb", StringComparison.OrdinalIgnoreCase));
+                if (albFallback != null) return albFallback.FilePath;
+
+                // Fall back to any texture with "Color" in the sampler name
+                var colorFallback = mat.Textures.FirstOrDefault(t =>
+                    t.Name != null && t.Name.Contains("Color", StringComparison.OrdinalIgnoreCase));
+                if (colorFallback != null) return colorFallback.FilePath;
+
+                // Last resort: first texture (may be normal/mask — but better than nothing)
                 return mat.Textures[0].FilePath;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Detect overlay/effect textures that shouldn't be used as the primary albedo.
+        /// These are fresnel, mask, probe textures that belong to effect pass materials.
+        /// </summary>
+        private static bool IsOverlayTexture(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName)) return false;
+            // Fresnel overlays, mask textures, probe textures
+            return fileName.Contains("fresnel", StringComparison.OrdinalIgnoreCase)
+                || fileName.Contains("_msk", StringComparison.OrdinalIgnoreCase)
+                || fileName.Contains("_prb", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// For overlay materials (e.g. body_b_01 = fresnel pass), find the base material's
+        /// albedo by looking for a sibling material on the same mesh group.
+        /// E.g. body_b_01 → look for body_b_00's BaseColorMap.
+        /// </summary>
+        private string? FindSiblingAlbedo(string materialName)
+        {
+            if (_data.Materials == null) return null;
+
+            // Strip trailing digits to get the material group prefix (e.g. "body_b_" from "body_b_01")
+            string prefix = materialName;
+            while (prefix.Length > 0 && char.IsDigit(prefix[^1]))
+                prefix = prefix[..^1];
+
+            foreach (var mat in _data.Materials)
+            {
+                if (string.Equals(mat.Name, materialName, StringComparison.OrdinalIgnoreCase))
+                    continue; // skip self
+                if (mat.Name == null || !mat.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    continue; // not in same group
+
+                var albedo = mat.Textures.FirstOrDefault(t =>
+                    string.Equals(t.Name, "BaseColorMap", StringComparison.OrdinalIgnoreCase));
+                if (albedo != null && !IsOverlayTexture(Path.GetFileNameWithoutExtension(albedo.FilePath)))
+                    return albedo.FilePath;
             }
             return null;
         }
