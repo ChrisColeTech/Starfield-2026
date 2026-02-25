@@ -236,11 +236,11 @@ export function Header() {
 
     return (
         <div
-            className="h-[30px] bg-bg border-b border-border flex items-center select-none"
+            className="h-[30px] bg-background border-b border-border flex items-center select-none"
             style={{ fontSize: 13, WebkitAppRegion: 'drag' } as React.CSSProperties}
         >
             <span
-                className="px-[10px] text-[13px] font-semibold text-text border-r border-border h-full flex items-center"
+                className="px-2.5 text-[13px] font-semibold text-foreground border-r border-border h-full flex items-center"
                 style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
             >
                 BgEditor

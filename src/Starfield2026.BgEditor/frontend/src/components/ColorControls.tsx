@@ -11,10 +11,10 @@ interface SliderRowProps {
 
 function SliderRow({ label, value, min, max, onChange }: SliderRowProps) {
   return (
-    <div className="mb-[12px]">
-      <div className="flex justify-between items-center mb-[4px]">
-        <span className="text-[11px] text-text-secondary">{label}</span>
-        <span className="text-[11px] text-accent font-mono min-w-[36px] text-right">
+    <div className="mb-3">
+      <div className="flex justify-between items-center mb-1">
+        <span className="text-[11px] text-muted-foreground">{label}</span>
+        <span className="text-[11px] text-primary font-mono min-w-9 text-right">
           {value}
         </span>
       </div>
@@ -24,8 +24,7 @@ function SliderRow({ label, value, min, max, onChange }: SliderRowProps) {
         max={max}
         value={value}
         onChange={e => onChange(Number(e.target.value))}
-        className="w-full h-[4px] cursor-pointer"
-        style={{ accentColor: 'var(--color-accent)' }}
+        className="w-full h-1 cursor-pointer accent-primary"
       />
     </div>
   )
@@ -46,36 +45,36 @@ export default function ColorControls() {
   return (
     <div className="flex flex-col overflow-hidden border-t border-border">
       {/* Header — always visible */}
-      <div className="p-[10px_14px] border-b border-border text-[12px] font-semibold text-text shrink-0">
+      <div className="px-3.5 py-2.5 border-b border-border text-xs font-semibold text-foreground shrink-0">
         Color Adjustments
       </div>
 
       {selected ? (
-        <div className="flex-1 overflow-auto p-[12px_14px]">
+        <div className="flex-1 overflow-auto px-3.5 py-3">
           {/* Thumbnails: original vs modified */}
-          <div className="flex gap-[10px] mb-[14px] justify-center">
+          <div className="flex gap-2.5 mb-3.5 justify-center">
             <div className="text-center">
               <img
                 src={selected.originalDataUrl}
                 alt="Original"
-                className="w-[64px] h-[64px] rounded border border-border"
-                style={{ imageRendering: 'pixelated', background: '#000' }}
+                className="w-16 h-16 rounded border border-border bg-black"
+                style={{ imageRendering: 'pixelated' }}
               />
-              <div className="text-[9px] text-text-disabled mt-[3px]">Original</div>
+              <div className="text-[9px] text-muted-foreground/50 mt-0.5">Original</div>
             </div>
             <div className="text-center">
               <img
                 src={selected.modifiedDataUrl}
                 alt="Modified"
-                className="w-[64px] h-[64px] rounded border border-border"
-                style={{ imageRendering: 'pixelated', background: '#000' }}
+                className="w-16 h-16 rounded border border-border bg-black"
+                style={{ imageRendering: 'pixelated' }}
               />
-              <div className="text-[9px] text-text-disabled mt-[3px]">Modified</div>
+              <div className="text-[9px] text-muted-foreground/50 mt-0.5">Modified</div>
             </div>
           </div>
 
           {/* Texture name */}
-          <div className="text-[11px] text-text-secondary mb-[14px] text-center whitespace-nowrap overflow-hidden text-ellipsis">
+          <div className="text-[11px] text-muted-foreground mb-3.5 text-center whitespace-nowrap overflow-hidden text-ellipsis">
             {selected.name}
           </div>
 
@@ -85,14 +84,14 @@ export default function ColorControls() {
           <SliderRow label="Brightness" value={adj.brightness} min={-100} max={100} onChange={v => handleChange('brightness', v)} />
 
           {/* Tint Color */}
-          <div className="mb-[12px]">
-            <div className="flex justify-between items-center mb-[4px]">
-              <span className="text-[11px] text-text-secondary">Tint Color</span>
+          <div className="mb-3">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-[11px] text-muted-foreground">Tint Color</span>
               <input
                 type="color"
                 value={adj.tintColor}
                 onChange={e => handleChange('tintColor', e.target.value)}
-                className="w-[28px] h-[20px] p-0 border border-border rounded-[3px] bg-transparent cursor-pointer"
+                className="w-7 h-5 p-0 border border-border rounded bg-transparent cursor-pointer"
               />
             </div>
           </div>
@@ -100,7 +99,7 @@ export default function ColorControls() {
           <SliderRow label="Tint Strength" value={adj.tintStrength} min={0} max={100} onChange={v => handleChange('tintStrength', v)} />
         </div>
       ) : (
-        <div className="p-[14px] text-[11px] text-text-disabled">
+        <div className="p-3.5 text-[11px] text-muted-foreground/50">
           Select a texture to adjust
         </div>
       )}

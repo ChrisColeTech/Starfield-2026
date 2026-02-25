@@ -77,6 +77,38 @@ app.post<{ Body: { path: string; type: 'manifest' | 'dae' | 'folder' } }>('/api/
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
     manifest.dir = dir
 
+    // Normalize manifest to ensure models[] array exists (same as /api/manifests/read)
+    const normalizeClips = (clips: any[]) => clips.map((c: any, i: number) => ({
+      index: c.index ?? i,
+      id: c.id || c.name || `clip_${String(i).padStart(3, '0')}`,
+      name: c.name || c.id || `clip_${i}`,
+      sourceName: c.sourceName || c.name || '',
+      semanticName: c.semanticName || null,
+      semanticSource: c.semanticSource || null,
+      file: c.file || '',
+      frameCount: c.frameCount || 0,
+      fps: c.fps || 30,
+    }))
+
+    if (manifest.models && Array.isArray(manifest.models)) {
+      const rootClips = Array.isArray(manifest.clips) ? manifest.clips : []
+      manifest.models = manifest.models.map((m: any) => ({
+        name: m.name || '',
+        modelFile: m.modelFile || m.file || manifest.modelFile || 'model.dae',
+        clips: normalizeClips(m.clips || rootClips),
+        meshCount: m.meshCount,
+        boneCount: m.boneCount,
+      }))
+    } else if (manifest.modelFile) {
+      const modelName = manifest.modelFile.replace(/\.[^.]+$/, '')
+      manifest.models = [{
+        name: modelName,
+        modelFile: manifest.modelFile,
+        clips: normalizeClips(manifest.clips || []),
+      }]
+    }
+    if (!manifest.mode) manifest.mode = 'split-model-anims'
+
     broadcast('model:load', { dir, modelType: type, manifest })
     return reply.send({ ok: true })
   } catch (err: any) {

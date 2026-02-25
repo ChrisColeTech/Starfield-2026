@@ -13,7 +13,7 @@ export default function Sidebar() {
   const location = useLocation();
 
   return (
-    <aside className="flex flex-col h-full w-[36px] bg-bg border-r border-border shrink-0">
+    <aside className="flex flex-col h-full w-9 bg-background border-r border-border shrink-0">
       {navItems.map(({ path, label, icon: Icon }) => {
         const active = location.pathname === path;
         return (
@@ -21,11 +21,10 @@ export default function Sidebar() {
             key={path}
             onClick={() => navigate(path)}
             title={label}
-            className="w-[36px] h-[36px] flex items-center justify-center bg-transparent border-none cursor-pointer hover:bg-hover"
-            style={{
-              color: active ? '#e0e0e0' : '#555555',
-              borderLeft: active ? '2px solid #569cd6' : '2px solid transparent',
-            }}
+            className={`w-9 h-9 flex items-center justify-center bg-transparent border-none cursor-pointer border-l-2 transition-colors ${active
+                ? 'text-foreground border-l-primary'
+                : 'text-muted-foreground/50 border-l-transparent hover:bg-muted hover:text-muted-foreground'
+              }`}
           >
             <Icon size={18} />
           </button>

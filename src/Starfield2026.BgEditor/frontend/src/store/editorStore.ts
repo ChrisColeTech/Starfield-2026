@@ -230,6 +230,9 @@ export const useEditorStore = create<EditorState>()((set, get) => ({
         folderPath: manifest.dir || '',
         animManifest: manifest as any,
         activeModelIndex: 0,
+        scanDir: manifest.dir || '',
+        manifests: [{ dir: manifest.dir, name: manifest.name || 'Loaded Model', clipCount: (manifest as any).models?.[0]?.clips?.length || 0 }],
+        selectedManifestIndex: 0,
       })
     } catch (err) {
       console.error('[EditorStore] loadManifestData failed:', err)

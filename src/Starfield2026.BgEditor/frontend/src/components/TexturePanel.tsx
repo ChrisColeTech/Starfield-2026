@@ -7,10 +7,10 @@ export default function TexturePanel() {
   const sceneName = useEditorStore(s => s.sceneName)
 
   return (
-    <div className="w-full bg-surface flex flex-col overflow-hidden">
+    <div className="w-full bg-card flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-[12px_14px] border-b border-border text-[12px] text-text-secondary">
-        <div className="font-semibold text-text mb-[4px]">
+      <div className="px-3.5 py-3 border-b border-border text-xs text-muted-foreground">
+        <div className="font-semibold text-foreground mb-1">
           {sceneName || 'Textures'}
         </div>
         {textures.length > 0
@@ -20,29 +20,28 @@ export default function TexturePanel() {
 
       {/* Texture list */}
       {textures.length > 0 && (
-        <div className="flex-1 overflow-auto p-[8px]">
+        <div className="flex-1 overflow-auto p-2">
           {textures.map((tex, i) => (
             <div
               key={tex.name + i}
               onClick={() => selectTexture(i)}
-              className="flex items-center gap-[10px] p-[8px_10px] mb-[4px] rounded-[6px] cursor-pointer"
-              style={{
-                background: i === selectedIndex ? 'var(--color-active)' : 'transparent',
-                border: i === selectedIndex ? '1px solid var(--color-accent)' : '1px solid transparent',
-              }}
+              className={`flex items-center gap-2.5 px-2.5 py-2 mb-1 rounded-md cursor-pointer border transition-colors ${i === selectedIndex
+                  ? 'bg-primary/10 border-primary'
+                  : 'border-transparent hover:bg-muted'
+                }`}
             >
               {/* Thumbnail */}
               <img
                 src={tex.modifiedDataUrl}
                 alt={tex.name}
-                className="w-[40px] h-[40px] rounded border border-border"
-                style={{ imageRendering: 'pixelated', background: '#000' }}
+                className="w-10 h-10 rounded border border-border bg-black"
+                style={{ imageRendering: 'pixelated' }}
               />
               <div className="flex-1 min-w-0">
-                <div className="text-[12px] text-text whitespace-nowrap overflow-hidden text-ellipsis">
+                <div className="text-xs text-foreground whitespace-nowrap overflow-hidden text-ellipsis">
                   {tex.name}
                 </div>
-                <div className="text-[10px] text-text-disabled">
+                <div className="text-[10px] text-muted-foreground/50">
                   {tex.originalImage.naturalWidth}x{tex.originalImage.naturalHeight}
                 </div>
               </div>

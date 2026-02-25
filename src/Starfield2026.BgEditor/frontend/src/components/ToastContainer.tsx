@@ -34,10 +34,8 @@ export function ToastContainer() {
             {toasts.map(t => (
                 <div
                     key={t.id}
-                    className="bg-surface-2 border border-border text-text px-4 py-3 rounded-lg shadow-lg text-sm max-w-sm animate-in slide-in-from-right"
-                    style={{
-                        animation: 'slideIn 0.3s ease-out',
-                    }}
+                    className="bg-card border border-border text-foreground px-4 py-3 rounded-lg shadow-lg text-sm max-w-sm"
+                    style={{ animation: 'slideIn 0.3s ease-out' }}
                 >
                     {t.message}
                 </div>

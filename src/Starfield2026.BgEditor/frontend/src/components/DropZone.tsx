@@ -39,27 +39,24 @@ export default function DropZone() {
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
-      className="absolute inset-0 flex flex-col items-center justify-center gap-[16px] rounded-[12px] m-[40px] transition-colors"
-      style={{
-        border: dragging ? '2px dashed var(--color-accent)' : '2px dashed var(--color-border)',
-        background: dragging ? 'rgba(86,156,214,0.05)' : 'transparent',
-      }}
+      className={`absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-xl m-10 transition-colors border-2 border-dashed ${dragging ? 'border-primary bg-primary/5' : 'border-border'
+        }`}
     >
       {loading ? (
-        <span className="text-text-secondary text-[16px]">Loading...</span>
+        <span className="text-muted-foreground text-base">Loading...</span>
       ) : (
         <>
-          <span className="text-text-secondary text-[16px]">
+          <span className="text-muted-foreground text-base">
             Drop a manifest.json file here
           </span>
-          <span className="text-text-disabled text-[12px]">or</span>
-          <label className="px-[20px] py-[8px] bg-input border border-border rounded-[6px] cursor-pointer text-text-secondary text-[13px] hover:bg-hover">
+          <span className="text-muted-foreground/50 text-xs">or</span>
+          <label className="px-5 py-2 bg-input border border-border rounded-md cursor-pointer text-muted-foreground text-sm hover:bg-muted">
             Browse
             <input
               type="file"
               accept=".json"
               onChange={handleFileInput}
-              style={{ display: 'none' }}
+              className="hidden"
             />
           </label>
         </>

@@ -13,32 +13,32 @@ export default function InfoBar() {
   }
 
   return (
-    <div className="h-[40px] bg-surface border-b border-border flex items-center px-[16px] gap-[16px] shrink-0">
-      <span className="font-bold text-[14px] text-accent">
+    <div className="h-10 bg-card border-b border-border flex items-center px-4 gap-4 shrink-0">
+      <span className="font-bold text-sm text-primary">
         BG Editor
       </span>
 
       {sceneName && (
-        <span className="text-text-secondary text-[12px]">
+        <span className="text-muted-foreground text-xs">
           {sceneName} &mdash; {textures.length} textures
         </span>
       )}
 
       {error && (
-        <span className="text-danger text-[12px]">
+        <span className="text-destructive text-xs">
           {error}
         </span>
       )}
 
       <div className="flex-1" />
 
-      <label className="px-[12px] py-[4px] bg-input border border-border rounded cursor-pointer text-text-secondary text-[12px] hover:bg-hover">
+      <label className="px-3 py-1 bg-input border border-border rounded cursor-pointer text-muted-foreground text-xs hover:bg-muted">
         Load Manifest
         <input
           type="file"
           accept=".json"
           onChange={handleFileInput}
-          style={{ display: 'none' }}
+          className="hidden"
         />
       </label>
     </div>

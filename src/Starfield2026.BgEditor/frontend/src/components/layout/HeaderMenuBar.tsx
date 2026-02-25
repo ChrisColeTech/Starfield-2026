@@ -12,28 +12,29 @@ export function HeaderMenuBar({ menus }: HeaderMenuBarProps) {
             {menus.map((menu) => (
                 <Menu as="div" key={menu.label} className="relative" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                     <MenuButton
-                        className={`h-[30px] px-[10px] bg-transparent border-none cursor-pointer text-[13px] focus:outline-none hover:bg-hover data-[open]:bg-[#2d2d2d] ${menu.active ? 'text-text' : 'text-text-secondary'}`}
+                        className={`h-[30px] px-2.5 bg-transparent border-none cursor-pointer text-[13px] focus:outline-none hover:bg-muted data-[open]:bg-muted ${menu.active ? 'text-foreground' : 'text-muted-foreground'}`}
                     >
                         {menu.label}
                     </MenuButton>
 
-                    <MenuItems className="absolute top-[30px] left-0 bg-bg border border-border shadow-xl min-w-[220px] py-[4px] z-50 whitespace-nowrap focus:outline-none">
+                    <MenuItems className="absolute top-[30px] left-0 bg-background border border-border shadow-xl min-w-[220px] py-1 z-50 whitespace-nowrap focus:outline-none">
                         {menu.items.map((item, j) =>
                             item.separator ? (
-                                <div key={j} className="h-[1px] bg-border my-[4px] mx-[10px]" />
+                                <div key={j} className="h-px bg-border my-1 mx-2.5" />
                             ) : (
                                 <MenuItem key={j} disabled={item.disabled}>
                                     {({ focus }) => (
                                         <button
-                                            className={`w-full h-[28px] px-[20px] bg-transparent border-none text-left text-[13px] flex items-center justify-between cursor-pointer disabled:opacity-40 disabled:cursor-default ${focus ? 'bg-hover' : ''}`}
-                                            style={{
-                                                color: item.danger ? '#c74e4e' : item.disabled ? '#555555' : '#e0e0e0',
-                                            }}
+                                            className={`w-full h-7 px-5 bg-transparent border-none text-left text-[13px] flex items-center justify-between cursor-pointer disabled:opacity-40 disabled:cursor-default ${focus ? 'bg-muted' : ''
+                                                } ${item.danger ? 'text-destructive'
+                                                    : item.disabled ? 'text-muted-foreground/50'
+                                                        : 'text-foreground'
+                                                }`}
                                             onClick={() => item.onClick?.()}
                                         >
                                             <span>{item.label}</span>
                                             {item.shortcut && (
-                                                <span className="text-text-disabled text-[12px] ml-[30px]">
+                                                <span className="text-muted-foreground/50 text-xs ml-8">
                                                     {item.shortcut}
                                                 </span>
                                             )}
