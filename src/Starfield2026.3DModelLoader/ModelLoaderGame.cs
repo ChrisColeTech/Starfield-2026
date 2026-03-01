@@ -181,15 +181,24 @@ public class ModelLoaderGame : Game
         string coreRoot = Path.GetFullPath(Path.Combine(assetsRoot, "..", "Starfield2026.Core"));
         string registryPath = Path.Combine(coreRoot, "Maps", "TileRegistry.cs");
 
-        // Find first .g.cs map
+        // Find first .g.cs map — prefer MountainTrail which has ModelId tiles
         string generatedDir = Path.Combine(coreRoot, "Maps", "Generated");
         string? mapFile = null;
         if (Directory.Exists(generatedDir))
         {
-            foreach (var f in Directory.GetFiles(generatedDir, "*.g.cs"))
+            // Prefer MountainTrail if it exists
+            string preferred = Path.Combine(generatedDir, "MountainTrail.g.cs");
+            if (File.Exists(preferred))
             {
-                mapFile = f;
-                break;
+                mapFile = preferred;
+            }
+            else
+            {
+                foreach (var f in Directory.GetFiles(generatedDir, "*.g.cs"))
+                {
+                    mapFile = f;
+                    break;
+                }
             }
         }
 
