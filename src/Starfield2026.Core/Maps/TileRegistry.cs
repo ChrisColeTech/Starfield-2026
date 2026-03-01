@@ -26,13 +26,13 @@ public static class TileRegistry
         [15] = new TileDefinition(15, "TechFloor", true, "#d3d3d3", TileCategory.Terrain),
 
         // Decoration (16-31)
-        [16] = new TileDefinition(16, "Tree", false, "#228b22", TileCategory.Decoration, Height: 2f),
-        [17] = new TileDefinition(17, "Rock", false, "#808080", TileCategory.Decoration, Height: 1f),
-        [18] = new TileDefinition(18, "Crystal", true, "#ff69b4", TileCategory.Decoration),
+        [16] = new TileDefinition(16, "Tree", false, "#228b22", TileCategory.Decoration, Height: 2f, ModelId: "Tree01"),
+        [17] = new TileDefinition(17, "Rock", false, "#808080", TileCategory.Decoration, Height: 1f, ModelId: "Rock01"),
+        [18] = new TileDefinition(18, "Crystal", true, "#ff69b4", TileCategory.Decoration, ModelId: "Flower01"),
         [19] = new TileDefinition(19, "Antenna", false, "#a9a9a9", TileCategory.Decoration, Height: 3f),
-        [20] = new TileDefinition(20, "Bush", false, "#2e8b57", TileCategory.Decoration, Height: 0.8f),
+        [20] = new TileDefinition(20, "Bush", false, "#2e8b57", TileCategory.Decoration, Height: 0.8f, ModelId: "Bush01"),
         [21] = new TileDefinition(21, "DebrisPile", false, "#8b4513", TileCategory.Decoration, Height: 0.5f),
-        [22] = new TileDefinition(22, "Boulder", false, "#696969", TileCategory.Decoration, Height: 1.5f),
+        [22] = new TileDefinition(22, "Boulder", false, "#696969", TileCategory.Decoration, Height: 1.5f, ModelId: "Rock02"),
         [23] = new TileDefinition(23, "Sign", false, "#deb887", TileCategory.Decoration, "readable", Height: 1f),
         [24] = new TileDefinition(24, "Fence", false, "#cd853f", TileCategory.Decoration, Height: 1f),
         [25] = new TileDefinition(25, "Beacon", false, "#ffa500", TileCategory.Decoration, Height: 2f, AnimationFrames: 4),
@@ -100,7 +100,7 @@ public static class TileRegistry
         [79] = new TileDefinition(79, "SalvagePoint", false, "#228b22", TileCategory.Encounter, "headbutt"),
 
         // Structure (80-95)
-        [80] = new TileDefinition(80, "Wall", false, "#404040", TileCategory.Structure, Height: 2f),
+        [80] = new TileDefinition(80, "Wall", false, "#404040", TileCategory.Structure, Height: 2f, ModelId: "Mountain01"),
         [81] = new TileDefinition(81, "LedgeDown", true, "#7ec850", TileCategory.Structure, "ledge_down"),
         [82] = new TileDefinition(82, "LedgeLeft", true, "#7ec850", TileCategory.Structure, "ledge_left"),
         [83] = new TileDefinition(83, "LedgeRight", true, "#7ec850", TileCategory.Structure, "ledge_right"),
@@ -113,7 +113,7 @@ public static class TileRegistry
         [90] = new TileDefinition(90, "StairsDown", true, "#8b7355", TileCategory.Structure, "stairs_down"),
         [91] = new TileDefinition(91, "Ladder", true, "#a0522d", TileCategory.Structure, "ladder"),
         [92] = new TileDefinition(92, "Ramp", true, "#9b8b7b", TileCategory.Structure, "ramp"),
-        [93] = new TileDefinition(93, "Cliff", false, "#5a5a5a", TileCategory.Structure, Height: 3f),
+        [93] = new TileDefinition(93, "Cliff", false, "#5a5a5a", TileCategory.Structure, Height: 3f, ModelId: "Mountain01"),
         [94] = new TileDefinition(94, "Waterfall", false, "#4090ff", TileCategory.Structure, "waterfall_hm", AnimationFrames: 4),
         [95] = new TileDefinition(95, "EnergyBarrier", false, "#3080e8", TileCategory.Structure, "barrier", AnimationFrames: 4, Height: 2f),
 

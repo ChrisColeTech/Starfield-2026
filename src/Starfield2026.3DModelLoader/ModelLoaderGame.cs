@@ -24,7 +24,7 @@ public class ModelLoaderGame : Game
     private MinimapHUD _hud = new();
     private InputManager _input = new();
     private FreeRoamScreen _freeRoam = new();
-    private MountainSceneScreen _mountainScene = new();
+    private MapScene3DScreen _mapScene = new();
     private CharacterDatabase _database = new();
 
     private List<CharacterRecord> _characters = new();
@@ -32,13 +32,7 @@ public class ModelLoaderGame : Game
 
     private CharacterSelectOverlay? _charSelect;
 
-    // Map viewer
-    private MapViewerScreen _mapViewer = new();
-    private List<MapRecord> _maps = new();
-    private int _mapIndex = -1;
-    private MapSelectOverlay? _mapSelect;
-    private bool _inMapMode;
-    private bool _inMountainMode;
+    private bool _inMap3DMode;
 
     private const string LastModeSettingKey = "last_mode";
 
@@ -51,7 +45,6 @@ public class ModelLoaderGame : Game
     {
         ModelLoaderLog.Initialize();
 
-        // Load saved window config (logical pixels), scale by DPI for physical back buffer
         var cfg = WindowStateHelper.Load(WindowConfigPath);
         float dpiScale = WindowStateHelper.GetDpiScale();
 
@@ -69,7 +62,6 @@ public class ModelLoaderGame : Game
         Window.AllowUserResizing = true;
         Exiting += Game_Exiting;
 
-        // Defer position restore to first Update (SDL window not ready yet)
         _pendingRestore = cfg;
     }
 
@@ -101,7 +93,7 @@ public class ModelLoaderGame : Game
         _database.Initialize(dbPath);
         ModelLoaderLog.Info($"Database initialized: {dbPath}");
 
-        // Scan for models — look in Assets folder (not bin, since Models are excluded from copy)
+        // Scan for models
         string assetsRoot = FindAssetsRoot();
         string modelsRoot = Path.Combine(assetsRoot, "Models");
         ModelLoaderLog.Info($"Assets root: {assetsRoot}");
@@ -127,7 +119,7 @@ public class ModelLoaderGame : Game
         foreach (var kvp in _freeRoam.SharedAnimationFolders)
             ModelLoaderLog.Info($"  {kvp.Key} -> {kvp.Value}");
 
-// Load trainer party assignments
+        // Load trainer party assignments
         string pokemonRoot = Path.Combine(assetsRoot, "Models", "Pokemon");
         string partyJsonPath = Path.Combine(assetsRoot, "trainer_parties.json");
         _freeRoam.PokemonRoot = pokemonRoot;
@@ -147,50 +139,19 @@ public class ModelLoaderGame : Game
         if (savedTags != null)
             _freeRoam.FillTags = new HashSet<string>(savedTags.Split(',', StringSplitOptions.RemoveEmptyEntries));
 
-        // Scan map models
-        string mapsRoot = Path.Combine(assetsRoot, "Models", "Maps");
-        ModelLoaderLog.Info($"Scanning maps: {mapsRoot}");
-        var mapEntries = MapManifestScanner.Scan(mapsRoot);
-        ModelLoaderLog.Info($"Found {mapEntries.Count} map entries");
-        int mapId = 0;
-        foreach (var (name, category, subfolder, manifestPath) in mapEntries)
-            _maps.Add(new MapRecord(++mapId, name, category, subfolder, manifestPath));
-        ModelLoaderLog.Info($"Loaded {_maps.Count} maps");
-
-        // Restore last selected map index (if any)
-        if (_maps.Count > 0)
-        {
-            _mapIndex = 0;
-            string? lastMapId = _database.GetSetting("last_map_id");
-            if (lastMapId != null && int.TryParse(lastMapId, out int savedMapId))
-            {
-                for (int i = 0; i < _maps.Count; i++)
-                {
-                    if (_maps[i].Id == savedMapId)
-                    {
-                        _mapIndex = i;
-                        break;
-                    }
-                }
-            }
-        }
-
         // Init FreeRoam
         _freeRoam.Initialize(GraphicsDevice);
 
-        // Init MapViewer
-        _mapViewer.Initialize(GraphicsDevice);
+        // Init Map3D Scene
+        _mapScene.Initialize(GraphicsDevice);
+        _mapScene.SharedAnimationFolders = _freeRoam.SharedAnimationFolders;
+        _mapScene.TrainerParties = _freeRoam.TrainerParties;
+        _mapScene.PokemonRoot = _freeRoam.PokemonRoot;
+        _mapScene.LoadMode = _freeRoam.LoadMode;
+        _mapScene.FillTags = _freeRoam.FillTags;
 
-        // Init Mountain Scene
-        _mountainScene.Initialize(GraphicsDevice);
-        _mountainScene.SharedAnimationFolders = _freeRoam.SharedAnimationFolders;
-        _mountainScene.TrainerParties = _freeRoam.TrainerParties;
-        _mountainScene.PokemonRoot = _freeRoam.PokemonRoot;
-        _mountainScene.LoadMode = _freeRoam.LoadMode;
-        _mountainScene.FillTags = _freeRoam.FillTags;
-
-        string mountainPath = Path.Combine(assetsRoot, "Models", "Maps", "Mountain");
-        _mountainScene.LoadScene(mountainPath);
+        // Load map from TileRegistry.cs + first .g.cs found in Generated/
+        TryLoadMap3D(assetsRoot);
 
         // Restore last selected character, or fall back to first
         if (_characters.Count > 0)
@@ -214,6 +175,38 @@ public class ModelLoaderGame : Game
         RestoreLastMode();
     }
 
+    private void TryLoadMap3D(string assetsRoot)
+    {
+        // Find the TileRegistry.cs (source of truth)
+        string coreRoot = Path.GetFullPath(Path.Combine(assetsRoot, "..", "Starfield2026.Core"));
+        string registryPath = Path.Combine(coreRoot, "Maps", "TileRegistry.cs");
+
+        // Find first .g.cs map
+        string generatedDir = Path.Combine(coreRoot, "Maps", "Generated");
+        string? mapFile = null;
+        if (Directory.Exists(generatedDir))
+        {
+            foreach (var f in Directory.GetFiles(generatedDir, "*.g.cs"))
+            {
+                mapFile = f;
+                break;
+            }
+        }
+
+        string fbxModelsFolder = Path.Combine(assetsRoot, "Models", "Maps", "Mountain", "Models");
+
+        if (File.Exists(registryPath) && mapFile != null)
+        {
+            ModelLoaderLog.Info($"[Map3D] Loading registry: {registryPath}");
+            ModelLoaderLog.Info($"[Map3D] Loading map: {mapFile}");
+            _mapScene.LoadMap(registryPath, mapFile, fbxModelsFolder);
+        }
+        else
+        {
+            ModelLoaderLog.Info($"[Map3D] Registry or map not found (registry={File.Exists(registryPath)}, generated dir={Directory.Exists(generatedDir)})");
+        }
+    }
+
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
@@ -222,7 +215,6 @@ public class ModelLoaderGame : Game
 
         _uiFont = new PixelFont(_spriteBatch, _pixel);
 
-        // Try to load a SpriteFont for the minimap HUD
         SpriteFont? spriteFont = null;
         try { spriteFont = Content.Load<SpriteFont>("DefaultFont"); } catch { }
         _hud.Initialize(_spriteBatch, _pixel, spriteFont);
@@ -235,7 +227,6 @@ public class ModelLoaderGame : Game
         {
             WindowStateHelper.Restore(Window, _graphics, _pendingRestore);
             _pendingRestore = null;
-            // Subscribe AFTER restore so deferred SDL events don't overwrite
             Window.ClientSizeChanged += OnClientSizeChanged;
         }
 
@@ -250,7 +241,6 @@ public class ModelLoaderGame : Game
             {
                 bool settingsChanged = _charSelect.AnimationSettingsChanged;
 
-                // Sync animation settings back from overlay
                 if (settingsChanged)
                 {
                     _freeRoam.LoadMode = _charSelect.LoadMode;
@@ -260,9 +250,12 @@ public class ModelLoaderGame : Game
                 if (_charSelect.SelectedFolder != null)
                 {
                     ModelLoaderLog.Info($"Character selected: {_charSelect.SelectedFolder}");
-                    _freeRoam.LoadCharacter(_charSelect.SelectedFolder);
 
-                    // Update character index to match selection
+                    if (_inMap3DMode)
+                        _mapScene.LoadCharacter(_charSelect.SelectedFolder);
+                    else
+                        _freeRoam.LoadCharacter(_charSelect.SelectedFolder);
+
                     for (int i = 0; i < _characters.Count; i++)
                     {
                         string folder = Path.GetDirectoryName(_characters[i].ManifestPath) ?? "";
@@ -276,12 +269,10 @@ public class ModelLoaderGame : Game
                 }
                 else if (settingsChanged)
                 {
-                    // Mode/tags changed but no new character picked — reload current
                     ModelLoaderLog.Info("[UI] Animation settings changed, reloading current character");
                     LoadCurrentCharacter();
                 }
 
-                // Persist animation settings
                 _database.SetSetting("animation_mode", _freeRoam.LoadMode.ToString());
                 _database.SetSetting("fill_tags", string.Join(",", _freeRoam.FillTags));
 
@@ -291,75 +282,31 @@ public class ModelLoaderGame : Game
             return;
         }
 
-        // --- Map select overlay ---
-        if (_mapSelect != null)
-        {
-            _mapSelect.Update(snap, (float)gameTime.ElapsedGameTime.TotalSeconds);
-            if (_mapSelect.IsFinished)
-            {
-                if (_mapSelect.SelectedFolder != null)
-                {
-                    ModelLoaderLog.Info($"Map selected: {_mapSelect.SelectedFolder}");
-                    _mapViewer.LoadMap(_mapSelect.SelectedFolder);
-
-                    for (int i = 0; i < _maps.Count; i++)
-                    {
-                        string folder = Path.GetDirectoryName(_maps[i].ManifestPath) ?? "";
-                        if (string.Equals(folder, _mapSelect.SelectedFolder, StringComparison.OrdinalIgnoreCase))
-                        {
-                            _mapIndex = i;
-                            _database.SetSetting("last_map_id", _maps[i].Id.ToString());
-                            break;
-                        }
-                    }
-                }
-
-                _mapSelect = null;
-            }
-            base.Update(gameTime);
-            return;
-        }
-
-// Escape/Create button = cycle between character, map, and mountain mode
+        // F1 = cycle between FreeRoam and Map3D
         if (snap.SwitchModePressed)
         {
-            if (_inMountainMode)
-            {
-                _inMountainMode = false;
-                _inMapMode = false;
-            }
-            else if (_inMapMode)
-            {
-                _inMapMode = false;
-                _inMountainMode = true;
-                LoadCurrentCharacterToMountain();
-            }
-            else
-            {
-                _inMapMode = true;
-            }
+            _inMap3DMode = !_inMap3DMode;
+
+            // Load character into whichever mode we're switching to
+            if (_inMap3DMode)
+                LoadCurrentCharacterToMap3D();
 
             PersistCurrentMode();
-            ModelLoaderLog.Info($"Switched to {(_inMountainMode ? "Mountain" : _inMapMode ? "Map" : "Character")} mode");
+            ModelLoaderLog.Info($"Switched to {(_inMap3DMode ? "Map3D" : "FreeRoam")} mode");
             base.Update(gameTime);
             return;
         }
 
-        // Tab = open select overlay (character or map depending on mode)
+        // Tab = open character select overlay
         if (snap.PausePressed)
         {
-            if (_inMapMode)
-                _mapSelect = new MapSelectOverlay(_maps);
-            else
-                _charSelect = new CharacterSelectOverlay(_characters, _freeRoam.LoadMode, _freeRoam.FillTags);
+            _charSelect = new CharacterSelectOverlay(_characters, _freeRoam.LoadMode, _freeRoam.FillTags);
             base.Update(gameTime);
             return;
         }
 
-        if (_inMountainMode)
-            _mountainScene.Update(gameTime, snap);
-        else if (_inMapMode)
-            _mapViewer.Update(gameTime, snap);
+        if (_inMap3DMode)
+            _mapScene.Update(gameTime, snap);
         else
             _freeRoam.Update(gameTime, snap);
 
@@ -368,24 +315,13 @@ public class ModelLoaderGame : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        if (_inMountainMode)
+        if (_inMap3DMode)
         {
-            _mountainScene.Draw(GraphicsDevice);
+            _mapScene.Draw(GraphicsDevice);
 
-            string status = $"[F1] Cycle Mode  [Tab] Select Character  |  {_mountainScene.StatusText}";
-            Window.Title = $"Mountain Scene  |  {status}";
-            _hud.Draw(GraphicsDevice, _mountainScene.Position, _mountainScene.Yaw, status);
-        }
-        else if (_inMapMode)
-        {
-            _mapViewer.Draw(GraphicsDevice);
-
-            string mapName = _mapIndex >= 0 && _mapIndex < _maps.Count
-                ? _maps[_mapIndex].Name : "None";
-            string status = $"[F1] Characters  [Tab] Select  |  {mapName} ({_mapIndex + 1}/{_maps.Count})  |  {_mapViewer.StatusText}";
-            Window.Title = $"Map Viewer  |  {status}";
-
-            _hud.Draw(GraphicsDevice, Vector3.Zero, 0f, status);
+            string status = $"[F1] FreeRoam  [Tab] Select Character  |  {_mapScene.StatusText}";
+            Window.Title = $"Map 3D  |  {status}";
+            _hud.Draw(GraphicsDevice, _mapScene.Position, _mapScene.Yaw, status);
         }
         else
         {
@@ -393,23 +329,17 @@ public class ModelLoaderGame : Game
 
             string charName = _characterIndex >= 0 && _characterIndex < _characters.Count
                 ? _characters[_characterIndex].Name : "None";
-            string status = $"[F1] Maps  [Tab] Select  |  {charName} ({_characterIndex + 1}/{_characters.Count})  |  {_freeRoam.StatusText}";
+            string status = $"[F1] Map3D  [Tab] Select  |  {charName} ({_characterIndex + 1}/{_characters.Count})  |  {_freeRoam.StatusText}";
             Window.Title = $"3D Model Loader  |  {status}";
 
             _hud.Draw(GraphicsDevice, _freeRoam.Position, _freeRoam.Yaw, status);
         }
 
-        // Select overlays
+        // Character select overlay
         if (_charSelect != null)
         {
             _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
             _charSelect.Draw(_spriteBatch, _pixel, _uiFont, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
-            _spriteBatch.End();
-        }
-        if (_mapSelect != null)
-        {
-            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
-            _mapSelect.Draw(_spriteBatch, _pixel, _uiFont, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
             _spriteBatch.End();
         }
 
@@ -426,24 +356,14 @@ public class ModelLoaderGame : Game
         _freeRoam.LoadCharacter(folder);
     }
 
-    private void LoadCurrentCharacterToMountain()
+    private void LoadCurrentCharacterToMap3D()
     {
         if (_characterIndex < 0 || _characterIndex >= _characters.Count)
             return;
 
         var record = _characters[_characterIndex];
         string folder = Path.GetDirectoryName(record.ManifestPath) ?? "";
-        _mountainScene.LoadCharacter(folder);
-    }
-
-    private void LoadCurrentMap()
-    {
-        if (_mapIndex < 0 || _mapIndex >= _maps.Count)
-            return;
-
-        var record = _maps[_mapIndex];
-        string folder = Path.GetDirectoryName(record.ManifestPath) ?? "";
-        _mapViewer.LoadMap(folder);
+        _mapScene.LoadCharacter(folder);
     }
 
     private void RestoreLastMode()
@@ -454,26 +374,19 @@ public class ModelLoaderGame : Game
 
         switch (mode.ToLowerInvariant())
         {
-            case "map":
-                _inMapMode = true;
-                _inMountainMode = false;
-                LoadCurrentMap();
-                break;
-            case "mountain":
-                _inMapMode = false;
-                _inMountainMode = true;
-                LoadCurrentCharacterToMountain();
+            case "map3d":
+                _inMap3DMode = true;
+                LoadCurrentCharacterToMap3D();
                 break;
             default:
-                _inMapMode = false;
-                _inMountainMode = false;
+                _inMap3DMode = false;
                 break;
         }
     }
 
     private void PersistCurrentMode()
     {
-        string mode = _inMountainMode ? "mountain" : _inMapMode ? "map" : "character";
+        string mode = _inMap3DMode ? "map3d" : "freeroam";
         _database.SetSetting(LastModeSettingKey, mode);
     }
 

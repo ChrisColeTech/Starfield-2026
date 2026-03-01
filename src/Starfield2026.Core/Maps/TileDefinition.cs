@@ -13,7 +13,8 @@ public record TileDefinition(
     int? EntityId = null,
     string? SpriteName = null,
     int AnimationFrames = 0,
-    float Height = 0f
+    float Height = 0f,
+    string? ModelId = null
 )
 {
     public string GetSpriteName() => SpriteName ?? TileNameToSpriteName(Name);

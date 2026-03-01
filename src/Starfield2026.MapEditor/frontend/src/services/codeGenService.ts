@@ -310,6 +310,9 @@ function formatTileDefinition(tile: EditorTileDefinition): string {
   if (tile.encounter) {
     args += `, "${escapeString(tile.encounter)}"`
   }
+  if (tile.modelId) {
+    args += `, ModelId: "${escapeString(tile.modelId)}"`
+  }
   return `        [${tile.id}] = new TileDefinition(${args}),`
 }
 

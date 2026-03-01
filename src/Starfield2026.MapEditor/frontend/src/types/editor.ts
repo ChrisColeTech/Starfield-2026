@@ -11,6 +11,7 @@ export interface EditorTileDefinition {
   encounter?: string
   direction?: 'up' | 'down' | 'left' | 'right'
   isOverlay?: boolean
+  modelId?: string
   // Extended props (Pokemon-specific)
   requires?: string
   villain?: boolean

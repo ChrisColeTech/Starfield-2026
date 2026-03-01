@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.IO;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
@@ -7,17 +8,22 @@ using Starfield2026.ModelLoader.Animations;
 using Starfield2026.ModelLoader.Controllers;
 using Starfield2026.ModelLoader.Helpers;
 using Starfield2026.ModelLoader.Input;
-using System;
 using Starfield2026.ModelLoader.Loaders;
+using Starfield2026.ModelLoader.Maps;
 using Starfield2026.ModelLoader.Rendering;
 
 namespace Starfield2026.ModelLoader.Screens;
 
-public class MountainSceneScreen
+/// <summary>
+/// Map-driven 3D scene. Parses a .g.cs MapDefinition + TileRegistry.cs,
+/// resolves tiles with ModelId to FbxModel instances, places them on a grid.
+/// Standalone — no dependency on Starfield2026.Core.
+/// </summary>
+public class MapScene3DScreen
 {
     private GraphicsDevice _device = null!;
-    private List<FbxModel> _models = new();
-    private List<(FbxModel model, Vector3 position, float scale, float rotation)> _instances = new();
+    private readonly Dictionary<string, FbxModel> _modelCache = new();
+    private readonly List<(FbxModel model, Vector3 position, float scale, float rotation)> _instances = new();
     private BasicEffect? _effect;
     private QuadrantGridRenderer _grid = null!;
     private CubeRenderer _cubeRenderer = null!;
@@ -25,11 +31,8 @@ public class MountainSceneScreen
     private PlayerController _player = new();
     private FollowCamera _camera = new();
     private readonly List<(Vector3 pos, float size, Color color)> _stars = new();
-    private string? _activeModelName;
-    private Vector3 _activeModelPos;
-    private float _activeModelScale;
-    private float _climbRadius;
-    private float _climbMaxHeight;
+    private MapData3D? _mapData;
+    private Dictionary<int, Tile3D> _tileRegistry = new();
 
     public AnimationLoadMode LoadMode { get; set; } = AnimationLoadMode.FillMissing;
     public HashSet<string> FillTags { get; set; } = new() { "Jump", "Land" };
@@ -37,7 +40,7 @@ public class MountainSceneScreen
     public Dictionary<string, string?[]> TrainerParties { get; set; } = new();
     public string PokemonRoot { get; set; } = "";
 
-    public string StatusText { get; private set; } = "No scene loaded";
+    public string StatusText { get; private set; } = "No map loaded";
     public Vector3 Position => _player.Position;
     public float Yaw => _player.Yaw;
 
@@ -48,7 +51,7 @@ public class MountainSceneScreen
         _grid = new QuadrantGridRenderer
         {
             Spacing = 2f,
-            GridHalfSize = 40,
+            GridHalfSize = 60,
             PlaneOffset = 0.01f,
         };
         _grid.Initialize(device);
@@ -56,8 +59,8 @@ public class MountainSceneScreen
         _cubeRenderer = new CubeRenderer();
         _cubeRenderer.Initialize(device);
 
-        _player.Initialize(new Vector3(0, 0f, -12f));
-        _player.WorldHalfSize = 200f;
+        _player.Initialize(Vector3.Zero);
+        _player.WorldHalfSize = 400f;
         _camera.Initialize(_player.Position);
         _camera.TerrainHeightSampler = SampleTerrainHeight;
 
@@ -68,134 +71,117 @@ public class MountainSceneScreen
             TextureEnabled = true,
         };
 
-        // Tone lighting down so rock texture isn't washed out to white
         _effect.AmbientLightColor = new Vector3(0.15f, 0.15f, 0.18f);
-
         _effect.DirectionalLight0.Enabled = true;
         _effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-0.5f, -1f, 0.3f));
         _effect.DirectionalLight0.DiffuseColor = new Vector3(0.7f, 0.65f, 0.6f);
         _effect.DirectionalLight0.SpecularColor = new Vector3(0.1f, 0.1f, 0.1f);
-
         _effect.DirectionalLight1.Enabled = true;
         _effect.DirectionalLight1.Direction = Vector3.Normalize(new Vector3(0.5f, -0.3f, -0.5f));
         _effect.DirectionalLight1.DiffuseColor = new Vector3(0.15f, 0.18f, 0.25f);
         _effect.DirectionalLight1.SpecularColor = Vector3.Zero;
-
         _effect.DirectionalLight2.Enabled = false;
 
         BuildStarBackdrop();
     }
 
-    private void BuildStarBackdrop()
+    /// <summary>
+    /// Load a TileRegistry.cs file, then a .g.cs map file, and place models.
+    /// </summary>
+    public void LoadMap(string registryPath, string mapPath, string fbxModelsFolder)
     {
-        _stars.Clear();
-        var rng = new Random(1337);
+        _instances.Clear();
+        _tileRegistry = MapParser.LoadRegistryFile(registryPath);
+        ModelLoaderLog.Info($"[MapScene3D] Loaded {_tileRegistry.Count} tile definitions from registry");
 
-        for (int i = 0; i < 220; i++)
+        _mapData = MapParser.LoadMapFile(mapPath);
+        ModelLoaderLog.Info($"[MapScene3D] Loaded map '{_mapData.DisplayName}' ({_mapData.Width}x{_mapData.Height})");
+
+        int placed = 0;
+        Vector3 spawnPos = Vector3.Zero;
+        bool foundSpawn = false;
+
+        for (int y = 0; y < _mapData.Height; y++)
         {
-            float az = (float)rng.NextDouble() * MathHelper.TwoPi;
-            float el = MathHelper.Lerp(0.15f, 1.05f, (float)rng.NextDouble());
-            float dist = MathHelper.Lerp(140f, 260f, (float)rng.NextDouble());
+            for (int x = 0; x < _mapData.Width; x++)
+            {
+                int tileId = _mapData.GetBaseTile(x, y);
+                PlaceTileModel(tileId, x, y, fbxModelsFolder, ref placed);
 
-            var pos = new Vector3(
-                MathF.Cos(az) * MathF.Cos(el) * dist,
-                MathF.Sin(el) * dist,
-                MathF.Sin(az) * MathF.Cos(el) * dist);
+                // Check for spawn by name convention
+                if (_tileRegistry.TryGetValue(tileId, out var tileDef) &&
+                    tileDef.Name.Contains("Spawn", StringComparison.OrdinalIgnoreCase) && !foundSpawn)
+                {
+                    spawnPos = TileToWorld(x, y);
+                    foundSpawn = true;
+                }
 
-            float size = MathHelper.Lerp(0.04f, 0.12f, (float)rng.NextDouble());
-            byte tint = (byte)rng.Next(220, 255);
-            var color = new Color(tint, tint, 255);
-            _stars.Add((pos, size, color));
+                // Overlay
+                int? overlayId = _mapData.GetOverlayTile(x, y);
+                if (overlayId.HasValue)
+                    PlaceTileModel(overlayId.Value, x, y, fbxModelsFolder, ref placed);
+            }
         }
+
+        // Default spawn at center if none found
+        if (!foundSpawn)
+            spawnPos = TileToWorld(_mapData.Width / 2, _mapData.Height / 2);
+
+        _player.Initialize(spawnPos);
+        _camera.Initialize(spawnPos);
+        _camera.TerrainHeightSampler = SampleTerrainHeight;
+
+        StatusText = $"Map '{_mapData.DisplayName}' — {_mapData.Width}x{_mapData.Height}, {placed} models";
+        ModelLoaderLog.Info($"[MapScene3D] {StatusText}, cached models: {_modelCache.Count}");
     }
 
-    public void LoadScene(string folderPath)
+    private void PlaceTileModel(int tileId, int x, int y, string fbxModelsFolder, ref int placed)
     {
-        string modelsPath = Path.Combine(folderPath, "Models");
+        if (!_tileRegistry.TryGetValue(tileId, out var tileDef)) return;
+        if (string.IsNullOrEmpty(tileDef.ModelId)) return;
 
-        var modelFiles = new Dictionary<string, string>
+        var model = LoadOrGetModel(fbxModelsFolder, tileDef.ModelId!);
+        if (model == null) return;
+
+        float modelHeight = Math.Max(0.1f, model.BoundsMax.Y - model.BoundsMin.Y);
+        float targetHeight = Math.Max(1f, tileDef.Height);
+        float scale = targetHeight / modelHeight;
+
+        Vector3 worldPos = TileToWorld(x, y);
+        _instances.Add((model, worldPos, scale, 0f));
+        placed++;
+    }
+
+    private FbxModel? LoadOrGetModel(string modelsPath, string modelId)
+    {
+        if (_modelCache.TryGetValue(modelId, out var cached))
+            return cached;
+
+        string fbxPath = Path.Combine(modelsPath, $"{modelId}.fbx");
+        if (!File.Exists(fbxPath))
         {
-            ["Mountain"] = Path.Combine(modelsPath, "Mountain01.fbx"),
-            ["Rock1"] = Path.Combine(modelsPath, "Rock01.fbx"),
-            ["Rock2"] = Path.Combine(modelsPath, "Rock02.fbx"),
-            ["Tree"] = Path.Combine(modelsPath, "Tree01.fbx"),
-            ["Bush"] = Path.Combine(modelsPath, "Bush01.fbx"),
-            ["Grass"] = Path.Combine(modelsPath, "Grass01.fbx"),
-            ["Flower"] = Path.Combine(modelsPath, "Flower01.fbx"),
-            ["Flowers"] = Path.Combine(modelsPath, "Flowers01.fbx"),
-            ["Pebbles"] = Path.Combine(modelsPath, "Pebbles01.fbx"),
-            ["Bridge"] = Path.Combine(modelsPath, "Bridge01.fbx"),
-        };
-
-        var loadedModels = new Dictionary<string, FbxModel>();
-
-        foreach (var kvp in modelFiles)
-        {
-            if (File.Exists(kvp.Value))
-            {
-                var model = new FbxModel();
-                model.Load(_device, kvp.Value);
-                if (model.IsLoaded)
-                {
-                    loadedModels[kvp.Key] = model;
-                    _models.Add(model);
-                }
-            }
+            ModelLoaderLog.Info($"[MapScene3D] FBX not found: {fbxPath}");
+            return null;
         }
 
-        ModelLoaderLog.Info($"[MountainScene] Loaded {loadedModels.Count} models");
-
-        // One-thing-at-a-time debug mode: place exactly one model.
-        // Priority order keeps testing deterministic.
-        string[] priority =
+        var model = new FbxModel();
+        model.Load(_device, fbxPath);
+        if (!model.IsLoaded)
         {
-            "Mountain", "Rock1", "Rock2", "Tree", "Bush",
-            "Grass", "Flower", "Flowers", "Pebbles", "Bridge"
-        };
-
-        FbxModel? selected = null;
-        string? selectedName = null;
-        foreach (string key in priority)
-        {
-            if (loadedModels.TryGetValue(key, out var model))
-            {
-                selected = model;
-                selectedName = key;
-                break;
-            }
+            model.Dispose();
+            return null;
         }
 
-        if (selected != null && selectedName != null)
-        {
-            float modelHeight = Math.Max(0.1f, selected.BoundsMax.Y - selected.BoundsMin.Y);
-            float targetHeight = selectedName == "Mountain" ? 10f : 2.5f;
-            float scale = targetHeight / modelHeight;
-            var modelPos = new Vector3(0f, 0f, 20f);
-            _instances.Add((selected, modelPos, scale, 0f));
+        _modelCache[modelId] = model;
+        return model;
+    }
 
-            _activeModelName = selectedName;
-            _activeModelPos = modelPos;
-            _activeModelScale = scale;
-
-            if (selectedName == "Mountain")
-            {
-                _climbRadius = Math.Max(4f, selected.Radius * scale * 0.95f);
-                _climbMaxHeight = Math.Max(2f, (selected.BoundsMax.Y - selected.BoundsMin.Y) * scale * 0.85f);
-            }
-            else
-            {
-                _climbRadius = 0f;
-                _climbMaxHeight = 0f;
-            }
-
-            ModelLoaderLog.Info(
-                $"[MountainScene] One-model mode: {selectedName}, scale={scale:F3}, boundsMin={selected.BoundsMin}, boundsMax={selected.BoundsMax}, radius={selected.Radius:F3}");
-            StatusText = $"One-model mode: {selectedName} (scale {scale:F2})";
-        }
-        else
-        {
-            StatusText = "No FBX models found in Mountain/Models";
-        }
+    private Vector3 TileToWorld(int x, int y)
+    {
+        int tileSize = _mapData?.TileSize ?? 1;
+        float worldX = x * tileSize;
+        float worldZ = y * tileSize;
+        return new Vector3(worldX, 0f, worldZ);
     }
 
     public void LoadCharacter(string folderPath)
@@ -224,15 +210,12 @@ public class MountainSceneScreen
                 if (partyPaths != null)
                     _character.LoadParty(_device, partyPaths);
             }
-
-            StatusText = $"Loaded: {Path.GetFileName(folderPath)}";
         }
         catch (Exception ex)
         {
-            ModelLoaderLog.Info($"[MountainScene] Failed to load character: {ex.Message}");
+            ModelLoaderLog.Info($"[MapScene3D] Failed to load character: {ex.Message}");
             _character?.Dispose();
             _character = null;
-            StatusText = $"Failed: {Path.GetFileName(folderPath)}";
         }
     }
 
@@ -281,8 +264,7 @@ public class MountainSceneScreen
 
     private void ResolveModelCollisions()
     {
-        if (_instances.Count == 0)
-            return;
+        if (_instances.Count == 0) return;
 
         var playerPos = _player.Position;
         bool corrected = false;
@@ -290,31 +272,28 @@ public class MountainSceneScreen
 
         foreach (var (model, position, scale, _) in _instances)
         {
-            if (!model.IsLoaded)
-                continue;
+            if (!model.IsLoaded) continue;
 
-            // Allow climbing the active mountain model instead of hard-blocking it.
-            if (_activeModelName == "Mountain" && position == _activeModelPos)
-                continue;
+            // If mesh has height at this point, it's climbable — skip collision
+            var world = Matrix.CreateScale(scale)
+                * Matrix.CreateRotationY(0f)
+                * Matrix.CreateTranslation(position);
+            float? meshY = model.SampleHeight(position, world);
+            if (meshY.HasValue && meshY.Value > 0.1f) continue;
 
             float colliderRadius = Math.Max(0.75f, model.Radius * scale * 0.6f);
-
             float dx = playerPos.X - position.X;
             float dz = playerPos.Z - position.Z;
             float distSq = dx * dx + dz * dz;
             float minDist = playerRadius + colliderRadius;
-            float minDistSq = minDist * minDist;
 
-            if (distSq < minDistSq && distSq > 0.0001f)
+            if (distSq < minDist * minDist && distSq > 0.0001f)
             {
                 float dist = MathF.Sqrt(distSq);
-                float nx = dx / dist;
-                float nz = dz / dist;
-
                 playerPos = new Vector3(
-                    position.X + nx * minDist,
+                    position.X + dx / dist * minDist,
                     playerPos.Y,
-                    position.Z + nz * minDist);
+                    position.Z + dz / dist * minDist);
                 corrected = true;
             }
         }
@@ -326,8 +305,6 @@ public class MountainSceneScreen
     private float SampleTerrainHeight(Vector3 worldPos)
     {
         float y = 0f;
-
-        // Raycast against actual mesh geometry for the mountain
         foreach (var (model, position, scale, rotation) in _instances)
         {
             if (!model.IsLoaded) continue;
@@ -340,7 +317,6 @@ public class MountainSceneScreen
             if (meshY.HasValue && meshY.Value > y)
                 y = meshY.Value;
         }
-
         return y;
     }
 
@@ -351,13 +327,11 @@ public class MountainSceneScreen
         device.BlendState = BlendState.Opaque;
         device.SamplerStates[0] = SamplerState.LinearWrap;
 
-        // Draw stars with alpha blending first
         device.BlendState = BlendState.AlphaBlend;
         DrawStars(device);
         device.BlendState = BlendState.Opaque;
 
         _grid.Draw(device, _camera.View, _camera.Projection);
-
         DrawModels(device);
 
         var pos = _player.Position;
@@ -389,7 +363,7 @@ public class MountainSceneScreen
         _effect.Projection = _camera.Projection;
 
         var camPos = _camera.Position;
-        float cullDist = 100f;
+        float cullDist = 120f;
 
         foreach (var (model, position, scale, rotation) in _instances)
         {
@@ -408,18 +382,31 @@ public class MountainSceneScreen
         device.RasterizerState = prevRaster;
     }
 
+    private void BuildStarBackdrop()
+    {
+        _stars.Clear();
+        var rng = new Random(42);
+        for (int i = 0; i < 220; i++)
+        {
+            float az = (float)rng.NextDouble() * MathHelper.TwoPi;
+            float el = MathHelper.Lerp(0.15f, 1.05f, (float)rng.NextDouble());
+            float dist = MathHelper.Lerp(140f, 260f, (float)rng.NextDouble());
+            var pos = new Vector3(
+                MathF.Cos(az) * MathF.Cos(el) * dist,
+                MathF.Sin(el) * dist,
+                MathF.Sin(az) * MathF.Cos(el) * dist);
+            float size = MathHelper.Lerp(0.04f, 0.12f, (float)rng.NextDouble());
+            byte tint = (byte)rng.Next(220, 255);
+            _stars.Add((pos, size, new Color(tint, tint, 255)));
+        }
+    }
+
     private void DrawStars(GraphicsDevice device)
     {
         foreach (var (pos, size, color) in _stars)
         {
-            _cubeRenderer.Draw(
-                device,
-                _camera.View,
-                _camera.Projection,
-                pos,
-                0f,
-                new Vector3(size, size, size),
-                color);
+            _cubeRenderer.Draw(device, _camera.View, _camera.Projection,
+                pos, 0f, new Vector3(size, size, size), color);
         }
     }
 
@@ -439,9 +426,9 @@ public class MountainSceneScreen
 
     public void Dispose()
     {
-        foreach (var model in _models)
+        foreach (var model in _modelCache.Values)
             model.Dispose();
-        _models.Clear();
+        _modelCache.Clear();
         _instances.Clear();
         _effect?.Dispose();
         _character?.Dispose();

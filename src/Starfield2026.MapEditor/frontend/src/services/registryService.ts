@@ -66,14 +66,16 @@ export function parseCSharpRegistry(source: string): EditorTileRegistry {
   // Match lines like: [0] = new TileDefinition(0, "Water", false, "#3890f8", TileCategory.Terrain),
   // or with optional overlay: [8] = new TileDefinition(8, "Ice", true, "#b0e0f8", TileCategory.Terrain, "slippery"),
   // or with optional EntityId: [48] = new TileDefinition(48, "Villager", false, "#ffd700", TileCategory.Entity, "npc", EntityId: 506),
+  // or with optional ModelId: [16] = new TileDefinition(16, "Tree", false, "#228b22", TileCategory.Decoration, Height: 2f, ModelId: "Tree01"),
   const tilePattern = /\[(\d+)\]\s*=\s*new\s+TileDefinition\(\s*(\d+)\s*,\s*"([^"]+)"\s*,\s*(true|false)\s*,\s*"([^"]+)"\s*,\s*TileCategory\.(\w+)(?:\s*,\s*"([^"]+)")?(?:\s*,\s*EntityId:\s*(\d+))?[^)]*\)/g
+  const modelIdPattern = /ModelId:\s*"([^"]+)"/
 
   const tiles: EditorTileDefinition[] = []
   const categorySet = new Set<string>()
   let match: RegExpExecArray | null
 
   while ((match = tilePattern.exec(source)) !== null) {
-    const [, , idStr, name, walkableStr, color, category, overlay] = match
+    const [fullMatch, , idStr, name, walkableStr, color, category, overlay] = match
     const categoryId = category.toLowerCase()
     categorySet.add(categoryId)
 
@@ -87,6 +89,12 @@ export function parseCSharpRegistry(source: string): EditorTileRegistry {
 
     if (overlay) {
       tile.encounter = overlay
+    }
+
+    // Check for ModelId in the full match
+    const modelMatch = modelIdPattern.exec(fullMatch)
+    if (modelMatch) {
+      tile.modelId = modelMatch[1]
     }
 
     tiles.push(tile)
