@@ -15,6 +15,8 @@ public class FbxModel : IDisposable
     private IndexBuffer? _indexBuffer;
     private Texture2D? _texture;
     private int _primitiveCount;
+    private Vector3[]? _meshPositions;
+    private int[]? _meshIndices;
 
     public Vector3 BoundsMin { get; private set; }
     public Vector3 BoundsMax { get; private set; }
@@ -103,6 +105,12 @@ public class FbxModel : IDisposable
             BoundsMin = min;
             BoundsMax = max;
 
+            // Store mesh data for raycasting
+            _meshPositions = new Vector3[vertices.Count];
+            for (int i = 0; i < vertices.Count; i++)
+                _meshPositions[i] = vertices[i].Position;
+            _meshIndices = indices.ToArray();
+
             if (texPath != null && File.Exists(texPath))
             {
                 try
@@ -138,13 +146,14 @@ public class FbxModel : IDisposable
         {
                 if (material.HasTextureDiffuse && material.TextureDiffuse.FilePath != null)
                 {
-                    string texFile = material.TextureDiffuse.FilePath;
+                    string texFile = material.TextureDiffuse.FilePath.Replace('\\', '/');
+                    string texName = Path.GetFileName(texFile);
                     foreach (var dir in searchDirs)
                     {
-                        string candidate = Path.Combine(dir, texFile);
+                        string candidate = Path.Combine(dir, texName);
                         if (File.Exists(candidate)) return candidate;
 
-                        string nameNoExt = Path.GetFileNameWithoutExtension(texFile);
+                        string nameNoExt = Path.GetFileNameWithoutExtension(texName);
                         foreach (var ext in new[] { "_ALB.png", ".png", ".jpg" })
                         {
                             candidate = Path.Combine(dir, nameNoExt + ext);
@@ -153,6 +162,40 @@ public class FbxModel : IDisposable
                     }
                 }
             }
+
+        // Fallback for Unity-style packs where diffuse path is missing or stripped.
+        string stem = Path.GetFileNameWithoutExtension(modelPath).ToLowerInvariant();
+        string? family = stem switch
+        {
+            var s when s.Contains("flower") => "Flower01_ALB.png",
+            var s when s.Contains("grass") => "Grass01_ALB.png",
+            var s when s.Contains("bush") => "Bush01_ALB.png",
+            var s when s.Contains("tree") => "Leaf01_ALB.png",
+            var s when s.Contains("bridge") => "Bridge01_ALB.png",
+            var s when s.Contains("rock") || s.Contains("mountain") || s.Contains("pebble") => "Rock01_ALB.png",
+            _ => null,
+        };
+
+        if (family != null)
+        {
+            foreach (var dir in searchDirs)
+            {
+                string candidate = Path.Combine(dir, family);
+                if (File.Exists(candidate)) return candidate;
+            }
+        }
+
+        // Last resort: first ALB texture in Colored, then Textures.
+        if (Directory.Exists(coloredDir))
+        {
+            foreach (string p in Directory.EnumerateFiles(coloredDir, "*_ALB.png"))
+                return p;
+        }
+        if (Directory.Exists(textureDir))
+        {
+            foreach (string p in Directory.EnumerateFiles(textureDir, "*_ALB.png"))
+                return p;
+        }
 
         return null;
     }
@@ -170,11 +213,14 @@ public class FbxModel : IDisposable
         {
             effect.TextureEnabled = true;
             effect.Texture = _texture;
+            effect.DiffuseColor = Vector3.One;
+            effect.Alpha = 1f;
         }
         else
         {
             effect.TextureEnabled = false;
             effect.DiffuseColor = new Vector3(0.6f, 0.6f, 0.65f);
+            effect.Alpha = 1f;
         }
 
         foreach (var pass in effect.CurrentTechnique.Passes)
@@ -182,6 +228,62 @@ public class FbxModel : IDisposable
             pass.Apply();
             device.DrawIndexedPrimitives(Microsoft.Xna.Framework.Graphics.PrimitiveType.TriangleList, 0, 0, _primitiveCount);
         }
+    }
+
+    /// <summary>
+    /// Sample the mesh height at a world XZ position by casting a vertical ray down.
+    /// Returns the highest Y intersection, or null if no hit.
+    /// </summary>
+    public float? SampleHeight(Vector3 worldPos, Matrix world)
+    {
+        if (_meshPositions == null || _meshIndices == null) return null;
+
+        Matrix inv = Matrix.Invert(world);
+
+        Vector3 localPos = Vector3.Transform(worldPos, inv);
+        float bestY = float.MinValue;
+        bool hit = false;
+
+        for (int i = 0; i < _meshIndices.Length; i += 3)
+        {
+            Vector3 v0 = _meshPositions[_meshIndices[i]];
+            Vector3 v1 = _meshPositions[_meshIndices[i + 1]];
+            Vector3 v2 = _meshPositions[_meshIndices[i + 2]];
+
+            // Check if localPos.XZ is inside triangle XZ projection
+            float? y = PointInTriangleY(localPos.X, localPos.Z, v0, v1, v2);
+            if (y.HasValue && y.Value > bestY)
+            {
+                bestY = y.Value;
+                hit = true;
+            }
+        }
+
+        if (!hit) return null;
+
+        // Transform the hit point back to world space
+        Vector3 hitLocal = new Vector3(localPos.X, bestY, localPos.Z);
+        Vector3 hitWorld = Vector3.Transform(hitLocal, world);
+        return hitWorld.Y;
+    }
+
+    private static float? PointInTriangleY(float px, float pz, Vector3 a, Vector3 b, Vector3 c)
+    {
+        // Barycentric coordinate test on XZ plane
+        float ax = a.X, az = a.Z;
+        float bx = b.X, bz = b.Z;
+        float cx = c.X, cz = c.Z;
+
+        float d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz);
+        if (MathF.Abs(d) < 1e-8f) return null;
+
+        float u = ((bz - cz) * (px - cx) + (cx - bx) * (pz - cz)) / d;
+        float v = ((cz - az) * (px - cx) + (ax - cx) * (pz - cz)) / d;
+        float w = 1f - u - v;
+
+        if (u < -0.001f || v < -0.001f || w < -0.001f) return null;
+
+        return u * a.Y + v * b.Y + w * c.Y;
     }
 
     public void Dispose()

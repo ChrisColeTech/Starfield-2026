@@ -40,6 +40,8 @@ public class ModelLoaderGame : Game
     private bool _inMapMode;
     private bool _inMountainMode;
 
+    private const string LastModeSettingKey = "last_mode";
+
     private static string WindowConfigPath =>
         Path.Combine(AppContext.BaseDirectory, "window.json");
 
@@ -86,6 +88,7 @@ public class ModelLoaderGame : Game
 
     private void Game_Exiting(object? sender, ExitingEventArgs e)
     {
+        PersistCurrentMode();
         WindowStateHelper.Save(WindowConfigPath, Window);
     }
 
@@ -154,6 +157,24 @@ public class ModelLoaderGame : Game
             _maps.Add(new MapRecord(++mapId, name, category, subfolder, manifestPath));
         ModelLoaderLog.Info($"Loaded {_maps.Count} maps");
 
+        // Restore last selected map index (if any)
+        if (_maps.Count > 0)
+        {
+            _mapIndex = 0;
+            string? lastMapId = _database.GetSetting("last_map_id");
+            if (lastMapId != null && int.TryParse(lastMapId, out int savedMapId))
+            {
+                for (int i = 0; i < _maps.Count; i++)
+                {
+                    if (_maps[i].Id == savedMapId)
+                    {
+                        _mapIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
         // Init FreeRoam
         _freeRoam.Initialize(GraphicsDevice);
 
@@ -189,6 +210,8 @@ public class ModelLoaderGame : Game
             }
             LoadCurrentCharacter();
         }
+
+        RestoreLastMode();
     }
 
     protected override void LoadContent()
@@ -315,6 +338,8 @@ public class ModelLoaderGame : Game
             {
                 _inMapMode = true;
             }
+
+            PersistCurrentMode();
             ModelLoaderLog.Info($"Switched to {(_inMountainMode ? "Mountain" : _inMapMode ? "Map" : "Character")} mode");
             base.Update(gameTime);
             return;
@@ -409,6 +434,47 @@ public class ModelLoaderGame : Game
         var record = _characters[_characterIndex];
         string folder = Path.GetDirectoryName(record.ManifestPath) ?? "";
         _mountainScene.LoadCharacter(folder);
+    }
+
+    private void LoadCurrentMap()
+    {
+        if (_mapIndex < 0 || _mapIndex >= _maps.Count)
+            return;
+
+        var record = _maps[_mapIndex];
+        string folder = Path.GetDirectoryName(record.ManifestPath) ?? "";
+        _mapViewer.LoadMap(folder);
+    }
+
+    private void RestoreLastMode()
+    {
+        string? mode = _database.GetSetting(LastModeSettingKey);
+        if (string.IsNullOrWhiteSpace(mode))
+            return;
+
+        switch (mode.ToLowerInvariant())
+        {
+            case "map":
+                _inMapMode = true;
+                _inMountainMode = false;
+                LoadCurrentMap();
+                break;
+            case "mountain":
+                _inMapMode = false;
+                _inMountainMode = true;
+                LoadCurrentCharacterToMountain();
+                break;
+            default:
+                _inMapMode = false;
+                _inMountainMode = false;
+                break;
+        }
+    }
+
+    private void PersistCurrentMode()
+    {
+        string mode = _inMountainMode ? "mountain" : _inMapMode ? "map" : "character";
+        _database.SetSetting(LastModeSettingKey, mode);
     }
 
     private static string FindAssetsRoot()

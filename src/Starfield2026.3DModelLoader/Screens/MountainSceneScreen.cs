@@ -24,6 +24,12 @@ public class MountainSceneScreen
     private OverworldCharacter? _character;
     private PlayerController _player = new();
     private FollowCamera _camera = new();
+    private readonly List<(Vector3 pos, float size, Color color)> _stars = new();
+    private string? _activeModelName;
+    private Vector3 _activeModelPos;
+    private float _activeModelScale;
+    private float _climbRadius;
+    private float _climbMaxHeight;
 
     public AnimationLoadMode LoadMode { get; set; } = AnimationLoadMode.FillMissing;
     public HashSet<string> FillTags { get; set; } = new() { "Jump", "Land" };
@@ -50,7 +56,7 @@ public class MountainSceneScreen
         _cubeRenderer = new CubeRenderer();
         _cubeRenderer.Initialize(device);
 
-        _player.Initialize(new Vector3(0, 0f, 0));
+        _player.Initialize(new Vector3(0, 0f, -12f));
         _player.WorldHalfSize = 200f;
         _camera.Initialize(_player.Position);
 
@@ -60,9 +66,46 @@ public class MountainSceneScreen
             PreferPerPixelLighting = true,
             TextureEnabled = true,
         };
-        _effect.EnableDefaultLighting();
-        _effect.AmbientLightColor = new Vector3(0.4f, 0.4f, 0.45f);
+
+        // Tone lighting down so rock texture isn't washed out to white
+        _effect.AmbientLightColor = new Vector3(0.15f, 0.15f, 0.18f);
+
+        _effect.DirectionalLight0.Enabled = true;
         _effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-0.5f, -1f, 0.3f));
+        _effect.DirectionalLight0.DiffuseColor = new Vector3(0.7f, 0.65f, 0.6f);
+        _effect.DirectionalLight0.SpecularColor = new Vector3(0.1f, 0.1f, 0.1f);
+
+        _effect.DirectionalLight1.Enabled = true;
+        _effect.DirectionalLight1.Direction = Vector3.Normalize(new Vector3(0.5f, -0.3f, -0.5f));
+        _effect.DirectionalLight1.DiffuseColor = new Vector3(0.15f, 0.18f, 0.25f);
+        _effect.DirectionalLight1.SpecularColor = Vector3.Zero;
+
+        _effect.DirectionalLight2.Enabled = false;
+
+        BuildStarBackdrop();
+    }
+
+    private void BuildStarBackdrop()
+    {
+        _stars.Clear();
+        var rng = new Random(1337);
+
+        for (int i = 0; i < 220; i++)
+        {
+            float az = (float)rng.NextDouble() * MathHelper.TwoPi;
+            float el = MathHelper.Lerp(0.15f, 1.05f, (float)rng.NextDouble());
+            float dist = MathHelper.Lerp(140f, 260f, (float)rng.NextDouble());
+
+            var pos = new Vector3(
+                MathF.Cos(az) * MathF.Cos(el) * dist,
+                MathF.Sin(el) * dist,
+                MathF.Sin(az) * MathF.Cos(el) * dist);
+
+            float size = MathHelper.Lerp(0.04f, 0.12f, (float)rng.NextDouble());
+            byte tint = (byte)rng.Next(220, 255);
+            var color = new Color(tint, tint, 255);
+            _stars.Add((pos, size, color));
+        }
     }
 
     public void LoadScene(string folderPath)
@@ -101,94 +144,57 @@ public class MountainSceneScreen
 
         ModelLoaderLog.Info($"[MountainScene] Loaded {loadedModels.Count} models");
 
-        var rng = new Random(42);
-        float mapRadius = 60f;
-
-        // Main mountain at center (scale to ~10 units tall)
-        if (loadedModels.TryGetValue("Mountain", out var mountain))
+        // One-thing-at-a-time debug mode: place exactly one model.
+        // Priority order keeps testing deterministic.
+        string[] priority =
         {
-            float scale = 10f / Math.Max(0.1f, mountain.BoundsMax.Y - mountain.BoundsMin.Y);
-            _instances.Add((mountain, new Vector3(0, 0, 0), scale, 0f));
-        }
+            "Mountain", "Rock1", "Rock2", "Tree", "Bush",
+            "Grass", "Flower", "Flowers", "Pebbles", "Bridge"
+        };
 
-        // Rocks scattered (scale to ~1 unit)
-        if (loadedModels.TryGetValue("Rock1", out var rock1) && loadedModels.TryGetValue("Rock2", out var rock2))
+        FbxModel? selected = null;
+        string? selectedName = null;
+        foreach (string key in priority)
         {
-            float rockScale = 1f / Math.Max(0.1f, Math.Max(rock1.Radius, rock2.Radius));
-            for (int i = 0; i < 15; i++)
+            if (loadedModels.TryGetValue(key, out var model))
             {
-                float angle = (float)rng.NextDouble() * MathHelper.TwoPi;
-                float dist = 5f + (float)rng.NextDouble() * mapRadius * 0.6f;
-                var pos = new Vector3(MathF.Sin(angle) * dist, 0, MathF.Cos(angle) * dist);
-                var rock = rng.Next(2) == 0 ? rock1 : rock2;
-                _instances.Add((rock, pos, rockScale * (0.8f + (float)rng.NextDouble() * 0.4f), (float)rng.NextDouble() * MathHelper.TwoPi));
+                selected = model;
+                selectedName = key;
+                break;
             }
         }
 
-        // Trees (scale to ~3 units tall)
-        if (loadedModels.TryGetValue("Tree", out var tree))
+        if (selected != null && selectedName != null)
         {
-            float treeScale = 3f / Math.Max(0.1f, tree.BoundsMax.Y - tree.BoundsMin.Y);
-            for (int i = 0; i < 20; i++)
-            {
-                float angle = (float)rng.NextDouble() * MathHelper.TwoPi;
-                float dist = 8f + (float)rng.NextDouble() * mapRadius * 0.7f;
-                var pos = new Vector3(MathF.Sin(angle) * dist, 0, MathF.Cos(angle) * dist);
-                _instances.Add((tree, pos, treeScale * (0.8f + (float)rng.NextDouble() * 0.4f), (float)rng.NextDouble() * MathHelper.TwoPi));
-            }
-        }
+            float modelHeight = Math.Max(0.1f, selected.BoundsMax.Y - selected.BoundsMin.Y);
+            float targetHeight = selectedName == "Mountain" ? 10f : 2.5f;
+            float scale = targetHeight / modelHeight;
+            var modelPos = new Vector3(0f, 0f, 20f);
+            _instances.Add((selected, modelPos, scale, 0f));
 
-        // Bushes (scale to ~0.8 units)
-        if (loadedModels.TryGetValue("Bush", out var bush))
+            _activeModelName = selectedName;
+            _activeModelPos = modelPos;
+            _activeModelScale = scale;
+
+            if (selectedName == "Mountain")
+            {
+                _climbRadius = Math.Max(4f, selected.Radius * scale * 0.95f);
+                _climbMaxHeight = Math.Max(2f, (selected.BoundsMax.Y - selected.BoundsMin.Y) * scale * 0.85f);
+            }
+            else
+            {
+                _climbRadius = 0f;
+                _climbMaxHeight = 0f;
+            }
+
+            ModelLoaderLog.Info(
+                $"[MountainScene] One-model mode: {selectedName}, scale={scale:F3}, boundsMin={selected.BoundsMin}, boundsMax={selected.BoundsMax}, radius={selected.Radius:F3}");
+            StatusText = $"One-model mode: {selectedName} (scale {scale:F2})";
+        }
+        else
         {
-            float bushScale = 0.8f / Math.Max(0.1f, bush.Radius);
-            for (int i = 0; i < 15; i++)
-            {
-                float angle = (float)rng.NextDouble() * MathHelper.TwoPi;
-                float dist = 4f + (float)rng.NextDouble() * mapRadius * 0.5f;
-                var pos = new Vector3(MathF.Sin(angle) * dist, 0, MathF.Cos(angle) * dist);
-                _instances.Add((bush, pos, 0.4f + (float)rng.NextDouble() * 0.2f, (float)rng.NextDouble() * MathHelper.TwoPi));
-            }
+            StatusText = "No FBX models found in Mountain/Models";
         }
-
-        // Grass patches
-        if (loadedModels.TryGetValue("Grass", out var grass))
-        {
-            for (int i = 0; i < 25; i++)
-            {
-                float angle = (float)rng.NextDouble() * MathHelper.TwoPi;
-                float dist = 3f + (float)rng.NextDouble() * mapRadius * 0.6f;
-                var pos = new Vector3(MathF.Sin(angle) * dist, 0, MathF.Cos(angle) * dist);
-                _instances.Add((grass, pos, 0.3f + (float)rng.NextDouble() * 0.15f, (float)rng.NextDouble() * MathHelper.TwoPi));
-            }
-        }
-
-        // Flowers
-        if (loadedModels.TryGetValue("Flower", out var flower))
-        {
-            for (int i = 0; i < 12; i++)
-            {
-                float angle = (float)rng.NextDouble() * MathHelper.TwoPi;
-                float dist = 5f + (float)rng.NextDouble() * mapRadius * 0.4f;
-                var pos = new Vector3(MathF.Sin(angle) * dist, 0, MathF.Cos(angle) * dist);
-                _instances.Add((flower, pos, 0.25f + (float)rng.NextDouble() * 0.1f, (float)rng.NextDouble() * MathHelper.TwoPi));
-            }
-        }
-
-        // Pebbles
-        if (loadedModels.TryGetValue("Pebbles", out var pebbles))
-        {
-            for (int i = 0; i < 10; i++)
-            {
-                float angle = (float)rng.NextDouble() * MathHelper.TwoPi;
-                float dist = 2f + (float)rng.NextDouble() * mapRadius * 0.5f;
-                var pos = new Vector3(MathF.Sin(angle) * dist, 0, MathF.Cos(angle) * dist);
-                _instances.Add((pebbles, pos, 0.2f + (float)rng.NextDouble() * 0.1f, (float)rng.NextDouble() * MathHelper.TwoPi));
-            }
-        }
-
-        ModelLoaderLog.Info($"[MountainScene] Placed {_instances.Count} instances");
-        StatusText = $"Loaded Mountain scene ({_instances.Count} objects)";
     }
 
     public void LoadCharacter(string folderPath)
@@ -240,7 +246,9 @@ public class MountainSceneScreen
         else if (_player.IsMovingBackward)
             _player.SetFacingCamera(_camera.SmoothedYaw);
 
-        _player.SetTerrainHeight(0f);
+        _player.SetTerrainHeight(SampleTerrainHeight(_player.Position));
+
+        ResolveModelCollisions();
 
         _character?.Update(dt, _player.IsMoving, _player.IsRunning, _player.IsGrounded, input,
             _player.Position, _player.Yaw);
@@ -270,12 +278,82 @@ public class MountainSceneScreen
             input.CameraYaw, input.CameraPitch, input.CameraZoom);
     }
 
+    private void ResolveModelCollisions()
+    {
+        if (_instances.Count == 0)
+            return;
+
+        var playerPos = _player.Position;
+        bool corrected = false;
+        const float playerRadius = 0.6f;
+
+        foreach (var (model, position, scale, _) in _instances)
+        {
+            if (!model.IsLoaded)
+                continue;
+
+            // Allow climbing the active mountain model instead of hard-blocking it.
+            if (_activeModelName == "Mountain" && position == _activeModelPos)
+                continue;
+
+            float colliderRadius = Math.Max(0.75f, model.Radius * scale * 0.6f);
+
+            float dx = playerPos.X - position.X;
+            float dz = playerPos.Z - position.Z;
+            float distSq = dx * dx + dz * dz;
+            float minDist = playerRadius + colliderRadius;
+            float minDistSq = minDist * minDist;
+
+            if (distSq < minDistSq && distSq > 0.0001f)
+            {
+                float dist = MathF.Sqrt(distSq);
+                float nx = dx / dist;
+                float nz = dz / dist;
+
+                playerPos = new Vector3(
+                    position.X + nx * minDist,
+                    playerPos.Y,
+                    position.Z + nz * minDist);
+                corrected = true;
+            }
+        }
+
+        if (corrected)
+            _player.SetPosition(playerPos, _player.Yaw);
+    }
+
+    private float SampleTerrainHeight(Vector3 worldPos)
+    {
+        float y = 0f;
+
+        // Raycast against actual mesh geometry for the mountain
+        foreach (var (model, position, scale, rotation) in _instances)
+        {
+            if (!model.IsLoaded) continue;
+
+            var world = Matrix.CreateScale(scale)
+                * Matrix.CreateRotationY(rotation)
+                * Matrix.CreateTranslation(position);
+
+            float? meshY = model.SampleHeight(worldPos, world);
+            if (meshY.HasValue && meshY.Value > y)
+                y = meshY.Value;
+        }
+
+        return y;
+    }
+
     public void Draw(GraphicsDevice device)
     {
-        device.Clear(new Color(70, 90, 70));
+        device.Clear(new Color(8, 12, 28));
         device.DepthStencilState = DepthStencilState.Default;
-        device.BlendState = BlendState.AlphaBlend;
+        device.BlendState = BlendState.Opaque;
         device.SamplerStates[0] = SamplerState.LinearWrap;
+
+        // Draw stars with alpha blending first
+        device.BlendState = BlendState.AlphaBlend;
+        DrawStars(device);
+        device.BlendState = BlendState.Opaque;
 
         _grid.Draw(device, _camera.View, _camera.Projection);
 
@@ -303,6 +381,9 @@ public class MountainSceneScreen
     {
         if (_effect == null) return;
 
+        var prevRaster = device.RasterizerState;
+        device.RasterizerState = RasterizerState.CullNone;
+
         _effect.View = _camera.View;
         _effect.Projection = _camera.Projection;
 
@@ -321,6 +402,23 @@ public class MountainSceneScreen
                 * Matrix.CreateTranslation(position);
 
             model.Draw(device, _effect, world);
+        }
+
+        device.RasterizerState = prevRaster;
+    }
+
+    private void DrawStars(GraphicsDevice device)
+    {
+        foreach (var (pos, size, color) in _stars)
+        {
+            _cubeRenderer.Draw(
+                device,
+                _camera.View,
+                _camera.Projection,
+                pos,
+                0f,
+                new Vector3(size, size, size),
+                color);
         }
     }
 
