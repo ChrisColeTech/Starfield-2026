@@ -197,9 +197,16 @@ public class ModelLoaderGame : Game
 
         if (File.Exists(registryPath) && mapFile != null)
         {
-            ModelLoaderLog.Info($"[Map3D] Loading registry: {registryPath}");
-            ModelLoaderLog.Info($"[Map3D] Loading map: {mapFile}");
-            _mapScene.LoadMap(registryPath, mapFile, fbxModelsFolder);
+            try
+            {
+                ModelLoaderLog.Info($"[Map3D] Loading registry: {registryPath}");
+                ModelLoaderLog.Info($"[Map3D] Loading map: {mapFile}");
+                _mapScene.LoadMap(registryPath, mapFile, fbxModelsFolder);
+            }
+            catch (Exception ex)
+            {
+                ModelLoaderLog.Info($"[Map3D] Failed to load map: {ex.Message}");
+            }
         }
         else
         {

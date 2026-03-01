@@ -25,11 +25,19 @@ public class MapData3D
     public int[] BaseTiles { get; init; } = Array.Empty<int>();
     public int?[] OverlayTiles { get; init; } = Array.Empty<int?>();
 
-    public int GetBaseTile(int x, int y) =>
-        (x >= 0 && x < Width && y >= 0 && y < Height) ? BaseTiles[y * Width + x] : 0;
+    public int GetBaseTile(int x, int y)
+    {
+        if (x < 0 || x >= Width || y < 0 || y >= Height) return 0;
+        int idx = y * Width + x;
+        return idx >= 0 && idx < BaseTiles.Length ? BaseTiles[idx] : 0;
+    }
 
-    public int? GetOverlayTile(int x, int y) =>
-        (x >= 0 && x < Width && y >= 0 && y < Height) ? OverlayTiles[y * Width + x] : null;
+    public int? GetOverlayTile(int x, int y)
+    {
+        if (x < 0 || x >= Width || y < 0 || y >= Height) return null;
+        int idx = y * Width + x;
+        return idx >= 0 && idx < OverlayTiles.Length ? OverlayTiles[idx] : null;
+    }
 }
 
 /// <summary>
