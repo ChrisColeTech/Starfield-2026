@@ -3,203 +3,153 @@
 ## 1) What We Accomplished
 
 ### Shader Experiment (Reverted)
-- Implemented full custom HLSL shader pipeline (`PokemonEffect.fx`) for vertex color blending on Pokemon models.
-- Modified 7 files: `SkinnedVertex`, `MeshData`, `MeshLoader`, `MeshBuilder`, `CpuSkinner`, `SkinnedModel`, `PokemonSlot`.
-- Discovered vertex color alpha blending applied universally turns all Pokemon white (baked exports have `alpha=1` everywhere).
-- **Reverted entirely** back to `BasicEffect` — all custom shader code removed, pipeline restored to original state.
-- Shader `.fx`/`.mgfx` files left in `Content/` for future reference.
+- Built full custom HLSL shader pipeline (`PokemonEffect.fx`) for vertex color blending.
+- Modified 7 files across the skinned model pipeline.
+- Discovered vertex color alpha blending turns all baked Pokemon white (`alpha=1` everywhere).
+- **Reverted entirely** back to `BasicEffect`. Shader files left in `Content/` for reference.
 
 ### Mountain Scene Fixes
-- **Fixed white mountain**: Replaced `EnableDefaultLighting()` (blows out light rock textures) with manual lighting — ambient 0.15, warm key 0.7, subtle blue fill.
-- **Fixed black return beam**: `VertexPositionColor` has no normals, so `BasicEffect` lighting produced black. Added `LightingEnabled = false` during beam draw.
-- **Fixed character floating**: Replaced fake radial cone height approximation with **actual mesh raycasting** (`FbxModel.SampleHeight()`). Uses barycentric ray-triangle intersection against FBX geometry.
-- **Fixed camera clipping**: Added elevation-aware camera with asymmetric smoothing (rises in 0.3s, falls over 1.5s) plus terrain-surface push to prevent camera from going through the mountain.
+- **Fixed white mountain**: `EnableDefaultLighting()` blows out light rock textures. Replaced with manual lighting (ambient 0.15, warm key 0.7, blue fill).
+- **Fixed black return beam**: `VertexPositionColor` has no normals → `BasicEffect` lighting = black. Set `LightingEnabled = false` during beam draw.
+- **Fixed character floating**: Replaced fake radial cone with `FbxModel.SampleHeight()` — barycentric ray-triangle intersection against actual FBX mesh geometry.
+- **Fixed camera clipping**: Elevation-aware camera with asymmetric smoothing (rises 0.3s, falls 1.5s) plus terrain-surface push via `TerrainHeightSampler` callback.
 
 ### Model Management
-- Rescaled Arceus baked `model.dae` (÷100 via `rescale_sunmoon.py`) to match non-baked scale.
+- Rescaled Arceus baked `model.dae` (÷100 via `rescale_sunmoon.py`).
 
 ## 2) What Work Remains
 
-### Map Editor ↔ 3D Scene Integration (Primary)
-The map editor and 3D scene are currently disconnected. The integration plan:
+### Map Editor ↔ 3D Scene Integration
 
-1. **Create `mountain.json` editor registry** — new tile palette mapping tile IDs to FBX model names (Rock=Rock01.fbx, Tree=Tree01.fbx, etc.).
-2. **Add `ModelId` field to `TileDefinition`** — connects tile IDs to FBX stems.
-3. **Update code gen** — `codeGenService.ts` must include `ModelId` in exported `TileRegistry.cs`.
-4. **Create `MapScene3DScreen`** — reads compiled `MapDefinition` grid, places FBX instances at cells, handles collision via mesh raycasting.
-5. **Wire into `ModelLoaderGame`** — add mode cycling for the new screen.
-
-### Pipeline Flow (Corrected)
+**Pipeline (corrected)**:
 ```
-Editor JSON registry (mountain.json)
-  → Paint map in editor grid
-  → Export C# → .g.cs MapDefinition class
-  → Export Registry C# → TileRegistry.cs with ModelId fields
-  → Compile into game
-  → MapCatalog.LoadAllMaps() auto-registers map
-  → MapScene3DScreen reads tile grid → resolves FBX models → places instances
+C# TileRegistry.cs                      ← SOURCE OF TRUTH
+  ↓
+File > Load Registry (C#)                ← editor imports .cs from disk
+  ↓
+parseCSharpRegistry()                    ← regex parses C# into tile palette
+  ↓
+Editor palette populated                 ← user paints map
+  ↓
+File > Export Map (C#)                   ← generates .g.cs MapDefinition
+  ↓
+Copy to Core/Maps/Generated/ → compile  ← MapCatalog auto-registers
+  ↓
+MapScene3DScreen                         ← reads tiles, resolves ModelId → FbxModel
 ```
 
-### Custom Shader (Deferred)
-- Vertex color blending for type-specific Pokemon coloring (Arceus Ice form, etc.) requires per-model analysis — which models have meaningful vertex colors vs baked white.
-- Custom shader infrastructure is understood but needs selective application, not universal.
+**Required changes**:
+1. Add `ModelId` field to `TileDefinition.cs` — e.g. `ModelId: "Rock01"` maps to `Rock01.fbx`.
+2. Add `ModelId` to relevant tiles in `TileRegistry.cs` (decoration, structure tiles).
+3. Update editor's `parseCSharpRegistry()` regex to capture `ModelId: "..."`.
+4. Update editor's `formatTileDefinition()` and `exportRegistryCSharp()` to round-trip `ModelId`.
+5. Create `MapScene3DScreen.cs` — reads `MapDefinition`, resolves `ModelId` → `FbxModel`, places instances.
+6. Wire into `ModelLoaderGame.cs` mode cycle.
 
 ### Screen Consolidation
-- `TerritoriesScreen`, `MountainSceneScreen`, and future `MapScene3DScreen` overlap. Territories should eventually be deprecated once map-driven 3D placement works.
+- `TerritoriesScreen`, `MountainSceneScreen`, and `MapScene3DScreen` overlap. Deprecate earlier screens once map-driven placement works.
+
+### Custom Shader (Deferred)
+- Needs per-model vertex color analysis before selective application.
 
 ## 3) Optimizations — Prime Suspects
 
-1. **FBX model instancing**: `FbxModel` stores one copy of vertex/index data. For maps with 50+ trees, we draw the same mesh 50 times with different world matrices. Batch these into instanced draw calls.
-
-2. **Mesh raycasting performance**: `SampleHeight()` iterates ALL triangles linearly for every position query every frame. Build a spatial index (BVH or grid) for O(1) lookups. Current mountain has ~5K triangles — fine now, but won't scale to full scenes.
-
-3. **Texture deduplication**: `FbxModel` loads textures per-model. When a map has 30 Rock instances, they all reference the same `Rock01_ALB.png` — should share one `Texture2D` via a cache.
-
-4. **Camera terrain query caching**: `TerrainHeightSampler` is called for the camera position every frame, doing full mesh raycasting. Cache the last result and only recompute when camera moves >0.1 units.
+1. **FBX model instancing** — maps with 50+ trees draw the same mesh 50 times. Batch into instanced draw calls.
+2. **Mesh raycasting spatial index** — `SampleHeight()` linearly scans ALL triangles. Build BVH or grid for O(1) lookups.
+3. **Texture deduplication** — 30 Rock instances all load `Rock01_ALB.png` separately. Share via `Dictionary<string, Texture2D>` cache.
+4. **Shared FbxModel cache** — `Dictionary<string, FbxModel>` keyed by FBX path. Load once, reuse for all instances.
 
 ## 4) Step-by-Step to Get App Fully Working
 
-1. **Build and verify**:
+1. Build:
    ```bash
-   dotnet restore
    dotnet build src/Starfield2026.3DModelLoader/Starfield2026.3DModelLoader.csproj
    ```
-
-2. **Confirm asset paths exist**:
-   - `src/Starfield2026.Assets/Models/Maps/Mountain/Models/*.fbx`
-   - `src/Starfield2026.Assets/Models/Maps/Mountain/Textures/*.png`
-   - `src/Starfield2026.Assets/Models/Characters/` (trainer models)
-   - `src/Starfield2026.Assets/Models/Pokemon/` (pokemon models)
-
-3. **Run app**:
-   ```bash
-   dotnet run --project src/Starfield2026.3DModelLoader
-   ```
-
-4. **Verify all three modes** (F1 to cycle):
-   - **Character mode**: Trainer renders with animations, beam works (red, not black).
-   - **Map mode**: 2D tile grid with terrain textures.
-   - **Mountain mode**: FBX mountain renders with rock texture (not white), character walks on mesh surface (not floating), camera stays above terrain on descent.
-
-5. **Map editor** (separate process):
-   ```bash
-   cd src/Starfield2026.MapEditor/frontend
-   npm run dev
-   ```
-
-6. **Close app before rebuilding** — `dotnet build` will fail with EXE lock if the app is running.
+2. Confirm assets at `src/Starfield2026.Assets/Models/Maps/Mountain/Models/*.fbx`.
+3. Run: `dotnet run --project src/Starfield2026.3DModelLoader`
+4. Verify all modes (F1 to cycle): Character, Map, Mountain.
+5. Mountain mode: rock texture visible (not white), character on mesh (not floating), camera above terrain on descent.
+6. **Close app before rebuilding** — EXE lock will fail the build.
 
 ## 5) How to Start/Test
 
-### 3D Model Loader (main game)
+### 3D Model Loader
 ```bash
 dotnet run --project src/Starfield2026.3DModelLoader
 ```
-- F1 = cycle modes (Character → Map → Mountain)
-- Tab = cycle characters
-- WASD = move, Shift = run
-- Alt = deploy/recall Pokemon
+F1 = cycle modes, WASD = move, Shift = run, Alt = deploy Pokemon.
 
 ### Map Editor
 ```bash
-cd src/Starfield2026.MapEditor/frontend
-npm run dev
+cd src/Starfield2026.MapEditor/frontend && npm run dev
 ```
-- Opens at `http://localhost:5173`
-- Paint tiles on grid, export as C# `.g.cs`
-- Can also export `TileRegistry.cs` from registry
-
-### MiniToolbox MCP Server
-- See `src/Starfield2026.MiniToolboxMCP/README.md`
-- Provides screenshot tool, GARC/TRPAK extraction, model listing
+- File > Load Registry (C#) → select `TileRegistry.cs` → palette populates
+- Paint map → File > Export Map (C#) → save `.g.cs`
+- File > Export Registry (C#) → regenerate `TileRegistry.cs` from editor state
 
 ## 6) Issues + Strategies
 
-### Known Issues
-- **Two disconnected registries**: Map editor uses `default.json` (IDs 0-72), C# `TileRegistry.cs` uses IDs 0-119. Different ID schemes for same concepts.
-- **Vertex colors cause whitening**: Custom shader applied vertex color alpha blending universally — baked exports have `alpha=1` everywhere, turning all textures white.
-- **Camera clipping on descent**: Asymmetric smoothing helps but isn't perfect on steep slopes.
-- **FBX model scale inconsistency**: Different asset packs use different unit scales.
+### Issues
+- Two registries existed (editor's `default.json` vs C# `TileRegistry.cs`) with different ID schemes — now understood: C# is source of truth, editor imports it.
+- Vertex colors cause universal whitening on baked Pokemon.
+- Camera clips on steep descent slopes.
+- FBX model scale inconsistency across asset packs.
 
 ### Strategies
 
-1. **Editor as single source of truth for registries**
-   - Stop maintaining `TileRegistry.cs` by hand. Use the editor's `exportRegistryCSharp()` to generate it from the JSON registry. One registry, one export.
+1. **C# TileRegistry.cs as single source of truth** — editor imports it, never maintain tiles separately.
+2. **Per-model vertex color analysis** — Python script scanning `.dae` files for non-trivial alpha. Only apply shader to those models.
+3. **Asset profile metadata** — per-pack JSON (`unitScale`, `upAxis`, `textureRoot`) normalized at load time.
+4. **Ray-march camera** — march from lookAt to camera position, pull camera forward at first terrain hit. Handles steep faces and overhangs.
 
-2. **Per-model vertex color analysis script**
-   - Write a Python script that scans all `.dae` files, reports which have non-trivial vertex colors (alpha != 0). Only apply the custom shader to those specific models.
-
-3. **Asset profile metadata**
-   - Create a JSON profile per asset pack (`Mountain.profile.json`) with `unitScale`, `upAxis`, `textureRoot`. `FbxModel.Load()` reads the profile to normalize scale automatically. No more manual guessing.
-
-4. **Terrain-aware camera with ray march**
-   - Instead of just pushing camera Y above terrain, ray-march from lookAt point to camera position. If any point along the ray hits terrain, pull camera forward to the clear position. This handles steep faces and overhangs.
-
-## 7) Architecture Overview
+## 7) Architecture
 
 ### Map System (`Starfield2026.Core.Maps`)
-
 ```
-TileDefinition          TileCategory (enum)
-  ├ Id, Name, Color       Terrain, Decoration, Interactive,
-  ├ Walkable, Height      Entity, Trainer, Encounter,
-  ├ Category              Structure, Item, Transition, Spawn
-  ├ OverlayBehavior
-  ├ EntityId, SpriteName
-  └ ModelId (NEW)       
+TileDefinition (record)        TileCategory (enum)
+  Id, Name, Color, Walkable      Terrain, Decoration, Interactive,
+  Category, Height               Entity, Trainer, Encounter,
+  OverlayBehavior, EntityId      Structure, Item, Transition, Spawn
+  SpriteName, AnimationFrames
+  ModelId (NEW) ←── "Rock01", "Tree01", etc.
 
-TileRegistry (static)   MapDefinition (abstract)
-  └ Dictionary<int, Tile>   ├ base tile grid (int[])
-                            ├ overlay tile grid (int?[])
-MapCatalog (static)         ├ walkable set
-  └ Dictionary<id, Map>     ├ warps, connections
-  └ LoadAllMaps()           └ encounter tables
-    (reflection)
-                          WorldDefinition → WorldRegistry
+TileRegistry (static)          MapDefinition (abstract)
+  Dictionary<int, Tile>          base tile grid int[]
+  ↓                              overlay tile grid int?[]
+  SOURCE OF TRUTH                warps, connections, encounters
+
+MapCatalog (static)            WorldDefinition → WorldRegistry
+  LoadAllMaps() via reflection
 ```
 
 ### Map Editor (`Starfield2026.MapEditor`)
-
 ```
-frontend/src/
-  data/registries/default.json   ← tile palette (JSON)
-  types/editor.ts                ← EditorTileDefinition, EditorTileRegistry
-  store/editorStore.ts           ← zustand: paint, resize, import/export
-  services/
-    codeGenService.ts            ← generateMapClass() → .g.cs
-                                   exportRegistryCSharp() → TileRegistry.cs
-    registryService.ts           ← loadDefaultRegistry(), parseCSharpMap()
+MenuBar.tsx
+  File > Load Registry (C#)    → parseCSharpRegistry() → setRegistry()
+  File > Export Map (C#)        → generateMapClass() → .g.cs
+  File > Export Registry (C#)   → exportRegistryCSharp() → TileRegistry.cs
+
+registryService.ts
+  parseCSharpRegistry()         ← regex parses C# source code
+  parseCSharpMap()              ← regex parses .g.cs MapDefinition
+
+codeGenService.ts
+  generateMapClass()            ← template-based C# code gen
+  exportRegistryCSharp()        ← generates full TileRegistry.cs
+  formatTileDefinition()        ← single tile → C# constructor call
 ```
 
 ### 3D Scene (`Starfield2026.3DModelLoader`)
-
 ```
-Screens/
-  MountainSceneScreen.cs   ← current: hardcoded FBX placement
-  MapScene3DScreen.cs      ← planned: map-driven FBX placement
-
-Loaders/
-  FbxLoader.cs    ← FbxModel: Assimp load, SampleHeight() raycasting
-
-Rendering/
-  FollowCamera.cs ← elevation-aware, terrain-push, asymmetric smoothing
+Loaders/FbxLoader.cs          ← FbxModel: Assimp load, SampleHeight()
+Rendering/FollowCamera.cs     ← elevation-aware, TerrainHeightSampler
+Screens/MountainSceneScreen.cs ← current: hardcoded placement
+Screens/MapScene3DScreen.cs    ← planned: map-driven via ModelId
 ```
 
-## 8) New Features & Quick Wins
+## 8) Quick Wins
 
-### New Features Implemented This Session
-- `FbxModel.SampleHeight()` — vertical ray-triangle intersection against FBX mesh geometry.
-- Elevation-aware `FollowCamera` — asymmetric rise/fall smoothing + terrain surface push via `TerrainHeightSampler` callback.
-- Beam lighting fix — `LightingEnabled = false` for `VertexPositionColor` geometry.
-- Manual scene lighting — replaced `EnableDefaultLighting()` with tuned 2-light setup.
-
-### Quick Wins (High Impact, Low Effort)
-1. **Add `ModelId` to `TileDefinition`** — one field addition, unlocks the entire 3D map pipeline.
-2. **Create `mountain.json`** — copy `default.json`, change tiles to match available FBX assets. ~30 minutes.
-3. **Registry dropdown in editor** — let users switch registries. The store's `setRegistry()` already supports this.
-4. **Shared `FbxModel` cache** — `Dictionary<string, FbxModel>` keyed by FBX path. Load once, reuse for all instances. Prevents loading Rock01.fbx 30 times.
-
-### Architecture Decisions
-- The editor's C# code gen is the bridge between the JSON tile palette and the compiled game. No JSON parsing at runtime needed.
-- `MapDefinition` base/overlay grid pattern works for both 2D and 3D — base tiles define ground, overlays define objects on top.
-- Mesh raycasting is the correct approach for terrain collision (vs heightmaps) since our terrain IS meshes (FBX models), not generated heightmap data.
+1. **Add `ModelId` to `TileDefinition`** — one field, unlocks entire 3D pipeline.
+2. **Shared `FbxModel` cache** — `Dictionary<string, FbxModel>`, prevents loading same FBX 30 times.
+3. **`parseCSharpRegistry()` ModelId support** — one regex update, editor immediately shows model tiles.
+4. **Registry round-trip test** — Load `TileRegistry.cs` in editor → Export Registry (C#) → diff. Validates lossless parsing.
