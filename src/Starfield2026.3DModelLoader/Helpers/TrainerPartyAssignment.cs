@@ -62,7 +62,7 @@ public static class TrainerPartyAssignment
     {
         string normalized = trainerFolderPath.Replace('\\', '/').TrimEnd('/');
         
-        string[] generations = { "PZLA", "scarlet", "sun-moon" };
+        string[] generations = { "PZLA", "scarlet", "sun-moon-v2", "sun-moon" };
         foreach (var gen in generations)
         {
             int idx = normalized.IndexOf($"/{gen}/", StringComparison.OrdinalIgnoreCase);

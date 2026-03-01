@@ -41,16 +41,22 @@ class AUTORIG_OT_reset_view(bpy.types.Operator):
 
 
 class AUTORIG_OT_load_model(bpy.types.Operator, ImportHelper):
-    """Import a DAE model file (mesh + armature)"""
+    """Import a model file (FBX, DAE, or OBJ) with mesh + armature"""
     bl_idname = "autorig.load_model"
     bl_label = "Load Model"
     bl_options = {'REGISTER', 'UNDO'}
 
-    filename_ext = ".dae"
-    filter_glob: StringProperty(default="*.dae", options={'HIDDEN'})
+    filename_ext = ".fbx"
+    filter_glob: StringProperty(default="*.fbx;*.dae;*.obj", options={'HIDDEN'})
 
     def execute(self, context):
-        bpy.ops.wm.collada_import(filepath=self.filepath)
+        ext = os.path.splitext(self.filepath)[1].lower()
+        if ext == ".fbx":
+            bpy.ops.import_scene.fbx(filepath=self.filepath)
+        elif ext == ".obj":
+            bpy.ops.wm.obj_import(filepath=self.filepath)
+        else:
+            bpy.ops.wm.collada_import(filepath=self.filepath)
         name = os.path.splitext(os.path.basename(self.filepath))[0]
         armatures = [o for o in context.scene.objects if o.type == 'ARMATURE']
         meshes = [o for o in context.scene.objects if o.type == 'MESH']
@@ -129,6 +135,7 @@ class AUTORIG_OT_load_animation(bpy.types.Operator, ImportHelper):
             if old_action.users == 0:
                 bpy.data.actions.remove(old_action)
 
+        # Direct transfer — same skeleton, action applies as-is
         model_arm.animation_data.action = action
 
         frame_start = int(action.frame_range[0])
@@ -137,6 +144,7 @@ class AUTORIG_OT_load_animation(bpy.types.Operator, ImportHelper):
         context.scene.frame_end = frame_end
         context.scene.frame_set(frame_start)
 
+        # Clean up imported objects (keep the action on the model)
         clip_arm.animation_data.action = None
         for obj in new_objects:
             bpy.data.objects.remove(obj, do_unlink=True)
@@ -214,6 +222,7 @@ class AUTORIG_OT_generate(bpy.types.Operator):
 # -------------------------------------------------------------------
 # Helpers
 # -------------------------------------------------------------------
+
 
 def _rotate_bone(bone, pivot, rotation):
     """Rotate a single bone (head + tail) around a pivot point."""

@@ -1,4 +1,5 @@
 #nullable enable
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Starfield2026.ModelLoader.DTOs;
@@ -7,8 +8,16 @@ namespace Starfield2026.ModelLoader.Helpers;
 
 public static class SharedAnimationResolver
 {
-    public static string DetectFamily(Skeleton skeleton)
+    public static string DetectFamily(Skeleton skeleton, string? characterPath = null)
     {
+        // Check folder path first for v2 variants
+        if (!string.IsNullOrEmpty(characterPath))
+        {
+            string normalized = characterPath.Replace('\\', '/');
+            if (normalized.Contains("/sun-moon-v2/", StringComparison.OrdinalIgnoreCase))
+                return "sun-moon-v2";
+        }
+
         if (skeleton.TryGetBoneIndex("Waist", out _) && skeleton.TryGetBoneIndex("LThigh", out _))
             return "sun-moon";
         if (skeleton.TryGetBoneIndex("waist", out _) && skeleton.TryGetBoneIndex("left_leg_01", out _))
@@ -27,7 +36,7 @@ public static class SharedAnimationResolver
     {
         var bodyType = TrainerGender.Classify(characterFolderPath);
         string bodyName = TrainerGender.GetSharedFolderName(bodyType);
-        string family = DetectFamily(skeleton);
+        string family = DetectFamily(skeleton, characterFolderPath);
 
         string key = $"{family}/{bodyName}";
         if (folders.TryGetValue(key, out var folder))

@@ -18,29 +18,40 @@ public sealed class PokemonSlot : IDisposable
     private BasicEffect? _effect;
     private float _fitScale = 1f;
 
-    private static Dictionary<string, float>? _heightCache;
-    private const float DefaultHeight = 1.0f;
+    private static Dictionary<string, float>? _genScales;
+    private const float DefaultGenScale = 0.013f;
+
+    private static readonly string[] KnownGenerations = { "sun-moon-v2", "sun-moon", "scarlet", "plza" };
 
     public bool IsLoaded { get; private set; }
     public string FolderPath { get; private set; } = "";
     public string DisplayName { get; private set; } = "";
 
-    public static void LoadHeightConfig(string jsonPath)
+    public static void LoadGenScales(string jsonPath)
     {
-        if (!File.Exists(jsonPath)) return;
+        if (!File.Exists(jsonPath))
+        {
+            ModelLoaderLog.Info($"[Pokemon] Gen scales file not found: {jsonPath}");
+            return;
+        }
         try
         {
             string json = File.ReadAllText(jsonPath);
-            _heightCache = JsonSerializer.Deserialize<Dictionary<string, float>>(json);
+            _genScales = JsonSerializer.Deserialize<Dictionary<string, float>>(json);
+            ModelLoaderLog.Info($"[Pokemon] Loaded gen scales: {_genScales?.Count ?? 0} entries");
         }
-        catch { _heightCache = null; }
+        catch (Exception ex)
+        {
+            ModelLoaderLog.Info($"[Pokemon] Failed to load gen scales: {ex.Message}");
+            _genScales = null;
+        }
     }
 
     public void Load(GraphicsDevice device, string folderPath)
     {
         Dispose();
         FolderPath = folderPath;
-        DisplayName = System.IO.Path.GetFileName(folderPath.TrimEnd('/', '\\'));
+        DisplayName = Path.GetFileName(folderPath.TrimEnd('/', '\\'));
 
         var animSet = AnimationSetLoader.Load(folderPath);
 
@@ -63,37 +74,36 @@ public sealed class PokemonSlot : IDisposable
         _model.UpdatePose(device, _player.SkinPose);
         _model.ComputeSkinnedBounds(_player.SkinPose);
 
-        float modelHeight = _model.BoundsMax.Y - _model.BoundsMin.Y;
-        float targetHeight = GetTargetHeight(DisplayName);
-        
-        if (modelHeight > 0.001f)
-            _fitScale = targetHeight / modelHeight;
+        // Determine generation and apply gen-specific scale
+        string gen = DetectGeneration(folderPath);
+        float genScale = GetGenScale(gen);
+        _fitScale = genScale;
 
         IsLoaded = true;
-        ModelLoaderLog.Info($"[Pokemon] Loaded: {DisplayName}, modelHeight={modelHeight:F3}, targetHeight={targetHeight:F2}, scale={_fitScale:F3}");
+        ModelLoaderLog.Info($"[Pokemon] Loaded: {DisplayName}, gen={gen}, genScale={genScale:F4}");
     }
 
-    private float GetTargetHeight(string folderName)
+    private static string DetectGeneration(string folderPath)
     {
-        if (_heightCache == null) return DefaultHeight;
-
-        string? speciesId = ExtractSpeciesId(folderName);
-        if (speciesId != null && _heightCache.TryGetValue(speciesId, out float height))
-            return height;
-
-        if (_heightCache.TryGetValue("default", out float defaultHeight))
-            return defaultHeight;
-
-        return DefaultHeight;
-    }
-
-    private static string? ExtractSpeciesId(string folderName)
-    {
-        if (folderName.Length >= 7 && folderName.StartsWith("pm"))
+        string normalized = folderPath.Replace('\\', '/');
+        foreach (var gen in KnownGenerations)
         {
-            return folderName.Substring(0, 7);
+            if (normalized.Contains($"/{gen}/", StringComparison.OrdinalIgnoreCase))
+            {
+                return gen;
+            }
         }
-        return null;
+        // Also detect PLZA from test dump paths (plza-dump-patched, etc.)
+        if (normalized.Contains("/plza-dump", StringComparison.OrdinalIgnoreCase))
+            return "plza";
+        return "unknown";
+    }
+
+    private static float GetGenScale(string gen)
+    {
+        if (_genScales != null && _genScales.TryGetValue(gen, out float scale))
+            return scale;
+        return DefaultGenScale;
     }
 
     public void Update(float dt)

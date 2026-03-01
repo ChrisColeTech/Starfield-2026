@@ -129,10 +129,10 @@ public class ModelLoaderGame : Game
         _freeRoam.TrainerParties = Helpers.TrainerPartyAssignment.LoadFromJson(partyJsonPath);
         ModelLoaderLog.Info($"Trainer parties: {_freeRoam.TrainerParties.Count} entries from {partyJsonPath}");
 
-        // Load Pokemon height config
-        string heightConfigPath = Path.Combine(assetsRoot, "pokemon_heights.json");
-        Helpers.PokemonSlot.LoadHeightConfig(heightConfigPath);
-        ModelLoaderLog.Info($"Pokemon height config loaded from {heightConfigPath}");
+        // Load Pokemon gen scale config
+        string genScalesPath = Path.Combine(assetsRoot, "pokemon_gen_scales.json");
+        Helpers.PokemonSlot.LoadGenScales(genScalesPath);
+        ModelLoaderLog.Info($"Pokemon gen scales loaded from {genScalesPath}");
 
         // Restore animation settings
         string? savedMode = _database.GetSetting("animation_mode");
