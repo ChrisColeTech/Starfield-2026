@@ -17,10 +17,14 @@ public class FollowCamera
     private Vector3 _targetVelocity;
     private float _distVelocity;
     private float _yawVelocity;
+    private float _smoothedElevation;
+    private float _elevVelocity;
 
     private const float PositionSmoothTime = 0.2f;
     private const float DistSmoothTime = 0.4f;
     private const float YawSmoothTime = 0.25f;
+    private const float ElevRiseSmoothTime = 0.3f;
+    private const float ElevFallSmoothTime = 1.5f;
     private const float YawSpeed = 2f;
     private const float PitchSpeed = 1f;
     private const float ZoomSpeed = 10f;
@@ -41,10 +45,18 @@ public class FollowCamera
     public Vector3 Position { get; private set; } = new Vector3(0, 5, 10);
     public float SmoothedYaw => _smoothedYaw;
 
+    /// <summary>
+    /// Optional: set this to a function that returns terrain height at a world position.
+    /// Used to push the camera above the terrain surface.
+    /// </summary>
+    public Func<Vector3, float>? TerrainHeightSampler { get; set; }
+
     public void Initialize(Vector3 target)
     {
         _target = target;
         _initialized = false;
+        _smoothedElevation = 0f;
+        _elevVelocity = 0f;
     }
 
     public void Update(float dt, float viewportAspect,
@@ -64,9 +76,11 @@ public class FollowCamera
             _target = targetPos;
             _smoothedYaw = targetYaw + MathHelper.Pi + _yawOffset;
             _smoothedDist = _dist;
+            _smoothedElevation = Math.Max(0f, targetPos.Y);
             _targetVelocity = Vector3.Zero;
             _distVelocity = 0f;
             _yawVelocity = 0f;
+            _elevVelocity = 0f;
             _initialized = true;
         }
 
@@ -88,9 +102,23 @@ public class FollowCamera
         float deployOffset = pokemonHeight > 0.1f
             ? DeployDistBase + Math.Min(pokemonHeight, 4f) * DeployDistPerUnit
             : 0f;
-        float desiredDist = _dist + runDistOffset + deployOffset;
+
+        // Smoothed elevation: rises quickly, falls slowly so camera stays high during descent
+        float rawElevation = Math.Max(0f, targetPos.Y);
+        bool descending = rawElevation < _smoothedElevation;
+        float elevSmooth = descending ? ElevFallSmoothTime : ElevRiseSmoothTime;
+        _smoothedElevation = SmoothDamp(_smoothedElevation, rawElevation, ref _elevVelocity, elevSmooth, dt);
+
+        float elevation = _smoothedElevation;
+        float elevPitchOffset = elevation > 0.5f ? -MathHelper.Clamp(elevation * 0.06f, 0f, 0.45f) : 0f;
+        float elevDistOffset = elevation > 0.5f ? elevation * 0.5f : 0f;
+
+        float desiredDist = _dist + runDistOffset + deployOffset + elevDistOffset;
         desiredDist = MathHelper.Clamp(desiredDist, MinDist, MaxDist);
         _smoothedDist = SmoothDamp(_smoothedDist, desiredDist, ref _distVelocity, DistSmoothTime, dt);
+
+        float effectivePitch = _pitch + elevPitchOffset;
+        effectivePitch = MathHelper.Clamp(effectivePitch, MinPitch, MaxPitch);
 
         _yaw = _smoothedYaw;
 
@@ -99,11 +127,22 @@ public class FollowCamera
         var lookAt = _target + Vector3.Up * lookAtHeight;
 
         var offset = new Vector3(
-            (float)(_smoothedDist * Math.Cos(_pitch) * Math.Sin(_smoothedYaw)),
-            (float)(_smoothedDist * -Math.Sin(_pitch)),
-            (float)(_smoothedDist * Math.Cos(_pitch) * Math.Cos(_smoothedYaw)));
+            (float)(_smoothedDist * Math.Cos(effectivePitch) * Math.Sin(_smoothedYaw)),
+            (float)(_smoothedDist * -Math.Sin(effectivePitch)),
+            (float)(_smoothedDist * Math.Cos(effectivePitch) * Math.Cos(_smoothedYaw)));
 
-        Position = lookAt + offset;
+        var camPos = lookAt + offset;
+
+        // Push camera above terrain if it would clip through
+        if (TerrainHeightSampler != null)
+        {
+            float terrainY = TerrainHeightSampler(camPos);
+            float minCamY = terrainY + 1.5f;
+            if (camPos.Y < minCamY)
+                camPos.Y = minCamY;
+        }
+
+        Position = camPos;
 
         View = Matrix.CreateLookAt(Position, lookAt, Vector3.Up);
         Projection = Matrix.CreatePerspectiveFieldOfView(Fov, viewportAspect, NearPlane, FarPlane);

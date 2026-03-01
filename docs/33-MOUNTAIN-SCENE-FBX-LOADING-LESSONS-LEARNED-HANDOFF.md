@@ -121,3 +121,29 @@
 2. Log per-model dimensions and final applied scale each load.
 3. Replace random scatter with a tiny deterministic layout JSON for repeatable testing.
 4. Add `GlobalSceneScale` slider hotkey for fast runtime tuning.
+
+## 9) Update - Work Completed Since Initial Handoff
+
+### Completed now
+
+- Switched Mountain scene to strict one-model debugging flow:
+  - Exactly one FBX model is selected by deterministic priority and placed away from spawn.
+  - Added per-model scale derivation from bounds so first-pass size is predictable.
+- Restored a starry/night backdrop in mountain mode:
+  - Night clear color plus lightweight procedural star field.
+- Added climb behavior for mountain traversal:
+  - Terrain height sampling is applied so player can move up the mountain instead of being hard-blocked.
+- Added collision pass for non-mountain instances:
+  - Simple radial push-out collider to prevent walking through non-climb objects.
+- Improved texture fallback behavior in FBX loader:
+  - Diffuse path normalization and Unity-style `_ALB.png` fallback mapping.
+- Persisted last game mode across restarts:
+  - Character/Map/Mountain mode is restored on launch; map restore also reloads last selected map.
+- Fixed reverse-driving control behavior:
+  - While moving backward, left/right now steers as player-intuitive reverse steering (no side-slide).
+  - Camera-facing snap while backing is disabled whenever horizontal input is held.
+
+### Current known caveat
+
+- If the app is still running during build, `dotnet build` can fail with an EXE file lock.
+  - Close `Starfield2026.3DModelLoader.exe` before rebuilding.

@@ -113,7 +113,7 @@ public class TerritoriesScreen
 
         if (_character?.FacingOverride is float facing)
             _player.SetFacingCamera(facing);
-        else if (_player.IsMovingBackward)
+        else if (_player.IsMovingBackward && !_player.HasHorizontalInput)
             _player.SetFacingCamera(_camera.SmoothedYaw);
 
         _player.SetTerrainHeight(0f);

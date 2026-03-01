@@ -59,6 +59,7 @@ public class MountainSceneScreen
         _player.Initialize(new Vector3(0, 0f, -12f));
         _player.WorldHalfSize = 200f;
         _camera.Initialize(_player.Position);
+        _camera.TerrainHeightSampler = SampleTerrainHeight;
 
         _effect = new BasicEffect(device)
         {
@@ -243,7 +244,7 @@ public class MountainSceneScreen
 
         if (_character?.FacingOverride is float facing)
             _player.SetFacingCamera(facing);
-        else if (_player.IsMovingBackward)
+        else if (_player.IsMovingBackward && !_player.HasHorizontalInput)
             _player.SetFacingCamera(_camera.SmoothedYaw);
 
         _player.SetTerrainHeight(SampleTerrainHeight(_player.Position));

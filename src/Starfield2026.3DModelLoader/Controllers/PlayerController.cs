@@ -13,6 +13,7 @@ public class PlayerController
     public bool IsRunning { get; private set; }
     public bool IsGrounded { get; private set; } = true;
     public bool IsMovingBackward { get; private set; }
+    public bool HasHorizontalInput { get; private set; }
 
     private float _walkSpeed = 6f;
     private float _runSpeed = 12f;
@@ -97,19 +98,19 @@ float moveX = input.MoveX;
         float moveZ = input.MoveZ;
 
         IsMovingBackward = moveZ < 0;
+        HasHorizontalInput = Math.Abs(moveX) > 0.01f;
 
         IsMoving = (Math.Abs(_currentSpeed) > 0.1f) || (moveZ != 0);
         IsRunning = _runningToggled && IsMoving;
 
         float targetTurnSpeed = moveX != 0 ? -moveX * _rotationSpeed : 0f;
+        if (IsMovingBackward)
+            targetTurnSpeed = -targetTurnSpeed;
         float turnBlend = 1f - (float)Math.Exp(-10f * dt);
         _currentTurnSpeed = MathHelper.Lerp(_currentTurnSpeed, targetTurnSpeed, turnBlend);
 
-        if (!IsMovingBackward)
-        {
-            Yaw += _currentTurnSpeed * dt;
-            _baseYaw = Yaw;
-        }
+        Yaw += _currentTurnSpeed * dt;
+        _baseYaw = Yaw;
 
         float targetSpeed = 0f;
         if (moveZ != 0)
