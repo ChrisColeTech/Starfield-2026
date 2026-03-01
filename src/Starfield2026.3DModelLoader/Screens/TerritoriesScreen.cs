@@ -8,11 +8,14 @@ using Starfield2026.ModelLoader.Controllers;
 using Starfield2026.ModelLoader.Helpers;
 using Starfield2026.ModelLoader.Input;
 using Starfield2026.ModelLoader.Rendering;
+
 namespace Starfield2026.ModelLoader.Screens;
 
-public class FreeRoamScreen
+public class TerritoriesScreen
 {
     private GraphicsDevice _device = null!;
+    private RegionMap _map = null!;
+    private TexturedTileRenderer _tileRenderer = null!;
     private QuadrantGridRenderer _grid = null!;
     private CubeRenderer _cubeRenderer = null!;
     private OverworldCharacter? _character;
@@ -25,19 +28,28 @@ public class FreeRoamScreen
     public Dictionary<string, string?[]> TrainerParties { get; set; } = new();
     public string PokemonRoot { get; set; } = "";
 
+    public int MapWidth { get; set; } = 60;
+    public int MapDepth { get; set; } = 60;
+    public int MapSeed { get; set; } = 42;
+
+    public string StatusText { get; private set; } = "No character loaded";
     public Vector3 Position => _player.Position;
     public float Yaw => _player.Yaw;
-    public string StatusText { get; private set; } = "No model loaded";
 
     public void Initialize(GraphicsDevice device)
     {
         _device = device;
 
+        _map = new RegionMap(MapWidth, MapDepth, cellSize: 2f);
+        _map.GenerateProcedural(MapSeed);
+
+        _tileRenderer = new TexturedTileRenderer();
+
         _grid = new QuadrantGridRenderer
         {
             Spacing = 2f,
-            GridHalfSize = 250,
-            PlaneOffset = 0f,
+            GridHalfSize = 40,
+            PlaneOffset = 0.01f,
         };
         _grid.Initialize(device);
 
@@ -45,8 +57,14 @@ public class FreeRoamScreen
         _cubeRenderer.Initialize(device);
 
         _player.Initialize(new Vector3(0, 0f, 0));
-        _player.WorldHalfSize = 500f;
+        _player.WorldHalfSize = 200f;
         _camera.Initialize(_player.Position);
+    }
+
+    public void LoadTerrain(string textureFolder, string _)
+    {
+        _tileRenderer.Initialize(_device, textureFolder);
+        ModelLoaderLog.Info($"[Territories] Loaded terrain tiles");
     }
 
     public void LoadCharacter(string folderPath)
@@ -65,12 +83,10 @@ public class FreeRoamScreen
             _character ??= new OverworldCharacter();
             _character.Load(_device, animSet);
 
-            // Load pokeball model if available
             string? pokeballPath = FindPokeballModel(folderPath);
             if (pokeballPath != null)
                 _character.LoadPokeball(_device, pokeballPath);
 
-            // Load Pokemon party if assigned
             if (!string.IsNullOrEmpty(PokemonRoot))
             {
                 var partyPaths = TrainerPartyAssignment.ResolveParty(folderPath, PokemonRoot, TrainerParties);
@@ -78,12 +94,11 @@ public class FreeRoamScreen
                     _character.LoadParty(_device, partyPaths);
             }
 
-            string partyInfo = _character.PartyStatusText;
-            StatusText = $"Loaded: {System.IO.Path.GetFileName(folderPath)} ({animSet.ClipsByTag.Count} tags) {partyInfo}";
+            StatusText = $"Loaded: {System.IO.Path.GetFileName(folderPath)}";
         }
         catch (Exception ex)
         {
-            ModelLoaderLog.Info($"[FreeRoam] Failed to load character: {ex.Message}");
+            ModelLoaderLog.Info($"[Territories] Failed to load character: {ex.Message}");
             _character?.Dispose();
             _character = null;
             StatusText = $"Failed: {System.IO.Path.GetFileName(folderPath)}";
@@ -101,6 +116,8 @@ public class FreeRoamScreen
         else if (_player.IsMovingBackward)
             _player.SetFacingCamera(_camera.SmoothedYaw);
 
+        _player.SetTerrainHeight(0f);
+
         _character?.Update(dt, _player.IsMoving, _player.IsRunning, _player.IsGrounded, input,
             _player.Position, _player.Yaw);
 
@@ -108,7 +125,6 @@ public class FreeRoamScreen
         float pokemonHeight = _character?.DeployedPokemonHeight ?? 0f;
         bool pokemonOut = _character?.Party is { IsDeployed: true };
 
-        // Simple circle collision: push player out of deployed Pokemon
         if (pokemonOut && _character != null)
         {
             var pokePos = _character.DeployedPokemonPosition;
@@ -119,10 +135,8 @@ public class FreeRoamScreen
             if (distSq < collisionRadius * collisionRadius && distSq > 0.0001f)
             {
                 float dist = MathF.Sqrt(distSq);
-                float pushX = dx / dist * collisionRadius;
-                float pushZ = dz / dist * collisionRadius;
                 _player.SetPosition(
-                    new Vector3(pokePos.X + pushX, _player.Position.Y, pokePos.Z + pushZ),
+                    new Vector3(pokePos.X + dx / dist * collisionRadius, 0, pokePos.Z + dz / dist * collisionRadius),
                     _player.Yaw);
             }
         }
@@ -134,37 +148,34 @@ public class FreeRoamScreen
 
     public void Draw(GraphicsDevice device)
     {
-        device.Clear(new Color(20, 25, 50));
+        device.Clear(new Color(30, 40, 50));
         device.DepthStencilState = DepthStencilState.Default;
-        device.RasterizerState = RasterizerState.CullCounterClockwise;
         device.BlendState = BlendState.AlphaBlend;
-        device.SamplerStates[0] = SamplerState.AnisotropicClamp;
+        device.SamplerStates[0] = SamplerState.LinearWrap;
 
+        _tileRenderer.Draw(device, _camera.View, _camera.Projection, _map, _camera.Position);
         _grid.Draw(device, _camera.View, _camera.Projection);
 
         var pos = _player.Position;
         float yaw = _player.Yaw;
 
-        // Shadow
         _cubeRenderer.Draw(device, _camera.View, _camera.Projection,
-            new Vector3(pos.X, 0.05f, pos.Z),
-            yaw, new Vector3(1.5f, 0.05f, 1.5f), Color.Black * 0.4f);
+            new Vector3(pos.X, 0.02f, pos.Z),
+            yaw, new Vector3(1.2f, 0.02f, 1.2f), Color.Black * 0.3f);
 
-        // Character or fallback cube
         if (_character is { IsLoaded: true })
         {
             _character.Draw(device, _camera.View, _camera.Projection, pos, yaw);
         }
         else
         {
-            var cubePos = new Vector3(pos.X, pos.Y + 0.75f, pos.Z);
-            _cubeRenderer.Draw(device, _camera.View, _camera.Projection, cubePos, yaw, 1.5f, new Color(0, 220, 255));
+            var cubePos = new Vector3(pos.X, 0.75f, pos.Z);
+            _cubeRenderer.Draw(device, _camera.View, _camera.Projection, cubePos, yaw, 1.2f, new Color(0, 255, 255));
         }
     }
 
     private static string? FindPokeballModel(string characterFolderPath)
     {
-        // Walk up from character folder to find Models/Items/Pokeballs/ob0201_00/model.dae
         string? dir = characterFolderPath;
         for (int i = 0; i < 10 && dir != null; i++)
         {
@@ -175,5 +186,11 @@ public class FreeRoamScreen
                 return candidate;
         }
         return null;
+    }
+
+    public void Dispose()
+    {
+        _tileRenderer?.Dispose();
+        _character?.Dispose();
     }
 }

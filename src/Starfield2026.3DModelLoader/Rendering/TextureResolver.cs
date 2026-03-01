@@ -67,6 +67,22 @@ internal static class TextureResolver
     internal static string? ResolvePath(string baseDir, string imageFile)
     {
         string cleaned = imageFile.TrimStart('.', '/');
+
+        // The v2 DAE converter used _1 texture variants (secondary layers)
+        // for diffuse. Prefer the base texture when both exist.
+        string preferred = StripTextureVariant(cleaned);
+        if (preferred != cleaned)
+        {
+            string? base_result = TryResolve(baseDir, preferred);
+            if (base_result != null)
+                return base_result;
+        }
+
+        return TryResolve(baseDir, cleaned);
+    }
+
+    private static string? TryResolve(string baseDir, string cleaned)
+    {
         string direct = Path.Combine(baseDir, cleaned);
         if (File.Exists(direct)) return direct;
 
@@ -82,5 +98,18 @@ internal static class TextureResolver
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Strip "_1" variant suffix from texture filenames.
+    /// e.g. "textures/pm0493_14_Body1.tga_1.png" → "textures/pm0493_14_Body1.tga.png"
+    /// </summary>
+    private static string StripTextureVariant(string path)
+    {
+        // Match patterns like "name.tga_1.png" → "name.tga.png"
+        const string marker = "_1.png";
+        if (path.EndsWith(marker, StringComparison.OrdinalIgnoreCase))
+            return path.Substring(0, path.Length - marker.Length) + ".png";
+        return path;
     }
 }

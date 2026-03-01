@@ -12,8 +12,10 @@ public sealed class PokemonParty : IDisposable
     private float _deployScale;
     private bool _isScalingUp;
     private bool _isScalingDown;
+    private bool _fastRecall;
 
-    private const float ScaleSpeed = 4f; // 0→1 in 0.25s
+    private const float ScaleSpeed = 4f;
+    private const float FastScaleSpeed = 12f;
 
     public int ActiveIndex { get; private set; }
     public int? DeployedIndex { get; private set; }
@@ -23,6 +25,7 @@ public sealed class PokemonParty : IDisposable
     public bool IsDeployed => DeployedIndex.HasValue;
     public bool IsRecalling => _isScalingDown;
     public float DeployScale => _deployScale;
+    public float DeployedHeight => DeployedSlot?.RenderedHeight ?? 0f;
     public bool NeedsRecallFirst => DeployedIndex.HasValue && DeployedIndex.Value != ActiveIndex;
 
     public int SlotCount
@@ -96,6 +99,12 @@ public sealed class PokemonParty : IDisposable
     {
         _isScalingDown = true;
         _isScalingUp = false;
+        _fastRecall = false;
+    }
+
+    public void FastRecall()
+    {
+        _fastRecall = true;
     }
 
     public void Recall()
@@ -104,6 +113,7 @@ public sealed class PokemonParty : IDisposable
         _deployScale = 0f;
         _isScalingDown = false;
         _isScalingUp = false;
+        _fastRecall = false;
     }
 
     public void Update(float dt)
@@ -119,7 +129,8 @@ public sealed class PokemonParty : IDisposable
         }
         else if (_isScalingDown)
         {
-            _deployScale -= ScaleSpeed * dt;
+            float speed = _fastRecall ? FastScaleSpeed : ScaleSpeed;
+            _deployScale -= speed * dt;
             if (_deployScale <= 0f)
                 _deployScale = 0f;
         }
@@ -145,5 +156,6 @@ public sealed class PokemonParty : IDisposable
         _deployScale = 0f;
         _isScalingDown = false;
         _isScalingUp = false;
+        _fastRecall = false;
     }
 }

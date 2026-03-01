@@ -27,6 +27,11 @@ public sealed class PokemonSlot : IDisposable
     public string FolderPath { get; private set; } = "";
     public string DisplayName { get; private set; } = "";
 
+    /// <summary>Actual rendered height in game units (bounds × genScale).</summary>
+    public float RenderedHeight => _model is not null
+        ? (_model.BoundsMax.Y - _model.BoundsMin.Y) * _fitScale
+        : 0f;
+
     public static void LoadGenScales(string jsonPath)
     {
         if (!File.Exists(jsonPath))
@@ -62,9 +67,9 @@ public sealed class PokemonSlot : IDisposable
 
         _effect = new BasicEffect(device)
         {
-            LightingEnabled = false,
             VertexColorEnabled = false,
         };
+        ConfigureLighting(_effect);
 
         if (animSet.HasTag("Idle"))
         {
@@ -80,7 +85,7 @@ public sealed class PokemonSlot : IDisposable
         _fitScale = genScale;
 
         IsLoaded = true;
-        ModelLoaderLog.Info($"[Pokemon] Loaded: {DisplayName}, gen={gen}, genScale={genScale:F4}");
+        ModelLoaderLog.Info($"[Pokemon] Loaded: {DisplayName}, gen={gen}, genScale={genScale:F4}, boundsY=[{_model.BoundsMin.Y:F3}..{_model.BoundsMax.Y:F3}], renderedHeight={RenderedHeight:F2}");
     }
 
     private static string DetectGeneration(string folderPath)
@@ -104,6 +109,37 @@ public sealed class PokemonSlot : IDisposable
         if (_genScales != null && _genScales.TryGetValue(gen, out float scale))
             return scale;
         return DefaultGenScale;
+    }
+
+    private static void ConfigureLighting(BasicEffect effect)
+    {
+        effect.LightingEnabled = true;
+        effect.PreferPerPixelLighting = true;
+
+        // Warm ambient to avoid pitch-black shadows
+        effect.AmbientLightColor = new Vector3(0.35f, 0.35f, 0.40f);
+
+        // Key light — bright warm directional from above-front-right
+        effect.DirectionalLight0.Enabled = true;
+        effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-0.5f, -0.8f, -0.3f));
+        effect.DirectionalLight0.DiffuseColor = new Vector3(0.85f, 0.82f, 0.78f);
+        effect.DirectionalLight0.SpecularColor = new Vector3(0.3f, 0.3f, 0.3f);
+
+        // Fill light — soft cool light from opposite side
+        effect.DirectionalLight1.Enabled = true;
+        effect.DirectionalLight1.Direction = Vector3.Normalize(new Vector3(0.6f, -0.3f, 0.5f));
+        effect.DirectionalLight1.DiffuseColor = new Vector3(0.25f, 0.28f, 0.35f);
+        effect.DirectionalLight1.SpecularColor = Vector3.Zero;
+
+        // Rim/back light — subtle light from behind to give edge definition
+        effect.DirectionalLight2.Enabled = true;
+        effect.DirectionalLight2.Direction = Vector3.Normalize(new Vector3(0f, -0.2f, 1f));
+        effect.DirectionalLight2.DiffuseColor = new Vector3(0.20f, 0.22f, 0.30f);
+        effect.DirectionalLight2.SpecularColor = new Vector3(0.1f, 0.1f, 0.15f);
+
+        // Specular settings
+        effect.SpecularColor = new Vector3(0.2f, 0.2f, 0.2f);
+        effect.SpecularPower = 16f;
     }
 
     public void Update(float dt)

@@ -59,6 +59,12 @@ public void SetPosition(Vector3 position, float yaw)
         _baseYaw = cameraYaw;
     }
 
+    public void SetTerrainHeight(float height)
+    {
+        if (IsGrounded)
+            Position = new Vector3(Position.X, height, Position.Z);
+    }
+
     public void Update(float dt, InputSnapshot input)
     {
         if (input.RunPressed)

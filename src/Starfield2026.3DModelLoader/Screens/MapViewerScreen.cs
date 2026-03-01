@@ -76,7 +76,12 @@ public class MapViewerScreen
             string daePath = Path.Combine(folderPath, "model.dae");
             if (!File.Exists(daePath))
             {
-                StatusText = $"No model.dae: {Path.GetFileName(folderPath)}";
+                string[] daeFiles = Directory.GetFiles(folderPath, "*.dae", SearchOption.TopDirectoryOnly);
+                daePath = daeFiles.Length > 0 ? daeFiles[0] : "";
+            }
+            if (!File.Exists(daePath))
+            {
+                StatusText = $"No .dae file: {Path.GetFileName(folderPath)}";
                 return;
             }
 

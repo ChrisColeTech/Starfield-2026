@@ -37,6 +37,30 @@ public sealed class SkinnedModel : IDisposable
         var materialToImage = TextureResolver.ParseMaterialImageMap(doc);
         var symbolToMaterial = TextureResolver.ParseBindMaterialMap(doc);
 
+        // Fallback: v2 DAEs may lack bind_material entirely.
+        // Build synthetic mapping by matching symbol suffixes to material IDs.
+        if (symbolToMaterial.Count == 0 && materialToImage.Count > 0)
+        {
+            foreach (var geometry in geometries)
+            {
+                string sym = geometry.MaterialSymbol;
+                if (string.IsNullOrEmpty(sym) || symbolToMaterial.ContainsKey(sym)) continue;
+
+                // Extract suffix after "_Mtl_" (e.g. "Mdl_0_Mtl_BodyA00" → "BodyA00")
+                int idx = sym.LastIndexOf("_Mtl_", StringComparison.OrdinalIgnoreCase);
+                string suffix = idx >= 0 ? sym.Substring(idx + 5) : sym;
+
+                foreach (var matId in materialToImage.Keys)
+                {
+                    if (matId.Contains(suffix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        symbolToMaterial[sym] = matId;
+                        break;
+                    }
+                }
+            }
+        }
+
         _meshes.Clear();
         _batches.Clear();
 

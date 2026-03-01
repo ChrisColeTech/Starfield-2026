@@ -29,9 +29,6 @@ public class MinimapHUD
         // --- Minimap ---
         DrawMinimap(screenW, screenH, scale, playerWorldPos, playerYaw);
 
-        // --- Status bar at top ---
-        DrawStatusBar(screenW, scale, statusText);
-
         // --- Controls help at bottom-right ---
         DrawControls(screenW, screenH, scale);
 

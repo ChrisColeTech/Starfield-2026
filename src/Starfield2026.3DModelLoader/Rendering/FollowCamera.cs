@@ -28,16 +28,17 @@ public class FollowCamera
     private const float MaxDist = 40f;
     private const float WalkDist = 7f;
     private const float RunDist = 12f;
-    private const float DeployDist = 3f;
+    private const float DeployDistBase = 3f;
+    private const float DeployDistPerUnit = 1.0f;
     private const float MinPitch = -1.4f;
     private const float MaxPitch = -0.1f;
     private const float Fov = MathHelper.PiOver4;
     private const float NearPlane = 0.1f;
     private const float FarPlane = 500f;
 
-    public Matrix View { get; private set; }
-    public Matrix Projection { get; private set; }
-    public Vector3 Position { get; private set; }
+    public Matrix View { get; private set; } = Matrix.CreateLookAt(new Vector3(0, 5, 10), Vector3.Zero, Vector3.Up);
+    public Matrix Projection { get; private set; } = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, 16f / 9f, 0.1f, 500f);
+    public Vector3 Position { get; private set; } = new Vector3(0, 5, 10);
     public float SmoothedYaw => _smoothedYaw;
 
     public void Initialize(Vector3 target)
@@ -48,7 +49,7 @@ public class FollowCamera
 
     public void Update(float dt, float viewportAspect,
         Vector3 targetPos, float targetYaw, float targetSpeed,
-        bool isRunning, bool isMovingBackward, bool isPokemonDeployed,
+        bool isRunning, bool isMovingBackward, float pokemonHeight,
         float inputYaw, float inputPitch, float inputZoom)
     {
         if (inputYaw != 0)
@@ -84,14 +85,18 @@ public class FollowCamera
         }
 
         float runDistOffset = isRunning ? (RunDist - WalkDist) : 0f;
-        float deployOffset = isPokemonDeployed ? DeployDist : 0f;
+        float deployOffset = pokemonHeight > 0.1f
+            ? DeployDistBase + Math.Min(pokemonHeight, 4f) * DeployDistPerUnit
+            : 0f;
         float desiredDist = _dist + runDistOffset + deployOffset;
         desiredDist = MathHelper.Clamp(desiredDist, MinDist, MaxDist);
         _smoothedDist = SmoothDamp(_smoothedDist, desiredDist, ref _distVelocity, DistSmoothTime, dt);
 
         _yaw = _smoothedYaw;
 
-        var lookAt = _target + Vector3.Up * 1.5f;
+        // Raise lookAt when pokemon is out to center the view between trainer and pokemon
+        float lookAtHeight = 1.5f + (pokemonHeight > 0.1f ? Math.Min(pokemonHeight, 4f) * 0.3f : 0f);
+        var lookAt = _target + Vector3.Up * lookAtHeight;
 
         var offset = new Vector3(
             (float)(_smoothedDist * Math.Cos(_pitch) * Math.Sin(_smoothedYaw)),

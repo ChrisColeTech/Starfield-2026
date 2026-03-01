@@ -24,6 +24,7 @@ public class ModelLoaderGame : Game
     private MinimapHUD _hud = new();
     private InputManager _input = new();
     private FreeRoamScreen _freeRoam = new();
+    private MountainSceneScreen _mountainScene = new();
     private CharacterDatabase _database = new();
 
     private List<CharacterRecord> _characters = new();
@@ -37,6 +38,7 @@ public class ModelLoaderGame : Game
     private int _mapIndex = -1;
     private MapSelectOverlay? _mapSelect;
     private bool _inMapMode;
+    private bool _inMountainMode;
 
     private static string WindowConfigPath =>
         Path.Combine(AppContext.BaseDirectory, "window.json");
@@ -157,6 +159,17 @@ public class ModelLoaderGame : Game
 
         // Init MapViewer
         _mapViewer.Initialize(GraphicsDevice);
+
+        // Init Mountain Scene
+        _mountainScene.Initialize(GraphicsDevice);
+        _mountainScene.SharedAnimationFolders = _freeRoam.SharedAnimationFolders;
+        _mountainScene.TrainerParties = _freeRoam.TrainerParties;
+        _mountainScene.PokemonRoot = _freeRoam.PokemonRoot;
+        _mountainScene.LoadMode = _freeRoam.LoadMode;
+        _mountainScene.FillTags = _freeRoam.FillTags;
+
+        string mountainPath = Path.Combine(assetsRoot, "Models", "Maps", "Mountain");
+        _mountainScene.LoadScene(mountainPath);
 
         // Restore last selected character, or fall back to first
         if (_characters.Count > 0)
@@ -284,11 +297,25 @@ public class ModelLoaderGame : Game
             return;
         }
 
-// Escape/Create button = switch between character and map mode
+// Escape/Create button = cycle between character, map, and mountain mode
         if (snap.SwitchModePressed)
         {
-            _inMapMode = !_inMapMode;
-            ModelLoaderLog.Info($"Switched to {(_inMapMode ? "Map" : "Character")} mode");
+            if (_inMountainMode)
+            {
+                _inMountainMode = false;
+                _inMapMode = false;
+            }
+            else if (_inMapMode)
+            {
+                _inMapMode = false;
+                _inMountainMode = true;
+                LoadCurrentCharacterToMountain();
+            }
+            else
+            {
+                _inMapMode = true;
+            }
+            ModelLoaderLog.Info($"Switched to {(_inMountainMode ? "Mountain" : _inMapMode ? "Map" : "Character")} mode");
             base.Update(gameTime);
             return;
         }
@@ -304,7 +331,9 @@ public class ModelLoaderGame : Game
             return;
         }
 
-        if (_inMapMode)
+        if (_inMountainMode)
+            _mountainScene.Update(gameTime, snap);
+        else if (_inMapMode)
             _mapViewer.Update(gameTime, snap);
         else
             _freeRoam.Update(gameTime, snap);
@@ -314,7 +343,15 @@ public class ModelLoaderGame : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        if (_inMapMode)
+        if (_inMountainMode)
+        {
+            _mountainScene.Draw(GraphicsDevice);
+
+            string status = $"[F1] Cycle Mode  [Tab] Select Character  |  {_mountainScene.StatusText}";
+            Window.Title = $"Mountain Scene  |  {status}";
+            _hud.Draw(GraphicsDevice, _mountainScene.Position, _mountainScene.Yaw, status);
+        }
+        else if (_inMapMode)
         {
             _mapViewer.Draw(GraphicsDevice);
 
@@ -362,6 +399,16 @@ public class ModelLoaderGame : Game
         var record = _characters[_characterIndex];
         string folder = Path.GetDirectoryName(record.ManifestPath) ?? "";
         _freeRoam.LoadCharacter(folder);
+    }
+
+    private void LoadCurrentCharacterToMountain()
+    {
+        if (_characterIndex < 0 || _characterIndex >= _characters.Count)
+            return;
+
+        var record = _characters[_characterIndex];
+        string folder = Path.GetDirectoryName(record.ManifestPath) ?? "";
+        _mountainScene.LoadCharacter(folder);
     }
 
     private static string FindAssetsRoot()

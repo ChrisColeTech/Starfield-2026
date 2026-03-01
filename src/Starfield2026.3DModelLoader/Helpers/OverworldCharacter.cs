@@ -42,6 +42,7 @@ public sealed class OverworldCharacter : IDisposable
 
     private const float ThrowAnimSpeed = 1.125f;
     private const float RecallAnimSpeed = 0.9375f;
+    private const float FastRecallSpeed = 6f;
     private const float BeamThickness = 0.015f;
 
     private static readonly Color BeamColor = new Color(255, 50, 50) * 0.4f;
@@ -53,6 +54,8 @@ public sealed class OverworldCharacter : IDisposable
     public bool IsLoaded { get; private set; }
     public AnimationSet? AnimationSet => _animSet;
     public PokemonParty? Party => _party;
+    public Vector3 DeployedPokemonPosition => _deployPosition;
+    public float DeployedPokemonHeight => _party?.DeployedHeight ?? 0f;
     public float? FacingOverride { get; private set; }
     public string PartyStatusText => _party != null
         ? $"[{_party.ActiveIndex + 1}/{_party.SlotCount}: {_party.ActiveDisplayName}]"
@@ -69,9 +72,9 @@ public sealed class OverworldCharacter : IDisposable
 
         _effect = new BasicEffect(device)
         {
-            LightingEnabled = false,
             VertexColorEnabled = false,
         };
+        ConfigureLighting(_effect);
 
         // Setup pokeball controller
         _pokeballCtrl = new PokeballController();
@@ -90,6 +93,32 @@ public sealed class OverworldCharacter : IDisposable
         _pokeballCtrl.Configure(_fitScale, bodyType, animSet.ModelPath);
 
         IsLoaded = true;
+    }
+
+    private static void ConfigureLighting(BasicEffect effect)
+    {
+        effect.LightingEnabled = true;
+        effect.PreferPerPixelLighting = true;
+
+        effect.AmbientLightColor = new Vector3(0.35f, 0.35f, 0.40f);
+
+        effect.DirectionalLight0.Enabled = true;
+        effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-0.5f, -0.8f, -0.3f));
+        effect.DirectionalLight0.DiffuseColor = new Vector3(0.85f, 0.82f, 0.78f);
+        effect.DirectionalLight0.SpecularColor = new Vector3(0.3f, 0.3f, 0.3f);
+
+        effect.DirectionalLight1.Enabled = true;
+        effect.DirectionalLight1.Direction = Vector3.Normalize(new Vector3(0.6f, -0.3f, 0.5f));
+        effect.DirectionalLight1.DiffuseColor = new Vector3(0.25f, 0.28f, 0.35f);
+        effect.DirectionalLight1.SpecularColor = Vector3.Zero;
+
+        effect.DirectionalLight2.Enabled = true;
+        effect.DirectionalLight2.Direction = Vector3.Normalize(new Vector3(0f, -0.2f, 1f));
+        effect.DirectionalLight2.DiffuseColor = new Vector3(0.20f, 0.22f, 0.30f);
+        effect.DirectionalLight2.SpecularColor = new Vector3(0.1f, 0.1f, 0.15f);
+
+        effect.SpecularColor = new Vector3(0.2f, 0.2f, 0.2f);
+        effect.SpecularPower = 16f;
     }
 
     public void LoadPokeball(GraphicsDevice device, string pokeballDaePath)
@@ -178,7 +207,7 @@ public sealed class OverworldCharacter : IDisposable
                 _player.Update(dt);
                 return;
             }
-else if (_animState == AnimState.Deployed && HasClip("BallRecall"))
+            else if (_animState == AnimState.Deployed && HasClip("BallRecall"))
             {
                 _pendingRedeploy = _party != null && _party.NeedsRecallFirst;
 
@@ -197,6 +226,13 @@ else if (_animState == AnimState.Deployed && HasClip("BallRecall"))
                 _player.Speed = RecallAnimSpeed;
                 _player.Update(dt);
                 return;
+            }
+            else if (_animState == AnimState.RecallAnim)
+            {
+                // Quick switch: Alt during recall speeds up and queues redeploy
+                _pendingRedeploy = true;
+                _player.Speed = FastRecallSpeed;
+                _party?.FastRecall();
             }
         }
 
@@ -387,6 +423,7 @@ _player.Update(dt);
         _effect.View = view;
         _effect.Projection = projection;
         _effect.TextureEnabled = false;
+        _effect.LightingEnabled = false;
         _effect.VertexColorEnabled = true;
 
         foreach (var pass in _effect.CurrentTechnique.Passes)
@@ -400,6 +437,7 @@ _player.Update(dt);
 
         // Restore
         _effect.VertexColorEnabled = false;
+        _effect.LightingEnabled = true;
         device.BlendState = prevBlend;
         device.DepthStencilState = prevDepth;
     }
