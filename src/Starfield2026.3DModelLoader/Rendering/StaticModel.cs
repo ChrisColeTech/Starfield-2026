@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Assimp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Starfield2026.ModelLoader.DTOs;
@@ -12,7 +13,7 @@ using Starfield2026.ModelLoader.Loaders;
 namespace Starfield2026.ModelLoader.Rendering;
 
 /// <summary>
-/// Loads and renders static (unskinned) DAE models with textures.
+/// Loads and renders static (unskinned) DAE and FBX models with textures.
 /// Used for map props, terrain, and other non-animated geometry.
 /// </summary>
 public sealed class StaticModel : IDisposable
@@ -114,6 +115,163 @@ public sealed class StaticModel : IDisposable
         ModelLoaderLog.Info($"[StaticModel] Loaded: {allVertices.Count} total verts, {_batches.Count} batches, bounds {min} -> {max}");
     }
 
+    public void LoadFbx(GraphicsDevice device, string fbxPath)
+    {
+        Dispose();
+
+        string baseDir = Path.GetDirectoryName(Path.GetFullPath(fbxPath)) ?? ".";
+
+        using var importer = new AssimpContext();
+        var scene = importer.ImportFile(fbxPath,
+            PostProcessSteps.Triangulate |
+            PostProcessSteps.GenerateNormals |
+            PostProcessSteps.FlipUVs);
+
+        if (scene == null || !scene.HasMeshes)
+        {
+            ModelLoaderLog.Info($"[StaticModel] FBX has no meshes: {fbxPath}");
+            return;
+        }
+
+        ModelLoaderLog.Info($"[StaticModel] FBX meshes: {scene.MeshCount}, materials: {scene.MaterialCount}");
+
+        var allVertices = new List<VertexPositionNormalTexture>();
+        var allIndices = new List<int>();
+        _batches.Clear();
+
+        Vector3 min = new(float.MaxValue);
+        Vector3 max = new(float.MinValue);
+
+        foreach (var mesh in scene.Meshes)
+        {
+            if (!mesh.HasVertices) continue;
+
+            var vertices = new VertexPositionNormalTexture[mesh.VertexCount];
+            for (int i = 0; i < mesh.VertexCount; i++)
+            {
+                var p = mesh.Vertices[i];
+                var pos = new Vector3(p.X, p.Y, p.Z);
+
+                var nrm = Vector3.Up;
+                if (mesh.HasNormals)
+                {
+                    var n = mesh.Normals[i];
+                    nrm = new Vector3(n.X, n.Y, n.Z);
+                }
+
+                var uv = Vector2.Zero;
+                if (mesh.HasTextureCoords(0))
+                {
+                    var t = mesh.TextureCoordinateChannels[0][i];
+                    uv = new Vector2(t.X, t.Y);
+                }
+
+                vertices[i] = new VertexPositionNormalTexture(pos, nrm, uv);
+                min = Vector3.Min(min, pos);
+                max = Vector3.Max(max, pos);
+            }
+
+            var indices = mesh.GetIndices();
+            if (indices.Length == 0) continue;
+
+            Texture2D? texture = LoadFbxMaterialTexture(device, scene, mesh.MaterialIndex, baseDir);
+
+            int baseVertex = allVertices.Count;
+            int startIndex = allIndices.Count;
+
+            allVertices.AddRange(vertices);
+            for (int i = 0; i < indices.Length; i++)
+                allIndices.Add(baseVertex + indices[i]);
+
+            int primCount = indices.Length / 3;
+            if (primCount > 0)
+            {
+                _batches.Add(new MeshBatch
+                {
+                    StartIndex = startIndex,
+                    PrimitiveCount = primCount,
+                    Texture = texture,
+                    IsFace = false
+                });
+            }
+
+            ModelLoaderLog.Info($"[StaticModel] FBX mesh '{mesh.Name}': {vertices.Length} verts, {primCount} tris, tex={texture != null}");
+        }
+
+        if (allVertices.Count == 0)
+        {
+            ModelLoaderLog.Info("[StaticModel] FBX produced no vertices — model is empty");
+            return;
+        }
+
+        BoundsMin = min;
+        BoundsMax = max;
+        VertexCount = allVertices.Count;
+
+        _vertexBuffer = new VertexBuffer(device, VertexPositionNormalTexture.VertexDeclaration,
+            allVertices.Count, BufferUsage.WriteOnly);
+        _vertexBuffer.SetData(allVertices.ToArray());
+
+        _indexBuffer = new IndexBuffer(device, IndexElementSize.ThirtyTwoBits,
+            allIndices.Count, BufferUsage.WriteOnly);
+        _indexBuffer.SetData(allIndices.ToArray());
+
+        ModelLoaderLog.Info($"[StaticModel] FBX loaded: {allVertices.Count} total verts, {_batches.Count} batches, bounds {min} -> {max}");
+    }
+
+    private static Texture2D? LoadFbxMaterialTexture(GraphicsDevice device, Scene scene, int materialIndex, string baseDir)
+    {
+        if (materialIndex < 0 || materialIndex >= scene.MaterialCount)
+            return null;
+
+        var material = scene.Materials[materialIndex];
+        if (!material.HasTextureDiffuse)
+            return null;
+
+        string texFile = material.TextureDiffuse.FilePath;
+        if (string.IsNullOrWhiteSpace(texFile))
+            return null;
+
+        string? resolved = ResolveFbxTexturePath(baseDir, texFile);
+        if (resolved == null || !File.Exists(resolved))
+            return null;
+
+        try
+        {
+            using var stream = File.OpenRead(resolved);
+            return Texture2D.FromStream(device, stream);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string? ResolveFbxTexturePath(string baseDir, string texFile)
+    {
+        string cleaned = texFile.Replace('\\', '/').TrimStart('.', '/');
+
+        string direct = Path.Combine(baseDir, cleaned);
+        if (File.Exists(direct)) return direct;
+
+        string fileName = Path.GetFileName(cleaned);
+        string inBase = Path.Combine(baseDir, fileName);
+        if (File.Exists(inBase)) return inBase;
+
+        string inTextures = Path.Combine(baseDir, "textures", fileName);
+        if (File.Exists(inTextures)) return inTextures;
+
+        // Try parent directory's textures folder
+        string? parentDir = Path.GetDirectoryName(baseDir);
+        if (parentDir != null)
+        {
+            string inParentTextures = Path.Combine(parentDir, "textures", fileName);
+            if (File.Exists(inParentTextures)) return inParentTextures;
+        }
+
+        return null;
+    }
+
     public void Draw(GraphicsDevice device, BasicEffect effect)
     {
         if (_vertexBuffer == null || _indexBuffer == null || _batches.Count == 0) return;
@@ -131,7 +289,6 @@ public sealed class StaticModel : IDisposable
             }
             else
             {
-                // No texture — render with a flat diffuse color
                 effect.TextureEnabled = false;
                 effect.VertexColorEnabled = false;
                 effect.DiffuseColor = new Vector3(0.6f, 0.6f, 0.65f);
@@ -141,7 +298,43 @@ public sealed class StaticModel : IDisposable
             {
                 pass.Apply();
                 device.DrawIndexedPrimitives(
-                    PrimitiveType.TriangleList, 0, batch.StartIndex, batch.PrimitiveCount);
+                    Microsoft.Xna.Framework.Graphics.PrimitiveType.TriangleList, 0, batch.StartIndex, batch.PrimitiveCount);
+            }
+        }
+    }
+
+    public void DrawAlphaTested(GraphicsDevice device, BasicEffect effect, AlphaTestEffect alphaTestEffect)
+    {
+        if (_vertexBuffer == null || _indexBuffer == null || _batches.Count == 0) return;
+
+        device.SetVertexBuffer(_vertexBuffer);
+        device.Indices = _indexBuffer;
+
+        foreach (var batch in _batches)
+        {
+            if (batch.Texture is not null)
+            {
+                alphaTestEffect.Texture = batch.Texture;
+
+                foreach (var pass in alphaTestEffect.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    device.DrawIndexedPrimitives(
+                        Microsoft.Xna.Framework.Graphics.PrimitiveType.TriangleList, 0, batch.StartIndex, batch.PrimitiveCount);
+                }
+            }
+            else
+            {
+                effect.TextureEnabled = false;
+                effect.VertexColorEnabled = false;
+                effect.DiffuseColor = new Vector3(0.6f, 0.6f, 0.65f);
+
+                foreach (var pass in effect.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    device.DrawIndexedPrimitives(
+                        Microsoft.Xna.Framework.Graphics.PrimitiveType.TriangleList, 0, batch.StartIndex, batch.PrimitiveCount);
+                }
             }
         }
     }
