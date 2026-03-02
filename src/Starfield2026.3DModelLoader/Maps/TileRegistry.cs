@@ -61,9 +61,9 @@ public static class TileRegistry
         [56] = new TileDefinition(56, "AnimeBush04", false, "#257025", TileCategory.Decoration, Height: 0.5f, ModelId: "AnimeBush_04", BaselineSize: 1f),
 
         // ── Anime Trees pack — Grass (57-59) ──
-        [57] = new TileDefinition(57, "TallGrass", true, "#5ca050", TileCategory.Encounter, ModelId: "Grass01", BaselineSize: 0.5f),
+        [57] = new TileDefinition(57, "TallGrass", true, "#5ca050", TileCategory.Encounter, ModelId: "Grass01", BaselineSize: 1.0f),
         [58] = new TileDefinition(58, "AnimeGrassMesh", true, "#54964a", TileCategory.Encounter, ModelId: "GrassMesh", BaselineSize: 0.8f),
-        [59] = new TileDefinition(59, "ShortGrass", true, "#6ab85a", TileCategory.Decoration, ModelId: "Grass", BaselineSize: 0.3f),
+        [59] = new TileDefinition(59, "ShortGrass", true, "#6ab85a", TileCategory.Decoration, ModelId: "Grass", BaselineSize: 0.3f, AlphaCutout: false),
 
         // ── RPG Free — Nature (60-88) ──
         [60] = new TileDefinition(60, "RpgBush01", false, "#3a8040", TileCategory.Decoration, Height: 0.6f, ModelId: "rpgpp_lt_bush_01", BaselineSize: 1f),

@@ -125,6 +125,7 @@ public sealed class StaticModel : IDisposable
         var scene = importer.ImportFile(fbxPath,
             PostProcessSteps.Triangulate |
             PostProcessSteps.GenerateNormals |
+            PostProcessSteps.PreTransformVertices |
             PostProcessSteps.FlipUVs);
 
         if (scene == null || !scene.HasMeshes)
@@ -222,27 +223,38 @@ public sealed class StaticModel : IDisposable
     private static Texture2D? LoadFbxMaterialTexture(GraphicsDevice device, Scene scene, int materialIndex, string baseDir)
     {
         if (materialIndex < 0 || materialIndex >= scene.MaterialCount)
+        {
+            ModelLoaderLog.Info($"[StaticModel] FBX tex: material index {materialIndex} out of range");
             return null;
+        }
 
         var material = scene.Materials[materialIndex];
+        ModelLoaderLog.Info($"[StaticModel] FBX tex: material '{material.Name}', hasDiffuse={material.HasTextureDiffuse}");
+
         if (!material.HasTextureDiffuse)
             return null;
 
         string texFile = material.TextureDiffuse.FilePath;
+        ModelLoaderLog.Info($"[StaticModel] FBX tex: diffuse path='{texFile}'");
+
         if (string.IsNullOrWhiteSpace(texFile))
             return null;
 
         string? resolved = ResolveFbxTexturePath(baseDir, texFile);
+        ModelLoaderLog.Info($"[StaticModel] FBX tex: resolved='{resolved}', exists={resolved != null && File.Exists(resolved)}");
+
         if (resolved == null || !File.Exists(resolved))
             return null;
 
         try
         {
             using var stream = File.OpenRead(resolved);
-            return Texture2D.FromStream(device, stream);
+            var tex = Texture2D.FromStream(device, stream);
+            return tex;
         }
-        catch
+        catch (Exception ex)
         {
+            ModelLoaderLog.Info($"[StaticModel] FBX tex: load failed: {ex.Message}");
             return null;
         }
     }

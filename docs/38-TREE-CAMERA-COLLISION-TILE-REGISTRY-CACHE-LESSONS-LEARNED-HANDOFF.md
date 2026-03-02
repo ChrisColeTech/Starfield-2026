@@ -203,17 +203,73 @@ FollowCamera
 
 ---
 
+## 8. Update - Work Completed Since Initial Handoff
+
+### MapRenderer Rewrite
+- Rewrote `MapRenderer.cs` from scratch — removed all monkey-patched scatter/jitter/hash code
+- Split collision logic into new `MapCollision.cs` (static class for height sampling + passability)
+- Clean single-responsibility: one model per tile, no special-casing
+- `DrawWithOffset` now properly initializes effect View/Projection/RasterizerState (was missing, caused blank rendering)
+
+### Grass Orientation Fix (PreTransformVertices)
+- Root cause: the Z-up heuristic (`extentZ > extentY * 1.5`) falsely triggered for grass models — grass is a wide, flat patch (Y-up) where Z spread > Y height, NOT a Z-up model
+- Fix: added `PostProcessSteps.PreTransformVertices` to Assimp's FBX import, which bakes node transforms (including axis conversion) into vertex data
+- Removed the fragile Z-up heuristic entirely — Assimp handles axis conversion correctly now
+- Re-exported grass FBX files from Blender with `transform_apply(rotation=True, scale=True)` for clean Y-up vertex data
+
+### Grass Texture Fix (Colored ALB)
+- Root cause: `Grass01_ALB.png` was the **uncolored/greyscale** version designed to be tinted by Unity's shader at runtime. The RGB values were near-white (R235 G235 B235) — NOT a rendering bug
+- Fix: replaced `textures/Grass01_ALB.png` with the pre-colored version from `textures/Colored/Grass01_ALB.png` which has actual green blade colors
+- Re-exported `Grass01.fbx` from Blender referencing the colored texture
+
+### Per-Model Alpha Cutout Control
+- Added `AlphaCutout` flag to `TileDefinition` (defaults to `true`)
+- Models with `AlphaCutout: true` use `AlphaTestEffect` (transparency cutout for leaves/foliage)
+- Models with `AlphaCutout: false` use `BasicEffect` (lit + textured, like the original POC FbxLoader)
+- Short grass (tile 59) uses `AlphaCutout: false` since `Grass.png` is a solid texture with no alpha channel
+- Tall grass (tile 57) uses `AlphaCutout: true` with the colored cutout texture
+
+### Lessons Learned
+
+1. **Greyscale ALB textures**: Unity asset packs often include uncolored `_ALB.png` textures alongside `Colored/` variants. The uncolored ones are designed for runtime tinting — always check `Colored/` directory first.
+
+2. **Z-up heuristic is unreliable**: Extent ratios can't distinguish "model is Z-up" from "model is wider than tall". Use `PreTransformVertices` to let Assimp handle axis conversion properly.
+
+3. **AlphaTestEffect renders ALL pixels with alpha > threshold**: If a cutout texture has opaque white background areas (A=255 with white RGB), those render as solid white. The texture must have proper alpha = 0 in background areas.
+
+4. **POC code is valuable reference**: The deleted `FbxLoader.cs` from doc 33 used `BasicEffect` (not `AlphaTestEffect`) and searched `Colored/` directory first. Both were the correct approaches.
+
+5. **Don't make global changes for local problems**: When only grass had a color issue, changing the rendering path for ALL models was wrong. Use per-model flags to target fixes.
+
+6. **Diagnose with data, not guesses**: The pixel sampling diagnostic (`center pixel=R235 G235 B235`) immediately revealed the root cause was the texture content, not the rendering pipeline.
+
+### Next Steps
+
+1. **Re-apply scatter/cluster rendering** for grass tiles — place multiple instances per tile with spread offsets for fuller appearance
+2. **TGA texture conversion** for RPG Free and Stylized Rocks packs
+3. **Generic tile mapper fallback** — auto-resolve ModelId from file index without requiring mapper entries
+4. **Fog to hide horizon** — add fog to BasicEffect/AlphaTestEffect
+
+### Quick Wins
+
+1. **Scatter as a TileDefinition property**: Add `ScatterCount` and `ScatterSpread` fields to `TileDefinition` so scatter is data-driven, not hardcoded `IsGrassTile()` checks
+2. **Colored texture resolver**: In `ResolveFbxTexturePath`, check `Colored/` subdirectory before the base texture directory
+3. **Shared texture cache in LoadFbx**: Pass a texture dictionary to avoid loading the same bark/leaf texture 8 times across tree models
+
+---
+
 ## File Reference
 
 | File | Role |
 |------|------|
-| `Maps/TileDefinition.cs` | Tile data record (Id, ModelId, TexturePath, BaselineSize, Scale, Height) |
+| `Maps/TileDefinition.cs` | Tile data record (Id, ModelId, TexturePath, BaselineSize, Scale, Height, AlphaCutout) |
 | `Maps/TileRegistry.cs` | Central registry of 150 tile definitions across 4 asset packs |
 | `Maps/TileMappers/AnimeForestTileMapper.cs` | Tile ID -> FBX model + texture path mapping for anime forest |
 | `Maps/MapDefinition.cs` | Abstract base for maps; added `GetCameraCollisionHeight()` |
-| `Rendering/StaticModel.cs` | DAE + FBX model loader (Load, LoadFbx, Draw, DrawAlphaTested) |
+| `Rendering/StaticModel.cs` | DAE + FBX model loader (Load, LoadFbx with PreTransformVertices, Draw, DrawAlphaTested) |
 | `Rendering/TileModelCache.cs` | TTL-based async texture + model cache (BuildForMap, EnsureFileIndex, EvictExpiredAssets) |
-| `Rendering/MapRenderer.cs` | Tile rendering (DrawTileModel, BuildModelWorldMatrix, DrawScatteredModel, Z-up detection) |
+| `Rendering/MapRenderer.cs` | Clean tile renderer — one model per tile, per-model AlphaCutout vs BasicEffect |
+| `Rendering/MapCollision.cs` | Static collision class — SampleHeight, IsPassable (extracted from MapRenderer) |
 | `Rendering/FollowCamera.cs` | Camera with proactive obstacle avoidance + raycast safety net |
 | `Runtime/NavigationRuntime.cs` | Terrain config with separate camera height sampler |
 | `Screens/AnimeWorldScreen.cs` | Multi-map world with SampleCameraHeight for camera collision |

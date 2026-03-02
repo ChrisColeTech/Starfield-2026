@@ -15,5 +15,6 @@ public record TileDefinition(
     string? ModelId = null,
     string? TexturePath = null,
     float BaselineSize = 1f,
-    float Scale = 1f
+    float Scale = 1f,
+    bool AlphaCutout = true
 );

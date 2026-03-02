@@ -59,13 +59,13 @@ public sealed class MapWorldRuntime
     public float? SampleHeight(Vector3 worldPos)
     {
         if (_map == null || _cache == null) return null;
-        return _renderer.SampleHeight(worldPos, _map, _cache);
+        return MapCollision.SampleHeight(worldPos, _map, _cache);
     }
 
     public bool IsPassable(Vector3 worldPos, float radius)
     {
         if (_map == null || _cache == null) return true;
-        return _renderer.IsPassable(worldPos, radius, _map, _cache);
+        return MapCollision.IsPassable(worldPos, radius, _map);
     }
 
     public void Draw(GraphicsDevice device, Matrix view, Matrix projection, Vector3 cameraPosition)
