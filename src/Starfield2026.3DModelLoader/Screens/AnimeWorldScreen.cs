@@ -42,7 +42,7 @@ public class AnimeWorldScreen : IDisposable
         _actor.Initialize(device);
         _renderer.Initialize(device);
         _nav.Initialize(new Vector3(10, 0f, 10), 60f);
-        _nav.ConfigureTerrain(SampleHeight, IsPassable);
+        _nav.ConfigureTerrain(SampleHeight, IsPassable, SampleCameraHeight);
     }
 
     public void SetTileCache(TileModelCache cache) => _cache = cache;
@@ -122,6 +122,19 @@ public class AnimeWorldScreen : IDisposable
         localZ = Math.Clamp(localZ, 0, map.Height - 1);
 
         return map.GetTileHeight(localX, localZ);
+    }
+
+    private float SampleCameraHeight(Vector3 worldPos)
+    {
+        var map = FindMapAt(worldPos);
+        if (map == null) return 0f;
+
+        int localX = (int)MathF.Floor(worldPos.X + 0.5f) - map.WorldX * map.Width;
+        int localZ = (int)MathF.Floor(worldPos.Z + 0.5f) - map.WorldY * map.Height;
+        localX = Math.Clamp(localX, 0, map.Width - 1);
+        localZ = Math.Clamp(localZ, 0, map.Height - 1);
+
+        return map.GetCameraCollisionHeight(localX, localZ);
     }
 
     private bool IsPassable(Vector3 worldPos, float radius)

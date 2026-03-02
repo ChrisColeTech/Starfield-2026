@@ -239,21 +239,39 @@ public sealed class MapRenderer
     private void DrawTileModel(GraphicsDevice device, Matrix view, Matrix projection,
         int x, int y, TileDefinition tileDef, StaticModel model)
     {
+        // Detect Z-up models: if Z extent is significantly taller than Y extent, rotate to Y-up
+        float extentY = model.BoundsMax.Y - model.BoundsMin.Y;
+        float extentZ = model.BoundsMax.Z - model.BoundsMin.Z;
+        bool isZUp = extentZ > extentY * 1.5f;
+
         float modelDiameter = Math.Max(
             model.BoundsMax.X - model.BoundsMin.X,
-            Math.Max(model.BoundsMax.Y - model.BoundsMin.Y,
-                     model.BoundsMax.Z - model.BoundsMin.Z));
+            Math.Max(extentY, extentZ));
 
         float targetSize = tileDef.BaselineSize * tileDef.Scale;
         float scale = modelDiameter > 0.001f ? targetSize / modelDiameter : 1f;
 
         Vector3 modelCenter = model.Center;
-        float groundOffset = -model.BoundsMin.Y * scale;
 
-        Matrix world =
-            Matrix.CreateTranslation(-modelCenter) *
-            Matrix.CreateScale(scale) *
-            Matrix.CreateTranslation(x, groundOffset, y);
+        Matrix world;
+        if (isZUp)
+        {
+            // Rotate Z-up to Y-up: -90° around X
+            // Center XY only, align bottom (BoundsMin.Z) to ground before rotation
+            world =
+                Matrix.CreateTranslation(-modelCenter.X, -modelCenter.Y, -model.BoundsMin.Z) *
+                Matrix.CreateRotationX(-MathF.PI / 2f) *
+                Matrix.CreateScale(scale) *
+                Matrix.CreateTranslation(x, 0f, y);
+        }
+        else
+        {
+            // Center XZ only, align bottom (BoundsMin.Y) to ground
+            world =
+                Matrix.CreateTranslation(-modelCenter.X, -model.BoundsMin.Y, -modelCenter.Z) *
+                Matrix.CreateScale(scale) *
+                Matrix.CreateTranslation(x, 0f, y);
+        }
 
         _modelEffect.World = world;
         _modelEffect.View = view;

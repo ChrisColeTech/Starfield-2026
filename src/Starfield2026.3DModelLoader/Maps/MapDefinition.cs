@@ -98,6 +98,19 @@ public abstract class MapDefinition
         return height;
     }
 
+    public float GetCameraCollisionHeight(int x, int y)
+    {
+        float height = GetTileHeight(x, y);
+        int? overId = GetOverlayTile(x, y);
+        if (overId.HasValue)
+        {
+            var overDef = TileRegistry.GetTile(overId.Value);
+            if (overDef?.ModelId != null)
+                height = Math.Max(height, overDef.BaselineSize * overDef.Scale);
+        }
+        return height;
+    }
+
     public WarpConnection? GetWarp(int x, int y, WarpTrigger trigger)
     {
         foreach (var warp in _warps)

@@ -12,6 +12,8 @@ public static class AnimeForestTileMapper
         {
             [1] = new("base_tiles/terrain/Grass.png", null),
 
+            [6] = new(null, "anime_forest/models/AnimeTree_05.fbx"),
+
             [45] = new(null, "anime_forest/models/AnimeTree_01.fbx"),
             [46] = new(null, "anime_forest/models/AnimeTree_02.fbx"),
             [47] = new(null, "anime_forest/models/AnimeTree_03.fbx"),

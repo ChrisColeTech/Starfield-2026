@@ -23,7 +23,7 @@ public static class TileRegistry
         [5] = new TileDefinition(5, "Pebbles01", true, "#9a9080", TileCategory.Decoration, ModelId: "Pebbles01"),
 
         // Vegetation (6-9)
-        [6] = new TileDefinition(6, "Tree01", false, "#2d6b30", TileCategory.Decoration, Height: 2f, ModelId: "Tree01", BaselineSize: 2.5f),
+        [6] = new TileDefinition(6, "Tree01", false, "#2d6b30", TileCategory.Decoration, Height: 2f, ModelId: "Tree01", BaselineSize: 6.0f),
         [7] = new TileDefinition(7, "Bush01", false, "#3d8b40", TileCategory.Decoration, Height: 0.8f, ModelId: "Bush01"),
         [8] = new TileDefinition(8, "Flower01", true, "#e074a8", TileCategory.Decoration, ModelId: "Flower01"),
         [9] = new TileDefinition(9, "Flowers01", true, "#d4689c", TileCategory.Decoration, ModelId: "Flowers01"),
@@ -60,10 +60,10 @@ public static class TileRegistry
         [44] = new TileDefinition(44, "RockFree06", false, "#3e342d", TileCategory.Decoration, Height: 1f, ModelId: "rock6_LOD0", BaselineSize: 1.5f),
 
         // Anime Trees pack — Trees (45-52)
-        [45] = new TileDefinition(45, "AnimeTree01", false, "#2d8a30", TileCategory.Decoration, Height: 2f, ModelId: "AnimeTree_01", BaselineSize: 2.5f),
-        [46] = new TileDefinition(46, "AnimeTree02", false, "#258025", TileCategory.Decoration, Height: 2f, ModelId: "AnimeTree_02", BaselineSize: 2.5f),
-        [47] = new TileDefinition(47, "AnimeTree03", false, "#1d7520", TileCategory.Decoration, Height: 2f, ModelId: "AnimeTree_03", BaselineSize: 2.5f),
-        [48] = new TileDefinition(48, "AnimeTree04", false, "#2d6a2d", TileCategory.Decoration, Height: 2f, ModelId: "AnimeTree_04", BaselineSize: 2.5f),
+        [45] = new TileDefinition(45, "AnimeTree01", false, "#2d8a30", TileCategory.Decoration, Height: 2f, ModelId: "AnimeTree_01", BaselineSize: 5.0f),
+        [46] = new TileDefinition(46, "AnimeTree02", false, "#258025", TileCategory.Decoration, Height: 2f, ModelId: "AnimeTree_02", BaselineSize: 5.0f),
+        [47] = new TileDefinition(47, "AnimeTree03", false, "#1d7520", TileCategory.Decoration, Height: 2f, ModelId: "AnimeTree_03", BaselineSize: 5.0f),
+        [48] = new TileDefinition(48, "AnimeTree04", false, "#2d6a2d", TileCategory.Decoration, Height: 2f, ModelId: "AnimeTree_04", BaselineSize: 5.0f),
         [49] = new TileDefinition(49, "AnimeTree05", false, "#1a5c2a", TileCategory.Decoration, Height: 2.5f, ModelId: "AnimeTree_05", BaselineSize: 3f),
         [50] = new TileDefinition(50, "AnimeTree06", false, "#166024", TileCategory.Decoration, Height: 2.5f, ModelId: "AnimeTree_06", BaselineSize: 3f),
         [51] = new TileDefinition(51, "AnimeTree07", false, "#207030", TileCategory.Decoration, Height: 2f, ModelId: "AnimeTree_07", BaselineSize: 2.5f),

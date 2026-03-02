@@ -28,11 +28,12 @@ public sealed class NavigationRuntime
         _camera.Initialize(startPosition);
     }
 
-    public void ConfigureTerrain(Func<Vector3, float>? sampleHeight, Func<Vector3, float, bool>? passable)
+    public void ConfigureTerrain(Func<Vector3, float>? sampleHeight, Func<Vector3, float, bool>? passable,
+        Func<Vector3, float>? cameraHeightSampler = null)
     {
         _player.TerrainHeightSampler = sampleHeight == null ? null : pos => sampleHeight(pos);
         _player.CollisionCheck = passable;
-        _camera.TerrainHeightSampler = sampleHeight;
+        _camera.TerrainHeightSampler = cameraHeightSampler ?? sampleHeight;
     }
 
     public void UpdateMovement(float dt, InputSnapshot input) => _player.Update(dt, input);
