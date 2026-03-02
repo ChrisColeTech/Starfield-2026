@@ -28,8 +28,10 @@ public static class AnimeForestTileMapper
             [55] = new(null, "anime_forest/models/AnimeBush_03.fbx"),
             [56] = new(null, "anime_forest/models/AnimeBush_04.fbx"),
 
-            [57] = new("anime_forest/textures/Grass.png", "anime_forest/models/Grass.fbx"),
+            [57] = new("anime_forest/textures/Grass.png", "anime_forest/models/Grass01.fbx"),
             [58] = new("anime_forest/textures/Grass.png", "anime_forest/models/GrassMesh.fbx"),
+
+            [59] = new("anime_forest/textures/Grass.png", "anime_forest/models/Grass.fbx"),
         };
 
     public static bool TryGetAsset(int tileId, out AnimeForestTileAsset asset) =>

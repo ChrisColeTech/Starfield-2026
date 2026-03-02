@@ -236,10 +236,50 @@ public sealed class MapRenderer
         _cubeRenderer.Draw(device, view, projection, cubePos, 0f, cubeScale, color);
     }
 
+    private const int GrassScatterCount = 6;
+    private const float GrassScatterSpread = 0.4f;
+
+    private static bool IsGrassTile(string? modelId) =>
+        modelId != null && (modelId.Equals("Grass", StringComparison.OrdinalIgnoreCase)
+                         || modelId.Equals("Grass01", StringComparison.OrdinalIgnoreCase));
+
     private void DrawTileModel(GraphicsDevice device, Matrix view, Matrix projection,
         int x, int y, TileDefinition tileDef, StaticModel model)
     {
-        // Detect Z-up models: if Z extent is significantly taller than Y extent, rotate to Y-up
+        if (IsGrassTile(tileDef.ModelId))
+        {
+            DrawScatteredModel(device, view, projection, x, y, tileDef, model, GrassScatterCount, GrassScatterSpread);
+            return;
+        }
+
+        var world = BuildModelWorldMatrix(x, y, tileDef, model, 0f, 0f, 0f);
+        ApplyWorldAndDraw(device, view, projection, model, world);
+    }
+
+    private void DrawScatteredModel(GraphicsDevice device, Matrix view, Matrix projection,
+        int x, int y, TileDefinition tileDef, StaticModel model, int count, float spread)
+    {
+        int seed = x * 7919 + y * 6271;
+        for (int i = 0; i < count; i++)
+        {
+            // Deterministic pseudo-random offsets per scatter instance
+            int h = seed ^ (i * 3571);
+            h = ((h >> 16) ^ h) * 0x45d9f3b;
+            h = ((h >> 16) ^ h) * 0x45d9f3b;
+            h = (h >> 16) ^ h;
+
+            float ox = ((h & 0xFF) / 255f - 0.5f) * 2f * spread;
+            float oz = (((h >> 8) & 0xFF) / 255f - 0.5f) * 2f * spread;
+            float rotY = ((h >> 16) & 0xFF) / 255f * MathF.PI * 2f;
+
+            var world = BuildModelWorldMatrix(x, y, tileDef, model, ox, oz, rotY);
+            ApplyWorldAndDraw(device, view, projection, model, world);
+        }
+    }
+
+    private static Matrix BuildModelWorldMatrix(int x, int y, TileDefinition tileDef, StaticModel model,
+        float offsetX, float offsetZ, float rotationY)
+    {
         float extentY = model.BoundsMax.Y - model.BoundsMin.Y;
         float extentZ = model.BoundsMax.Z - model.BoundsMin.Z;
         bool isZUp = extentZ > extentY * 1.5f;
@@ -253,26 +293,30 @@ public sealed class MapRenderer
 
         Vector3 modelCenter = model.Center;
 
-        Matrix world;
+        Matrix baseTransform;
         if (isZUp)
         {
-            // Rotate Z-up to Y-up: -90° around X
-            // Center XY only, align bottom (BoundsMin.Z) to ground before rotation
-            world =
+            baseTransform =
                 Matrix.CreateTranslation(-modelCenter.X, -modelCenter.Y, -model.BoundsMin.Z) *
-                Matrix.CreateRotationX(-MathF.PI / 2f) *
-                Matrix.CreateScale(scale) *
-                Matrix.CreateTranslation(x, 0f, y);
+                Matrix.CreateRotationX(-MathF.PI / 2f);
         }
         else
         {
-            // Center XZ only, align bottom (BoundsMin.Y) to ground
-            world =
-                Matrix.CreateTranslation(-modelCenter.X, -model.BoundsMin.Y, -modelCenter.Z) *
-                Matrix.CreateScale(scale) *
-                Matrix.CreateTranslation(x, 0f, y);
+            baseTransform =
+                Matrix.CreateTranslation(-modelCenter.X, -model.BoundsMin.Y, -modelCenter.Z);
         }
 
+        if (rotationY != 0f)
+            baseTransform *= Matrix.CreateRotationY(rotationY);
+
+        return baseTransform *
+            Matrix.CreateScale(scale) *
+            Matrix.CreateTranslation(x + offsetX, 0f, y + offsetZ);
+    }
+
+    private void ApplyWorldAndDraw(GraphicsDevice device, Matrix view, Matrix projection,
+        StaticModel model, Matrix world)
+    {
         _modelEffect.World = world;
         _modelEffect.View = view;
         _modelEffect.Projection = projection;
